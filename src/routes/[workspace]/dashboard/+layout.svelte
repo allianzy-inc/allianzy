@@ -9,16 +9,16 @@
     
     // Client Menu Items
     const menuItems = [
-        { href: `/${workspace}/dashboard`, label: 'Overview', icon: LayoutDashboard },
-        { href: `/${workspace}/dashboard/projects`, label: 'Proyectos', icon: Briefcase },
-        { href: `/${workspace}/dashboard/support`, label: 'Soporte', icon: Ticket },
-        { href: `/${workspace}/dashboard/settings`, label: 'Configuraciones', icon: Settings },
-        { href: `/${workspace}/dashboard/contact`, label: 'Contactar', icon: Mail },
+        { href: `/dashboard`, label: 'Overview', icon: LayoutDashboard },
+        { href: `/dashboard/projects`, label: 'Proyectos', icon: Briefcase },
+        { href: `/dashboard/support`, label: 'Soporte', icon: Ticket },
+        { href: `/dashboard/settings`, label: 'Configuraciones', icon: Settings },
+        { href: `/dashboard/contact`, label: 'Contactar', icon: Mail },
     ];
 
     async function handleLogout() {
         await authClient.signOut();
-        goto(`/${workspace}/auth/login`);
+        goto(`/auth/login`);
     }
 
     let isProfileOpen = false;
@@ -34,7 +34,7 @@
             {#each menuItems as item}
                 <a 
                     href={item.href}
-                    class="flex items-center gap-3 px-4 py-2.5 rounded-md text-sm font-medium transition-colors {path === item.href || (item.href !== `/${workspace}/dashboard` && path.startsWith(item.href)) ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'}"
+                    class="flex items-center gap-3 px-4 py-2.5 rounded-md text-sm font-medium transition-colors {path === item.href || (item.href !== `/dashboard` && path.startsWith(item.href)) ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'}"
                 >
                     <item.icon class="w-4 h-4" />
                     {item.label}
@@ -64,7 +64,7 @@
                     
                     {#if isProfileOpen}
                         <div class="absolute right-0 mt-2 w-48 rounded-md border bg-popover shadow-md z-50 py-1">
-                            <a href="/{workspace}/dashboard/profile" class="block px-4 py-2 text-sm hover:bg-accent hover:text-accent-foreground">
+                            <a href="/dashboard/profile" class="block px-4 py-2 text-sm hover:bg-accent hover:text-accent-foreground">
                                 Perfil
                             </a>
                             <button on:click={handleLogout} class="block w-full text-left px-4 py-2 text-sm hover:bg-accent hover:text-accent-foreground text-red-500">

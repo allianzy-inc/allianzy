@@ -53,7 +53,7 @@
                     <p class="text-muted-foreground">Here is an overview of your {workspace === 'allianzy' ? 'Allianzy' : 'Beltix'} services.</p>
                 </div>
                 <div class="flex gap-2">
-                    <a href="/{workspace}/tickets/new" class="px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:opacity-90">
+                    <a href="/tickets/new" class="px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:opacity-90">
                         New Request
                     </a>
                 </div>

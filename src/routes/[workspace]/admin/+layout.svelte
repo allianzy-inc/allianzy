@@ -9,17 +9,17 @@
     
     // Admin Menu Items
     const menuItems = [
-        { href: `/${workspace}/admin`, label: 'Overview', icon: LayoutDashboard },
-        { href: `/${workspace}/admin/users`, label: 'Usuarios', icon: Users },
-        { href: `/${workspace}/admin/services`, label: 'Servicios', icon: Package },
-        { href: `/${workspace}/admin/projects`, label: 'Proyectos', icon: Briefcase },
-        { href: `/${workspace}/admin/support`, label: 'Soporte', icon: Ticket },
-        { href: `/${workspace}/admin/settings`, label: 'Configuraciones', icon: Settings },
+        { href: `/admin`, label: 'Overview', icon: LayoutDashboard },
+        { href: `/admin/users`, label: 'Usuarios', icon: Users },
+        { href: `/admin/services`, label: 'Servicios', icon: Package },
+        { href: `/admin/projects`, label: 'Proyectos', icon: Briefcase },
+        { href: `/admin/support`, label: 'Soporte', icon: Ticket },
+        { href: `/admin/settings`, label: 'Configuraciones', icon: Settings },
     ];
 
     async function handleLogout() {
         await authClient.signOut();
-        goto(`/${workspace}/auth/login`);
+        goto(`/auth/login`);
     }
 
     let isProfileOpen = false;
@@ -66,7 +66,7 @@
                     
                     {#if isProfileOpen}
                         <div class="absolute right-0 mt-2 w-48 rounded-md border bg-popover shadow-md z-50 py-1">
-                            <a href="/{workspace}/admin/profile" class="block px-4 py-2 text-sm hover:bg-accent hover:text-accent-foreground">
+                            <a href="/admin/profile" class="block px-4 py-2 text-sm hover:bg-accent hover:text-accent-foreground">
                                 Perfil
                             </a>
                             <button on:click={handleLogout} class="block w-full text-left px-4 py-2 text-sm hover:bg-accent hover:text-accent-foreground text-red-500">

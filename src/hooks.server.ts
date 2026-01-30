@@ -3,8 +3,8 @@ import { redirect, type Handle } from '@sveltejs/kit';
 const DOMAIN_MAP: Record<string, string> = {
     'allianzy.com': 'allianzy',
     'www.allianzy.com': 'allianzy',
-    'beltrix.com': 'beltrix',
-    'www.beltrix.com': 'beltrix'
+    'beltrix.agency': 'beltrix',
+    'www.beltrix.agency': 'beltrix'
 };
 
 const VALID_WORKSPACES = ['allianzy', 'beltrix'];
@@ -35,19 +35,17 @@ export const handle: Handle = async ({ event, resolve }) => {
         const pathSegments = event.url.pathname.split('/').filter(Boolean);
         const requestedWorkspace = pathSegments[0];
 
-        // Redirect root to workspace dashboard
-        if (event.url.pathname === '/') {
-            throw redirect(307, `/${allowedWorkspace}/dashboard`);
-        }
+        // NOTE: Redirection for root '/' is now handled by src/hooks.ts (reroute)
+        // effectively mapping '/' to '/[workspace]' internally without 307 redirect.
 
         // Check if user is trying to access a workspace route
         if (requestedWorkspace && VALID_WORKSPACES.includes(requestedWorkspace)) {
             // Strict check: Is this workspace allowed on this domain?
             if (requestedWorkspace !== allowedWorkspace) {
-                // Mismatch detected (e.g. accessing /allianzy on beltrix.com)
-                // Redirect to the correct workspace preserving the rest of the path
-                const newPath = event.url.pathname.replace(`/${requestedWorkspace}`, `/${allowedWorkspace}`);
-                throw redirect(307, newPath);
+                // Mismatch detected (e.g. accessing /allianzy on beltrix.agency)
+                // Redirect to the correct workspace root (which looks like / to the user)
+                // or just 404. Let's redirect to root of the domain.
+                throw redirect(307, '/');
             }
         }
     }

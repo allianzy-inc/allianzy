@@ -37,7 +37,7 @@ export async function get_hooks() {
 
 	let reroute;
 	let transport;
-	
+	({ reroute, transport } = await import("../../../src/hooks.ts"));
 
 	return {
 		handle,

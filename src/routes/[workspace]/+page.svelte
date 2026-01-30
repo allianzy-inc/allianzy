@@ -39,7 +39,7 @@
                         Security, performance, and reliability are not optional.
                     </p>
                     <div class="flex flex-col sm:flex-row gap-4">
-                        <a href="/allianzy/auth/login" class="inline-flex items-center justify-center px-8 py-4 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200">
+                        <a href="/auth/login" class="inline-flex items-center justify-center px-8 py-4 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200">
                             Access Dashboard
                             <ArrowRight class="ml-2 w-5 h-5" />
                         </a>
@@ -112,7 +112,7 @@
                     Bold strategies for brands that dare to be different.
                 </p>
                 <div class="flex flex-col sm:flex-row items-center justify-center gap-6">
-                    <a href="/beltrix/dashboard" class="group relative px-8 py-4 bg-transparent border border-neutral-700 hover:border-white transition-colors rounded-full overflow-hidden">
+                    <a href="/dashboard" class="group relative px-8 py-4 bg-transparent border border-neutral-700 hover:border-white transition-colors rounded-full overflow-hidden">
                         <span class="relative z-10 font-bold uppercase tracking-widest text-sm">Enter Dashboard</span>
                         <div class="absolute inset-0 bg-white translate-y-full group-hover:translate-y-0 transition-transform duration-300 -z-0"></div>
                         <span class="absolute inset-0 z-10 flex items-center justify-center font-bold uppercase tracking-widest text-sm text-black translate-y-full group-hover:translate-y-0 transition-transform duration-300">Enter Dashboard</span>

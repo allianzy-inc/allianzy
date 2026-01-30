@@ -1,0 +1,35 @@
+{
+	"/": [],
+	"/api/users/get-role": [
+		"src/routes/api/users/get-role/+server.ts"
+	],
+	"/api/users/sync": [
+		"src/routes/api/users/sync/+server.ts"
+	],
+	"/[workspace]": [],
+	"/[workspace]/admin": [],
+	"/[workspace]/admin/cases": [],
+	"/[workspace]/admin/profile": [],
+	"/[workspace]/admin/projects": [],
+	"/[workspace]/admin/services": [],
+	"/[workspace]/admin/settings": [],
+	"/[workspace]/admin/support": [],
+	"/[workspace]/admin/users": [],
+	"/[workspace]/auth/login": [],
+	"/[workspace]/config": [],
+	"/[workspace]/dashboard": [
+		"src/routes/[workspace]/dashboard/+page.server.ts"
+	],
+	"/[workspace]/dashboard/contact": [],
+	"/[workspace]/dashboard/profile": [],
+	"/[workspace]/dashboard/projects": [
+		"src/routes/[workspace]/dashboard/projects/+page.server.ts"
+	],
+	"/[workspace]/dashboard/settings": [],
+	"/[workspace]/dashboard/support": [],
+	"/[workspace]/intake": [],
+	"/[workspace]/portal": [],
+	"/[workspace]/provider": [],
+	"/[workspace]/schedule": [],
+	"/[workspace]/tickets": []
+}

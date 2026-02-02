@@ -27,13 +27,14 @@ export {};
 
 declare module "$app/types" {
 	export interface AppTypes {
-		RouteId(): "/" | "/api" | "/api/users" | "/api/users/get-role" | "/api/users/sync" | "/[workspace]" | "/[workspace]/admin" | "/[workspace]/admin/cases" | "/[workspace]/admin/profile" | "/[workspace]/admin/projects" | "/[workspace]/admin/services" | "/[workspace]/admin/settings" | "/[workspace]/admin/support" | "/[workspace]/admin/users" | "/[workspace]/auth" | "/[workspace]/auth/login" | "/[workspace]/config" | "/[workspace]/dashboard" | "/[workspace]/dashboard/contact" | "/[workspace]/dashboard/profile" | "/[workspace]/dashboard/projects" | "/[workspace]/dashboard/settings" | "/[workspace]/dashboard/support" | "/[workspace]/intake" | "/[workspace]/portal" | "/[workspace]/provider" | "/[workspace]/schedule" | "/[workspace]/tickets";
+		RouteId(): "/" | "/api" | "/api/files" | "/api/users" | "/api/users/get-role" | "/api/users/sync" | "/seed" | "/[workspace]" | "/[workspace]/admin" | "/[workspace]/admin/cases" | "/[workspace]/admin/profile" | "/[workspace]/admin/projects" | "/[workspace]/admin/projects/[id]" | "/[workspace]/admin/services" | "/[workspace]/admin/settings" | "/[workspace]/admin/support" | "/[workspace]/admin/users" | "/[workspace]/auth" | "/[workspace]/auth/login" | "/[workspace]/config" | "/[workspace]/dashboard" | "/[workspace]/dashboard/contact" | "/[workspace]/dashboard/profile" | "/[workspace]/dashboard/projects" | "/[workspace]/dashboard/settings" | "/[workspace]/dashboard/support" | "/[workspace]/intake" | "/[workspace]/portal" | "/[workspace]/provider" | "/[workspace]/schedule" | "/[workspace]/tickets";
 		RouteParams(): {
 			"/[workspace]": { workspace: string };
 			"/[workspace]/admin": { workspace: string };
 			"/[workspace]/admin/cases": { workspace: string };
 			"/[workspace]/admin/profile": { workspace: string };
 			"/[workspace]/admin/projects": { workspace: string };
+			"/[workspace]/admin/projects/[id]": { workspace: string; id: string };
 			"/[workspace]/admin/services": { workspace: string };
 			"/[workspace]/admin/settings": { workspace: string };
 			"/[workspace]/admin/support": { workspace: string };
@@ -54,16 +55,19 @@ declare module "$app/types" {
 			"/[workspace]/tickets": { workspace: string }
 		};
 		LayoutParams(): {
-			"/": { workspace?: string };
+			"/": { workspace?: string; id?: string };
 			"/api": Record<string, never>;
+			"/api/files": Record<string, never>;
 			"/api/users": Record<string, never>;
 			"/api/users/get-role": Record<string, never>;
 			"/api/users/sync": Record<string, never>;
-			"/[workspace]": { workspace: string };
-			"/[workspace]/admin": { workspace: string };
+			"/seed": Record<string, never>;
+			"/[workspace]": { workspace: string; id?: string };
+			"/[workspace]/admin": { workspace: string; id?: string };
 			"/[workspace]/admin/cases": { workspace: string };
 			"/[workspace]/admin/profile": { workspace: string };
-			"/[workspace]/admin/projects": { workspace: string };
+			"/[workspace]/admin/projects": { workspace: string; id?: string };
+			"/[workspace]/admin/projects/[id]": { workspace: string; id: string };
 			"/[workspace]/admin/services": { workspace: string };
 			"/[workspace]/admin/settings": { workspace: string };
 			"/[workspace]/admin/support": { workspace: string };
@@ -83,7 +87,7 @@ declare module "$app/types" {
 			"/[workspace]/schedule": { workspace: string };
 			"/[workspace]/tickets": { workspace: string }
 		};
-		Pathname(): "/" | "/api" | "/api/" | "/api/users" | "/api/users/" | "/api/users/get-role" | "/api/users/get-role/" | "/api/users/sync" | "/api/users/sync/" | `/${string}` & {} | `/${string}/` & {} | `/${string}/admin` & {} | `/${string}/admin/` & {} | `/${string}/admin/cases` & {} | `/${string}/admin/cases/` & {} | `/${string}/admin/profile` & {} | `/${string}/admin/profile/` & {} | `/${string}/admin/projects` & {} | `/${string}/admin/projects/` & {} | `/${string}/admin/services` & {} | `/${string}/admin/services/` & {} | `/${string}/admin/settings` & {} | `/${string}/admin/settings/` & {} | `/${string}/admin/support` & {} | `/${string}/admin/support/` & {} | `/${string}/admin/users` & {} | `/${string}/admin/users/` & {} | `/${string}/auth` & {} | `/${string}/auth/` & {} | `/${string}/auth/login` & {} | `/${string}/auth/login/` & {} | `/${string}/config` & {} | `/${string}/config/` & {} | `/${string}/dashboard` & {} | `/${string}/dashboard/` & {} | `/${string}/dashboard/contact` & {} | `/${string}/dashboard/contact/` & {} | `/${string}/dashboard/profile` & {} | `/${string}/dashboard/profile/` & {} | `/${string}/dashboard/projects` & {} | `/${string}/dashboard/projects/` & {} | `/${string}/dashboard/settings` & {} | `/${string}/dashboard/settings/` & {} | `/${string}/dashboard/support` & {} | `/${string}/dashboard/support/` & {} | `/${string}/intake` & {} | `/${string}/intake/` & {} | `/${string}/portal` & {} | `/${string}/portal/` & {} | `/${string}/provider` & {} | `/${string}/provider/` & {} | `/${string}/schedule` & {} | `/${string}/schedule/` & {} | `/${string}/tickets` & {} | `/${string}/tickets/` & {};
+		Pathname(): "/" | "/api" | "/api/" | "/api/files" | "/api/files/" | "/api/users" | "/api/users/" | "/api/users/get-role" | "/api/users/get-role/" | "/api/users/sync" | "/api/users/sync/" | "/seed" | "/seed/" | `/${string}` & {} | `/${string}/` & {} | `/${string}/admin` & {} | `/${string}/admin/` & {} | `/${string}/admin/cases` & {} | `/${string}/admin/cases/` & {} | `/${string}/admin/profile` & {} | `/${string}/admin/profile/` & {} | `/${string}/admin/projects` & {} | `/${string}/admin/projects/` & {} | `/${string}/admin/projects/${string}` & {} | `/${string}/admin/projects/${string}/` & {} | `/${string}/admin/services` & {} | `/${string}/admin/services/` & {} | `/${string}/admin/settings` & {} | `/${string}/admin/settings/` & {} | `/${string}/admin/support` & {} | `/${string}/admin/support/` & {} | `/${string}/admin/users` & {} | `/${string}/admin/users/` & {} | `/${string}/auth` & {} | `/${string}/auth/` & {} | `/${string}/auth/login` & {} | `/${string}/auth/login/` & {} | `/${string}/config` & {} | `/${string}/config/` & {} | `/${string}/dashboard` & {} | `/${string}/dashboard/` & {} | `/${string}/dashboard/contact` & {} | `/${string}/dashboard/contact/` & {} | `/${string}/dashboard/profile` & {} | `/${string}/dashboard/profile/` & {} | `/${string}/dashboard/projects` & {} | `/${string}/dashboard/projects/` & {} | `/${string}/dashboard/settings` & {} | `/${string}/dashboard/settings/` & {} | `/${string}/dashboard/support` & {} | `/${string}/dashboard/support/` & {} | `/${string}/intake` & {} | `/${string}/intake/` & {} | `/${string}/portal` & {} | `/${string}/portal/` & {} | `/${string}/provider` & {} | `/${string}/provider/` & {} | `/${string}/schedule` & {} | `/${string}/schedule/` & {} | `/${string}/tickets` & {} | `/${string}/tickets/` & {};
 		ResolvedPathname(): `${"" | `/${string}`}${ReturnType<AppTypes['Pathname']>}`;
 		Asset(): string & {};
 	}

@@ -12,8 +12,8 @@ type EnsureDefined<T> = T extends null | undefined ? {} : T;
 type OptionalUnion<U extends Record<string, any>, A extends keyof U = U extends U ? keyof U : never> = U extends unknown ? { [P in Exclude<A, keyof U>]?: never } & U : never;
 export type Snapshot<T = any> = Kit.Snapshot<T>;
 type PageParentData = Omit<Omit<EnsureDefined<import('../../$types.js').LayoutData>, keyof import('../$types.js').LayoutData> & EnsureDefined<import('../$types.js').LayoutData>, keyof LayoutData> & EnsureDefined<LayoutData>;
-type LayoutRouteId = RouteId | "/[workspace]/admin" | "/[workspace]/admin/cases" | "/[workspace]/admin/profile" | "/[workspace]/admin/projects" | "/[workspace]/admin/services" | "/[workspace]/admin/settings" | "/[workspace]/admin/support" | "/[workspace]/admin/users"
-type LayoutParams = RouteParams & { workspace?: string }
+type LayoutRouteId = RouteId | "/[workspace]/admin" | "/[workspace]/admin/cases" | "/[workspace]/admin/profile" | "/[workspace]/admin/projects" | "/[workspace]/admin/projects/[id]" | "/[workspace]/admin/services" | "/[workspace]/admin/settings" | "/[workspace]/admin/support" | "/[workspace]/admin/users"
+type LayoutParams = RouteParams & { workspace?: string; id?: string }
 type LayoutParentData = Omit<EnsureDefined<import('../../$types.js').LayoutData>, keyof import('../$types.js').LayoutData> & EnsureDefined<import('../$types.js').LayoutData>;
 
 export type EntryGenerator = () => Promise<Array<RouteParams>> | Array<RouteParams>;

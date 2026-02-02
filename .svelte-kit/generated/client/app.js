@@ -30,7 +30,8 @@ export const nodes = [
 	() => import('./nodes/24'),
 	() => import('./nodes/25'),
 	() => import('./nodes/26'),
-	() => import('./nodes/27')
+	() => import('./nodes/27'),
+	() => import('./nodes/28')
 ];
 
 export const server_loads = [];
@@ -41,24 +42,25 @@ export const dictionary = {
 		"/[workspace]/admin": [7,[2,3]],
 		"/[workspace]/admin/cases": [8,[2,3]],
 		"/[workspace]/admin/profile": [9,[2,3]],
-		"/[workspace]/admin/projects": [10,[2,3]],
-		"/[workspace]/admin/services": [11,[2,3]],
-		"/[workspace]/admin/settings": [12,[2,3]],
-		"/[workspace]/admin/support": [13,[2,3]],
-		"/[workspace]/admin/users": [14,[2,3]],
-		"/[workspace]/auth/login": [15,[2]],
-		"/[workspace]/config": [16,[2]],
-		"/[workspace]/dashboard": [~17,[2,4]],
-		"/[workspace]/dashboard/contact": [18,[2,4]],
-		"/[workspace]/dashboard/profile": [19,[2,4]],
-		"/[workspace]/dashboard/projects": [~20,[2,4]],
-		"/[workspace]/dashboard/settings": [21,[2,4]],
-		"/[workspace]/dashboard/support": [22,[2,4]],
-		"/[workspace]/intake": [23,[2]],
-		"/[workspace]/portal": [24,[2]],
-		"/[workspace]/provider": [25,[2]],
-		"/[workspace]/schedule": [26,[2]],
-		"/[workspace]/tickets": [27,[2]]
+		"/[workspace]/admin/projects": [~10,[2,3]],
+		"/[workspace]/admin/projects/[id]": [~11,[2,3]],
+		"/[workspace]/admin/services": [12,[2,3]],
+		"/[workspace]/admin/settings": [13,[2,3]],
+		"/[workspace]/admin/support": [14,[2,3]],
+		"/[workspace]/admin/users": [~15,[2,3]],
+		"/[workspace]/auth/login": [16,[2]],
+		"/[workspace]/config": [17,[2]],
+		"/[workspace]/dashboard": [~18,[2,4]],
+		"/[workspace]/dashboard/contact": [19,[2,4]],
+		"/[workspace]/dashboard/profile": [20,[2,4]],
+		"/[workspace]/dashboard/projects": [~21,[2,4]],
+		"/[workspace]/dashboard/settings": [22,[2,4]],
+		"/[workspace]/dashboard/support": [23,[2,4]],
+		"/[workspace]/intake": [24,[2]],
+		"/[workspace]/portal": [25,[2]],
+		"/[workspace]/provider": [26,[2]],
+		"/[workspace]/schedule": [27,[2]],
+		"/[workspace]/tickets": [28,[2]]
 	};
 
 export const hooks = {

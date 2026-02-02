@@ -1,12 +1,11 @@
 <script lang="ts">
     import { onMount } from 'svelte';
     import { Users, MoreVertical, Search, Filter } from 'lucide-svelte';
+    import type { PageData } from './$types';
 
-    let users = [
-        { id: 1, name: 'Usuario Demo', email: 'cliente@ejemplo.com', role: 'client', status: 'Active' },
-        { id: 2, name: 'Admin User', email: 'admin@allianzy.com', role: 'admin', status: 'Active' },
-        { id: 3, name: 'Staff Member', email: 'staff@beltix.com', role: 'staff', status: 'Active' },
-    ];
+    export let data: PageData;
+    
+    $: users = data.users;
 </script>
 
 <div class="space-y-6">

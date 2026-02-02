@@ -1,12 +1,12 @@
 <script lang="ts">
-    import { ArrowLeft, CheckCircle2, Circle, Clock, MessageSquare, FileText, User, Calendar, Briefcase, AlertCircle, DollarSign, CreditCard, ExternalLink, Download, Pencil, Trash2, Plus, X, Eye } from 'lucide-svelte';
+    import { ArrowLeft, CheckCircle2, Circle, Clock, MessageSquare, FileText, User, Calendar, Briefcase, AlertCircle, DollarSign, CreditCard, ExternalLink, Download, Pencil, Trash2, Plus, X, Eye, Inbox } from 'lucide-svelte';
     import type { PageData } from './$types';
     import { enhance } from '$app/forms';
     import DocumentPreviewModal from '$lib/components/DocumentPreviewModal.svelte';
 
     export let data: PageData;
 
-    $: ({ project, requirements, milestones, supportCases, proposals, payments } = data);
+    $: ({ project, requirements, milestones, supportCases, proposals, payments, requests } = data);
     $: allClients = data.allClients; // Destructure allClients
     $: allServices = data.allServices; // Destructure allServices
 
@@ -32,6 +32,25 @@
         previewFile = { title: '', url: null };
     }
 
+
+    // Request Modal Logic
+    let isRequestModalOpen = false;
+    let editingRequest: any = null;
+
+    function openCreateRequestModal() {
+        editingRequest = null;
+        isRequestModalOpen = true;
+    }
+
+    function openEditRequestModal(req: any) {
+        editingRequest = { ...req };
+        isRequestModalOpen = true;
+    }
+
+    function closeRequestModal() {
+        isRequestModalOpen = false;
+        editingRequest = null;
+    }
 
     // Milestone Modal Logic
     let isMilestoneModalOpen = false;
@@ -186,6 +205,14 @@
                 </button>
                 <button 
                     class="px-4 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap
+                    {activeTab === 'requests' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}"
+                    on:click={() => activeTab = 'requests'}
+                >
+                    <Inbox class="w-4 h-4" />
+                    Solicitudes
+                </button>
+                <button 
+                    class="px-4 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap
                     {activeTab === 'requirements' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}"
                     on:click={() => activeTab = 'requirements'}
                 >
@@ -286,6 +313,76 @@
                                 </div>
                             {/each}
                         </div>
+                    </div>
+
+                <!-- Requests -->
+                {:else if activeTab === 'requests'}
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-semibold">Solicitudes</h3>
+                            <button 
+                                on:click={openCreateRequestModal}
+                                class="text-xs bg-primary text-primary-foreground hover:bg-primary/90 px-3 py-1.5 rounded-md transition-colors flex items-center gap-1"
+                            >
+                                <Plus class="w-3 h-3" /> Nueva Solicitud
+                            </button>
+                        </div>
+                        {#if !requests || requests.length === 0}
+                            <p class="text-muted-foreground text-sm">No hay solicitudes registradas.</p>
+                        {:else}
+                            {#each requests as req}
+                                <div class="group flex items-start justify-between p-4 border rounded-lg bg-background/50 hover:bg-accent/5 transition-colors">
+                                    <div class="flex-1">
+                                        <div class="flex items-center gap-2">
+                                            <h4 class="font-medium text-sm flex items-center gap-2">
+                                                {req.title}
+                                            </h4>
+                                            <span class="px-2 py-0.5 rounded text-[10px] capitalize border
+                                                {req.status === 'completed' ? 'bg-green-100 text-green-700 border-green-200' : 
+                                                 req.status === 'in_progress' ? 'bg-blue-100 text-blue-700 border-blue-200' : 
+                                                 'bg-yellow-100 text-yellow-700 border-yellow-200'}">
+                                                {req.status}
+                                            </span>
+                                        </div>
+                                        <p class="text-xs text-muted-foreground mt-1 whitespace-pre-line">{req.description || 'Sin descripción'}</p>
+                                        <div class="flex items-center gap-4 mt-2 flex-wrap">
+                                            <span class="text-xs text-muted-foreground flex items-center gap-1">
+                                                <Calendar class="w-3 h-3" /> {formatDate(req.createdAt)}
+                                            </span>
+                                            {#if req.files && req.files.length > 0}
+                                                <div class="flex flex-wrap gap-2">
+                                                    {#each req.files as file}
+                                                        <button on:click={() => openPreview(file.name, file.url)} class="inline-flex items-center gap-1 text-xs text-primary hover:underline border px-2 py-0.5 rounded-md bg-background">
+                                                            <Eye class="w-3 h-3" /> {file.name}
+                                                        </button>
+                                                    {/each}
+                                                </div>
+                                            {/if}
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button 
+                                            on:click={() => openEditRequestModal(req)}
+                                            class="p-1.5 hover:bg-muted rounded text-muted-foreground hover:text-foreground"
+                                            title="Editar"
+                                        >
+                                            <Pencil class="w-4 h-4" />
+                                        </button>
+                                        <!-- <form action="?/deleteRequest" method="POST" use:enhance>
+                                            <input type="hidden" name="id" value={req.id} />
+                                            <button 
+                                                type="submit"
+                                                class="p-1.5 hover:bg-red-50 rounded text-muted-foreground hover:text-red-600"
+                                                title="Eliminar"
+                                            >
+                                                <Trash2 class="w-4 h-4" />
+                                            </button>
+                                        </form> -->
+                                    </div>
+                                </div>
+                            {/each}
+                        {/if}
                     </div>
 
                 <!-- Requirements History -->
@@ -1167,6 +1264,115 @@
                     </button>
                     <button type="submit" class="px-4 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors">
                         {editingProposal ? 'Guardar Cambios' : 'Crear Propuesta'}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+{/if}
+<!-- Request Modal -->
+{#if isRequestModalOpen}
+    <div class="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50">
+        <div class="bg-card border rounded-lg shadow-lg p-6 w-full max-w-md relative">
+            <button on:click={closeRequestModal} class="absolute top-4 right-4 text-muted-foreground hover:text-foreground">
+                <X class="w-4 h-4" />
+            </button>
+            
+            <h2 class="text-lg font-bold mb-4">
+                {editingRequest ? 'Editar Solicitud' : 'Nueva Solicitud'}
+            </h2>
+            
+            <form 
+                action={editingRequest ? '?/updateRequest' : '?/createRequest'} 
+                method="POST" 
+                enctype="multipart/form-data"
+                use:enhance={() => {
+                    return async ({ result }) => {
+                        if (result.type === 'success') {
+                            closeRequestModal();
+                        }
+                    };
+                }}
+                class="space-y-4"
+            >
+                {#if editingRequest}
+                    <input type="hidden" name="id" value={editingRequest.id} />
+                {/if}
+
+                <div class="space-y-2">
+                    <label for="title" class="text-sm font-medium">Título</label>
+                    <input 
+                        type="text" 
+                        name="title" 
+                        id="title"
+                        required
+                        value={editingRequest?.title || ''}
+                        class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                        placeholder="Ej: Logo en SVG"
+                    />
+                </div>
+
+                <div class="space-y-2">
+                    <label for="description" class="text-sm font-medium">Descripción / Nota</label>
+                    <textarea 
+                        name="description" 
+                        id="description"
+                        rows="4"
+                        class="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                        placeholder="Detalles adicionales, enlaces, etc."
+                    >{editingRequest?.description || ''}</textarea>
+                </div>
+
+                <div class="space-y-2">
+                    <label for="files" class="text-sm font-medium">Archivos</label>
+                    <input 
+                        type="file" 
+                        name="files" 
+                        id="files"
+                        multiple
+                        class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                    />
+                    {#if editingRequest && editingRequest.files && editingRequest.files.length > 0}
+                        <div class="text-xs text-muted-foreground mt-2">
+                            <p class="font-medium mb-1">Archivos actuales:</p>
+                            <ul class="list-disc list-inside">
+                                {#each editingRequest.files as file}
+                                    <li>{file.name}</li>
+                                {/each}
+                            </ul>
+                        </div>
+                    {/if}
+                </div>
+
+                {#if editingRequest}
+                    <div class="space-y-2">
+                        <label for="status" class="text-sm font-medium">Estado</label>
+                        <select 
+                            name="status" 
+                            id="status"
+                            class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                            value={editingRequest.status}
+                        >
+                            <option value="pending">Pendiente</option>
+                            <option value="in_progress">En Progreso</option>
+                            <option value="completed">Completado</option>
+                        </select>
+                    </div>
+                {/if}
+
+                <div class="flex justify-end gap-2 pt-4">
+                    <button 
+                        type="button" 
+                        on:click={closeRequestModal}
+                        class="px-4 py-2 text-sm font-medium hover:bg-muted rounded-md transition-colors"
+                    >
+                        Cancelar
+                    </button>
+                    <button 
+                        type="submit" 
+                        class="px-4 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 rounded-md transition-colors"
+                    >
+                        {editingRequest ? 'Guardar Cambios' : 'Crear Solicitud'}
                     </button>
                 </div>
             </form>

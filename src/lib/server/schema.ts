@@ -1,4 +1,4 @@
-import { pgTable, serial, text, timestamp, boolean, integer } from 'drizzle-orm/pg-core';
+import { pgTable, serial, text, timestamp, boolean, integer, jsonb } from 'drizzle-orm/pg-core';
 
 export const workspaces = pgTable('workspaces', {
     id: serial('id').primaryKey(),
@@ -90,5 +90,16 @@ export const projectMilestones = pgTable('project_milestones', {
     order: integer('order').notNull(),
     projectId: integer('project_id').references(() => projects.id),
     completedAt: timestamp('completed_at'),
+});
+
+export const requests = pgTable('requests', {
+    id: serial('id').primaryKey(),
+    title: text('title').notNull(),
+    description: text('description'),
+    status: text('status').default('pending'), // pending, in_progress, completed
+    files: jsonb('files'), // Array of { name, url, type }
+    projectId: integer('project_id').references(() => projects.id),
+    createdAt: timestamp('created_at').defaultNow(),
+    updatedAt: timestamp('updated_at').defaultNow(),
 });
 

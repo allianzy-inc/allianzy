@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { db } from '$lib/server/db';
-import { projects, services, users, requirements, projectMilestones, cases, proposals, payments } from '$lib/server/schema';
+import { projects, services, users, requirements, projectMilestones, cases, proposals, payments, requests } from '$lib/server/schema';
 import { uploadFile, getSignedUrlForFile } from '$lib/server/storage';
 import { eq, asc, desc } from 'drizzle-orm';
 import { error, fail } from '@sveltejs/kit';
@@ -86,7 +86,24 @@ export const load = async ({ params }: Parameters<PageServerLoad>[0]) => {
             documentUrl: await getSignedUrlForFile(p.documentUrl)
         })));
 
-        // 7. Fetch All Clients and Services (for editing)
+        // 7. Fetch Requests
+        const rawRequests = await db.select()
+            .from(requests)
+            .where(eq(requests.projectId, projectId))
+            .orderBy(desc(requests.createdAt));
+
+        const projectRequests = await Promise.all(rawRequests.map(async (r) => {
+            let files = r.files as any[];
+            if (files && Array.isArray(files)) {
+                files = await Promise.all(files.map(async (f) => ({
+                    ...f,
+                    url: await getSignedUrlForFile(f.url)
+                })));
+            }
+            return { ...r, files };
+        }));
+
+        // 8. Fetch All Clients and Services (for editing)
         const allClients = await db.select().from(users).where(eq(users.role, 'client'));
         const allServices = await db.select().from(services);
 
@@ -97,6 +114,7 @@ export const load = async ({ params }: Parameters<PageServerLoad>[0]) => {
             supportCases,
             proposals: projectProposals,
             payments: projectPayments,
+            requests: projectRequests,
             allClients,
             allServices
         };
@@ -148,15 +166,20 @@ export const actions = {
         const projectId = Number(params.id);
         const title = formData.get('title') as string;
         const description = formData.get('description') as string;
-        const documentUrl = formData.get('documentUrl') as string;
+        let documentUrl = formData.get('documentUrl') as string;
         const reqDate = formData.get('reqDate') as string;
         const reqTime = formData.get('reqTime') as string;
+        const file = formData.get('file') as File;
 
         if (!title) {
             return fail(400, { message: 'Title is required' });
         }
 
         try {
+            if (file && file.size > 0) {
+                documentUrl = await uploadFile(file, 'requirements');
+            }
+
             let createdAt = new Date();
             if (reqDate) {
                 const timeStr = reqTime || '12:00';
@@ -506,6 +529,97 @@ export const actions = {
         } catch (err) {
             console.error('Error deleting payment:', err);
             return fail(500, { message: 'Failed to delete payment' });
+        }
+    },
+
+    // Request Actions
+    createRequest: async ({ request, params }: import('./$types').RequestEvent) => {
+        const formData = await request.formData();
+        const projectId = Number(params.id);
+        const title = formData.get('title') as string;
+        const description = formData.get('description') as string;
+        
+        const uploadedFiles = [];
+        const files = formData.getAll('files') as File[];
+        
+        for (const file of files) {
+            if (file.size > 0 && file.name && file.name !== 'undefined') {
+                 const url = await uploadFile(file, 'requests');
+                 uploadedFiles.push({
+                     name: file.name,
+                     url: url,
+                     type: file.type
+                 });
+            }
+        }
+
+        if (!title) {
+            return fail(400, { message: 'Title is required' });
+        }
+
+        try {
+            await db.insert(requests).values({
+                projectId,
+                title,
+                description,
+                status: 'pending',
+                files: uploadedFiles
+            });
+            return { success: true };
+        } catch (err) {
+            console.error('Error creating request:', err);
+            return fail(500, { message: 'Failed to create request' });
+        }
+    },
+
+    updateRequest: async ({ request }: import('./$types').RequestEvent) => {
+        const formData = await request.formData();
+        const id = Number(formData.get('id'));
+        const title = formData.get('title') as string;
+        const description = formData.get('description') as string;
+        const status = formData.get('status') as string;
+        
+        if (!id || !title) {
+            return fail(400, { message: 'ID and Title are required' });
+        }
+
+        try {
+            // Get existing request to preserve existing files
+            const existingRequest = await db.select().from(requests).where(eq(requests.id, id)).limit(1);
+            let currentFiles: any[] = [];
+            if (existingRequest.length > 0 && Array.isArray(existingRequest[0].files)) {
+                currentFiles = existingRequest[0].files as any[];
+            }
+
+            const newFiles = [];
+            const files = formData.getAll('files') as File[];
+            
+            for (const file of files) {
+                if (file.size > 0 && file.name && file.name !== 'undefined') {
+                     const url = await uploadFile(file, 'requests');
+                     newFiles.push({
+                         name: file.name,
+                         url: url,
+                         type: file.type
+                     });
+                }
+            }
+
+            const updatedFiles = [...currentFiles, ...newFiles];
+
+            await db.update(requests)
+                .set({
+                    title,
+                    description,
+                    status,
+                    files: updatedFiles,
+                    updatedAt: new Date()
+                })
+                .where(eq(requests.id, id));
+            return { success: true };
+        } catch (err) {
+            console.error('Error updating request:', err);
+            return fail(500, { message: 'Failed to update request' });
         }
     }
 };;null as any as Actions;

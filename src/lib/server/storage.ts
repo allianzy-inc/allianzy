@@ -60,8 +60,8 @@ export async function getSignedUrlForFile(url: string | null): Promise<string | 
 }
 
 function generateLocalProxyUrl(key: string): string {
-  // Set expiration to 15 minutes (900 seconds)
-  const expires = Math.floor(Date.now() / 1000) + 900;
+  // Set expiration to 1 hour (3600 seconds)
+  const expires = Math.floor(Date.now() / 1000) + 3600;
   
   // Create signature: HMAC(secret, key + expires)
   const dataToSign = `${key}:${expires}`;

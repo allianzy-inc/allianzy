@@ -41,10 +41,15 @@ export const load: PageServerLoad = async ({ params }) => {
         const project = projectData[0];
 
         // 2. Fetch Requirements
-        const projectRequirements = await db.select()
+        const rawRequirements = await db.select()
             .from(requirements)
             .where(eq(requirements.projectId, projectId))
             .orderBy(desc(requirements.createdAt));
+        
+        const projectRequirements = await Promise.all(rawRequirements.map(async (r) => ({
+            ...r,
+            documentUrl: await getSignedUrlForFile(r.documentUrl)
+        })));
 
         // 3. Fetch Milestones (Process)
         const milestones = await db.select()

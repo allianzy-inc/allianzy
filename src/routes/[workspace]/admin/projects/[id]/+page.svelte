@@ -1,7 +1,8 @@
 <script lang="ts">
-    import { ArrowLeft, CheckCircle2, Circle, Clock, MessageSquare, FileText, User, Calendar, Briefcase, AlertCircle, DollarSign, CreditCard, ExternalLink, Download, Pencil, Trash2, Plus, X } from 'lucide-svelte';
+    import { ArrowLeft, CheckCircle2, Circle, Clock, MessageSquare, FileText, User, Calendar, Briefcase, AlertCircle, DollarSign, CreditCard, ExternalLink, Download, Pencil, Trash2, Plus, X, Eye } from 'lucide-svelte';
     import type { PageData } from './$types';
     import { enhance } from '$app/forms';
+    import DocumentPreviewModal from '$lib/components/DocumentPreviewModal.svelte';
 
     export let data: PageData;
 
@@ -15,6 +16,22 @@
     }
 
     let activeTab = 'process'; // process, requirements, support, proposals, payments
+
+    // Document Preview Modal Logic
+    let isPreviewModalOpen = false;
+    let previewFile: { title: string; url: string | null } = { title: '', url: null };
+
+    function openPreview(title: string, url: string | null) {
+        if (!url) return;
+        previewFile = { title, url };
+        isPreviewModalOpen = true;
+    }
+
+    function closePreview() {
+        isPreviewModalOpen = false;
+        previewFile = { title: '', url: null };
+    }
+
 
     // Milestone Modal Logic
     let isMilestoneModalOpen = false;
@@ -120,7 +137,13 @@
                 <button on:click={openEditProjectModal} class="p-1 text-muted-foreground hover:text-foreground transition-colors rounded-md hover:bg-muted" title="Editar Proyecto">
                     <Pencil class="w-4 h-4" />
                 </button>
-            </div>
+                <DocumentPreviewModal
+        isOpen={isPreviewModalOpen}
+        title={previewFile.title}
+        fileUrl={previewFile.url}
+        onClose={closePreview}
+    />
+</div>
             <p class="text-muted-foreground flex items-center gap-2 text-sm">
                 <span class="inline-flex items-center gap-1">
                     <User class="w-3 h-3" /> {project.clientName}
@@ -300,9 +323,9 @@
                                                 <Calendar class="w-3 h-3" /> {formatDate(req.createdAt)}
                                             </span>
                                             {#if req.documentUrl}
-                                                <a href={req.documentUrl} target="_blank" class="inline-flex items-center gap-1 text-xs text-primary hover:underline">
-                                                    <ExternalLink class="w-3 h-3" /> Ver Documento
-                                                </a>
+                                                <button on:click={() => openPreview(req.title, req.documentUrl)} class="inline-flex items-center gap-1 text-xs text-primary hover:underline">
+                                                    <Eye class="w-3 h-3" /> Ver Documento
+                                                </button>
                                             {/if}
                                         </div>
                                     </div>
@@ -403,9 +426,9 @@
                                                 <Calendar class="w-3 h-3" /> {formatDate(prop.createdAt)}
                                             </span>
                                             {#if prop.documentUrl}
-                                                <a href={prop.documentUrl} target="_blank" class="inline-flex items-center gap-1 text-xs text-primary hover:underline">
-                                                    <ExternalLink class="w-3 h-3" /> Ver Documento
-                                                </a>
+                                                <button on:click={() => openPreview(prop.title, prop.documentUrl)} class="inline-flex items-center gap-1 text-xs text-primary hover:underline">
+                                                    <Eye class="w-3 h-3" /> Ver Documento
+                                                </button>
                                             {/if}
                                         </div>
                                     </div>
@@ -470,9 +493,9 @@
                                                     <div class="font-medium flex items-center gap-2">
                                                         {pay.title}
                                                         {#if pay.documentUrl}
-                                                            <a href={pay.documentUrl} target="_blank" rel="noopener noreferrer" class="text-muted-foreground hover:text-primary" title="Ver documento">
-                                                                <FileText class="w-3 h-3" />
-                                                            </a>
+                                                            <button on:click={() => openPreview(pay.title, pay.documentUrl)} class="text-muted-foreground hover:text-primary" title="Ver documento">
+                                                                <Eye class="w-3 h-3" />
+                                                            </button>
                                                         {/if}
                                                     </div>
                                                     {#if pay.paidAt}

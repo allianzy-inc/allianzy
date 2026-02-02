@@ -51,7 +51,7 @@ export async function getSignedUrlForFile(url: string | null): Promise<string | 
       // Generate a direct S3 presigned URL
       // This is simpler and more reliable than the local proxy
       const command = new GetObjectCommand({
-        Bucket: env.B2_BUCKET_NAME,
+        Bucket: bucketInUrl, // Use the bucket from the URL to be safe
         Key: key
       });
       

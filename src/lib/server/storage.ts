@@ -48,11 +48,15 @@ export async function getSignedUrlForFile(url: string | null): Promise<string | 
       const bucketInUrl = match[1];
       const key = match[2];
 
-      // Optional: Check if bucket matches our env, but don't fail hard if env is missing/different
-      // This ensures we at least try to proxy it if it looks like a B2 URL.
-      // We prioritize the key extraction.
+      // Generate a direct S3 presigned URL
+      // This is simpler and more reliable than the local proxy
+      const command = new GetObjectCommand({
+        Bucket: env.B2_BUCKET_NAME,
+        Key: key
+      });
       
-      return generateLocalProxyUrl(key);
+      // Expire in 1 hour (3600 seconds)
+      return await getSignedUrl(s3, command, { expiresIn: 3600 });
     } catch (err) {
       console.error('Error signing URL:', err);
       return url; // Return original if signing fails
@@ -60,43 +64,6 @@ export async function getSignedUrlForFile(url: string | null): Promise<string | 
   }
 
   return url;
-}
-
-function generateLocalProxyUrl(key: string): string {
-  // Set expiration to 1 hour (3600 seconds)
-  const expires = Math.floor(Date.now() / 1000) + 3600;
-  
-  // Create signature: HMAC(secret, key + expires)
-  const dataToSign = `${key}:${expires}`;
-  const signature = createHmac('sha256', SIGNING_SECRET)
-    .update(dataToSign)
-    .digest('hex');
-    
-  // Return local API path
-  return `/api/files?key=${encodeURIComponent(key)}&expires=${expires}&signature=${signature}`;
-}
-
-export function verifyFileSignature(key: string, expires: string, signature: string): boolean {
-  try {
-    const now = Math.floor(Date.now() / 1000);
-    const exp = parseInt(expires, 10);
-    
-    // Check expiration
-    if (isNaN(exp) || now > exp) {
-      return false;
-    }
-    
-    // Recreate signature
-    const dataToSign = `${key}:${expires}`;
-    const expectedSignature = createHmac('sha256', SIGNING_SECRET)
-      .update(dataToSign)
-      .digest('hex');
-      
-    // Constant time comparison to prevent timing attacks
-    return signature === expectedSignature;
-  } catch (e) {
-    return false;
-  }
 }
 
 export async function getFileStream(key: string) {

@@ -1,8 +1,5 @@
 {
 	"/": [],
-	"/api/files": [
-		"src/routes/api/files/+server.ts"
-	],
 	"/api/users/get-role": [
 		"src/routes/api/users/get-role/+server.ts"
 	],

@@ -1,25 +1,65 @@
 <script lang="ts">
     import { page } from '$app/stores';
+    import { onMount } from 'svelte';
     import { User, LayoutDashboard, Briefcase, Calendar, Ticket, Settings, LogOut, MessageSquare, Mail, Users, Package } from 'lucide-svelte';
     import { authClient } from '$lib/auth-client';
     import { goto } from '$app/navigation';
 
     $: workspace = $page.params.workspace;
     $: path = $page.url.pathname;
+
+    onMount(async () => {
+        const { data: session } = await authClient.getSession();
+        
+        if (!session || !session.user) {
+            console.log('Admin Layout: No session found, redirecting to login');
+            goto(`/${workspace}/auth/login`);
+            return;
+        }
+
+        console.log('Admin Layout: Verifying role for', session.user.email);
+
+        // Verify admin role
+        try {
+            const roleResponse = await fetch('/api/users/get-role', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: session.user.email })
+            });
+            
+            if (roleResponse.ok) {
+                const { role } = await roleResponse.json();
+                console.log('Admin Layout: User role is', role);
+                if (role !== 'admin') {
+                    console.warn('Admin Layout: Access denied for role', role);
+                    // Redirect non-admins to client dashboard
+                    goto(`/${workspace}/dashboard`);
+                } else {
+                    console.log('Admin Layout: Access granted');
+                }
+            } else {
+                const errorText = await roleResponse.text();
+                console.error('Admin Layout: Failed to fetch role', roleResponse.status, errorText);
+                goto(`/${workspace}/dashboard`);
+            }
+        } catch (error) {
+            console.error('Role verification failed:', error);
+            goto(`/${workspace}/dashboard`);
+        }
+    });
     
-    // Admin Menu Items
-    const menuItems = [
-        { href: `/admin`, label: 'Overview', icon: LayoutDashboard },
-        { href: `/admin/users`, label: 'Usuarios', icon: Users },
-        { href: `/admin/services`, label: 'Servicios', icon: Package },
-        { href: `/admin/projects`, label: 'Proyectos', icon: Briefcase },
-        { href: `/admin/support`, label: 'Soporte', icon: Ticket },
-        { href: `/admin/settings`, label: 'Configuraciones', icon: Settings },
+    $: menuItems = [
+        { href: `/${workspace}/admin`, label: 'Overview', icon: LayoutDashboard },
+        { href: `/${workspace}/admin/users`, label: 'Usuarios', icon: Users },
+        { href: `/${workspace}/admin/services`, label: 'Servicios', icon: Package },
+        { href: `/${workspace}/admin/projects`, label: 'Proyectos', icon: Briefcase },
+        { href: `/${workspace}/admin/support`, label: 'Soporte', icon: Ticket },
+        { href: `/${workspace}/admin/settings`, label: 'Configuraciones', icon: Settings },
     ];
 
     async function handleLogout() {
         await authClient.signOut();
-        goto(`/auth/login`);
+        goto(`/${workspace}`);
     }
 
     let isProfileOpen = false;

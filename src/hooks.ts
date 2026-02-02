@@ -23,6 +23,12 @@ export function reroute({ url }) {
             return url.pathname;
         }
 
+        // EXCLUSION: Do not rewrite /api/* routes
+        // This ensures API calls are not prefixed with workspace slug
+        if (url.pathname.startsWith('/api')) {
+            return url.pathname;
+        }
+
         // Check if the path starts with ANY valid workspace
         // If it starts with a DIFFERENT workspace (e.g. accessing /beltrix on allianzy.com),
         // we might want to let it through to 404, or rewrite it.

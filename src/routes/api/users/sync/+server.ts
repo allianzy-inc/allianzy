@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { users, workspaces } from '$lib/server/schema';
-import { eq } from 'drizzle-orm';
+import { eq, ilike } from 'drizzle-orm';
 import type { RequestHandler } from './$types';
 
 export const POST: RequestHandler = async ({ request }) => {
@@ -11,6 +11,8 @@ export const POST: RequestHandler = async ({ request }) => {
         if (!email) {
             return json({ error: 'Email is required' }, { status: 400 });
         }
+        
+        const cleanEmail = email.trim().toLowerCase();
 
         // Find or create workspace if slug provided
         let workspaceId = null;
@@ -29,17 +31,17 @@ export const POST: RequestHandler = async ({ request }) => {
             }
         }
 
-        // Check if user already exists
-        const existingUser = await db.select().from(users).where(eq(users.email, email)).limit(1);
+        // Check if user already exists (case-insensitive)
+        const existingUser = await db.select().from(users).where(ilike(users.email, cleanEmail)).limit(1);
 
         if (existingUser.length > 0) {
             // User exists
             return json({ success: true, message: 'User already exists', user: existingUser[0] });
         }
 
-        // Create new user
+        // Create new user (ensure email is lowercase)
         const newUser = await db.insert(users).values({
-            email,
+            email: cleanEmail,
             name: name || '',
             role: role || 'client',
             workspaceId: workspaceId

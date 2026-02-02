@@ -11,7 +11,9 @@ export const translations = {
             services: 'Services',
             about: 'About',
             contact: 'Contact',
-            login: 'Login'
+            login: 'Login',
+            register: 'Start Now',
+            dashboard: 'Dashboard'
         },
         hero: {
             title: 'Empowering Your Business',
@@ -29,6 +31,28 @@ export const translations = {
                 title: 'Allianzy Consulting',
                 desc: 'Top-tier engineering and technical consultancy.',
                 link: 'Go to Allianzy'
+            }
+        },
+        allianzy: {
+            nav: {
+                services: 'Services',
+                projects: 'Projects',
+                about: 'About',
+                contact: 'Contact',
+                login: 'Login',
+                register: 'Start Now',
+                dashboard: 'Dashboard'
+            },
+            hero: {
+                title: 'Engineering the Future',
+                subtitle: 'We build robust, scalable, and high-performance software solutions for enterprise needs.',
+                cta: 'Start a Project'
+            },
+            footer: {
+                rights: 'All rights reserved.',
+                legal: 'Legal',
+                privacy: 'Privacy Policy',
+                terms: 'Terms of Service'
             }
         },
         footer: {
@@ -160,24 +184,46 @@ export const translations = {
             services: 'Servicios',
             about: 'Nosotros',
             contact: 'Contacto',
-            login: 'Ingresar'
+            login: 'Acceso'
         },
         hero: {
             title: 'Potenciando tu Negocio',
-            subtitle: 'Soluciones de Ingeniería y Creatividad Premium',
+            subtitle: 'Ingeniería Premium y Soluciones Creativas',
             cta: 'Comenzar'
         },
         services: {
             title: 'Nuestros Servicios',
             beltix: {
-                title: 'Agencia Beltix',
+                title: 'Beltix Agency',
                 desc: 'Soluciones creativas de marketing y diseño.',
                 link: 'Ir a Beltix'
             },
             allianzy: {
-                title: 'Consultoría Allianzy',
-                desc: 'Ingeniería de primer nivel y consultoría técnica.',
+                title: 'Allianzy Consulting',
+                desc: 'Consultoría técnica e ingeniería de alto nivel.',
                 link: 'Ir a Allianzy'
+            }
+        },
+        allianzy: {
+            nav: {
+                services: 'Servicios',
+                projects: 'Proyectos',
+                about: 'Nosotros',
+                contact: 'Contacto',
+                login: 'Iniciar sesión',
+                register: 'Comienza ahora',
+                dashboard: 'Dashboard'
+            },
+            hero: {
+                title: 'Ingeniería del Futuro',
+                subtitle: 'Construimos soluciones de software robustas, escalables y de alto rendimiento para necesidades empresariales.',
+                cta: 'Iniciar Proyecto'
+            },
+            footer: {
+                rights: 'Todos los derechos reservados.',
+                legal: 'Legal',
+                privacy: 'Política de Privacidad',
+                terms: 'Términos de Servicio'
             }
         },
         footer: {

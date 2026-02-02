@@ -1,16 +1,35 @@
 <script lang="ts">
+    import { onMount } from 'svelte';
     import { page } from '$app/stores';
     import { ArrowRight, CheckCircle2, LayoutGrid, ShieldCheck, Zap, Share2, Laptop, Megaphone, Palette, Image as ImageIcon, Brain } from 'lucide-svelte';
     import { currentLang, translations } from '$lib/i18n';
+    import { authClient } from '$lib/auth-client';
     import ThemeToggle from '$lib/components/ThemeToggle.svelte';
     import LanguageToggle from '$lib/components/LanguageToggle.svelte';
     import ProcessCarousel from '$lib/components/ProcessCarousel.svelte';
+    import Footer from '$lib/components/Footer.svelte';
+    import logoLight from '$lib/assets/brand/allianzy/logo-light.svg';
+    import logoDark from '$lib/assets/brand/allianzy/logo-dark.svg';
 
     export let data;
 
     $: workspace = $page.params.workspace;
     $: t = translations[$currentLang];
     
+    let session: any = null;
+    let loading = true;
+
+    onMount(async () => {
+        try {
+            const { data } = await authClient.getSession();
+            session = data?.session;
+        } catch (e) {
+            console.error('Failed to get session', e);
+        } finally {
+            loading = false;
+        }
+    });
+
     $: processSteps = [
         { id: 'eval', ...t.beltrix.process.steps.eval },
         { id: 'diag', ...t.beltrix.process.steps.diag },
@@ -23,82 +42,97 @@
 
 {#if workspace === 'allianzy'}
     <!-- ALLIANZY LANDING PAGE (Enterprise / Engineering) -->
-    <div class="min-h-screen bg-white text-slate-900 font-sans">
+    <div class="min-h-screen bg-allianzy-white dark:bg-allianzy-black text-allianzy-black dark:text-allianzy-white font-bricolage transition-colors duration-300">
         <!-- Navigation -->
-        <nav class="border-b bg-white/80 backdrop-blur-md sticky top-0 z-50">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-                <span class="text-xl font-bold tracking-tight text-slate-900">Allianzy<span class="text-blue-600">.</span></span>
-                <div class="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600">
-                    <a href="#services" class="hover:text-blue-600 transition-colors">Solutions</a>
-                    <a href="#about" class="hover:text-blue-600 transition-colors">About</a>
-                    <a href="#contact" class="hover:text-blue-600 transition-colors">Contact</a>
+        <nav class="border-b border-neutral-200 dark:border-neutral-800 bg-allianzy-white/80 dark:bg-allianzy-black/80 backdrop-blur-md sticky top-0 z-50 transition-colors duration-300">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+                <a href="/allianzy" class="flex items-center gap-2">
+                    <!-- Light Mode Logo -->
+                    <img src={logoLight} alt="Allianzy" class="h-8 dark:hidden" />
+                    <!-- Dark Mode Logo -->
+                    <img src={logoDark} alt="Allianzy" class="h-8 hidden dark:block" />
+                </a>
+                
+                <div class="hidden md:flex items-center gap-8 text-sm font-medium opacity-80">
+                    <a href="#services" class="hover:opacity-100 transition-opacity">{t.allianzy.nav.services}</a>
+                    <a href="#projects" class="hover:opacity-100 transition-opacity">{t.allianzy.nav.projects}</a>
+                    <a href="#about" class="hover:opacity-100 transition-opacity">{t.allianzy.nav.about}</a>
+                    <a href="#contact" class="hover:opacity-100 transition-opacity">{t.allianzy.nav.contact}</a>
                 </div>
+
                 <div class="flex items-center gap-4">
-                     <a href="/allianzy/auth/login" class="text-sm font-medium text-slate-600 hover:text-slate-900">Sign In</a>
-                    <a href="/allianzy/dashboard" class="bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors">
-                        Client Portal
-                    </a>
+                    <LanguageToggle />
+                    <ThemeToggle />
+                    {#if !loading}
+                        {#if session}
+                            <a href="/{workspace}/dashboard" class="bg-allianzy-black dark:bg-allianzy-white text-allianzy-white dark:text-allianzy-black px-5 py-2.5 rounded-lg text-sm font-bold hover:opacity-90 transition-opacity">
+                                {t.allianzy.nav.dashboard}
+                            </a>
+                        {:else}
+                            <a href="/{workspace}/auth/login" class="text-sm font-medium hover:opacity-80 transition-opacity">
+                                {t.allianzy.nav.login}
+                            </a>
+                            <a href="/{workspace}/auth/login?mode=register" class="bg-allianzy-black dark:bg-allianzy-white text-allianzy-white dark:text-allianzy-black px-5 py-2.5 rounded-lg text-sm font-bold hover:opacity-90 transition-opacity">
+                                {t.allianzy.nav.register}
+                            </a>
+                        {/if}
+                    {/if}
                 </div>
             </div>
         </nav>
 
         <!-- Hero Section -->
-        <section class="relative pt-24 pb-32 overflow-hidden">
+        <section class="relative pt-32 pb-40 overflow-hidden">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-                <div class="max-w-3xl">
-                    <h1 class="text-5xl md:text-6xl font-extrabold tracking-tight text-slate-900 mb-6 leading-tight">
-                        Premium Engineering <br>
-                        <span class="text-blue-600">Solutions</span> for Scale.
+                <div class="max-w-4xl">
+                    <h1 class="text-6xl md:text-8xl font-bold tracking-tighter mb-8 leading-[0.9]">
+                        {t.allianzy.hero.title}
                     </h1>
-                    <p class="text-xl text-slate-600 mb-10 max-w-2xl leading-relaxed">
-                        We architect robust, scalable software systems for enterprise clients. 
-                        Security, performance, and reliability are not optional.
+                    <p class="text-xl md:text-2xl opacity-70 mb-12 max-w-2xl leading-relaxed font-light">
+                        {t.allianzy.hero.subtitle}
                     </p>
                     <div class="flex flex-col sm:flex-row gap-4">
-                        <a href="/auth/login" class="inline-flex items-center justify-center px-8 py-4 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200">
-                            Access Dashboard
+                        <a href="/contact" class="inline-flex items-center justify-center px-8 py-4 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20">
+                            {t.allianzy.hero.cta}
                             <ArrowRight class="ml-2 w-5 h-5" />
-                        </a>
-                        <a href="#services" class="inline-flex items-center justify-center px-8 py-4 bg-slate-50 text-slate-900 border border-slate-200 rounded-xl font-semibold hover:bg-slate-100 transition-all">
-                            View Services
                         </a>
                     </div>
                 </div>
             </div>
             <!-- Abstract Background Pattern -->
-            <div class="absolute top-0 right-0 -z-10 w-1/2 h-full bg-gradient-to-bl from-blue-50 to-transparent opacity-50 blur-3xl"></div>
+            <div class="absolute top-0 right-0 -z-10 w-2/3 h-full bg-gradient-to-bl from-blue-50 dark:from-blue-900/10 to-transparent opacity-50 blur-3xl"></div>
         </section>
 
         <!-- Features Grid -->
-        <section class="py-24 bg-slate-50" id="services">
+        <section class="py-32 bg-neutral-50 dark:bg-neutral-900/50 transition-colors duration-300" id="services">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="grid md:grid-cols-3 gap-12">
-                    <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100">
-                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600 mb-6">
-                            <ShieldCheck class="w-6 h-6" />
+                    <div class="bg-white dark:bg-neutral-900 p-10 rounded-3xl shadow-sm border border-neutral-100 dark:border-neutral-800 transition-colors duration-300">
+                        <div class="w-14 h-14 bg-blue-100 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center text-blue-600 dark:text-blue-400 mb-8">
+                            <ShieldCheck class="w-7 h-7" />
                         </div>
-                        <h3 class="text-xl font-bold mb-3 text-slate-900">Enterprise Security</h3>
-                        <p class="text-slate-600 leading-relaxed">Bank-grade encryption and compliance standards built into every layer of your infrastructure.</p>
+                        <h3 class="text-2xl font-bold mb-4">Enterprise Security</h3>
+                        <p class="opacity-70 leading-relaxed">Bank-grade encryption and compliance standards built into every layer of your infrastructure.</p>
                     </div>
-                    <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100">
-                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600 mb-6">
-                            <Zap class="w-6 h-6" />
+                    <div class="bg-white dark:bg-neutral-900 p-10 rounded-3xl shadow-sm border border-neutral-100 dark:border-neutral-800 transition-colors duration-300">
+                        <div class="w-14 h-14 bg-blue-100 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center text-blue-600 dark:text-blue-400 mb-8">
+                            <Zap class="w-7 h-7" />
                         </div>
-                        <h3 class="text-xl font-bold mb-3 text-slate-900">High Performance</h3>
-                        <p class="text-slate-600 leading-relaxed">Optimized for milliseconds. We build systems that handle millions of requests without breaking a sweat.</p>
+                        <h3 class="text-2xl font-bold mb-4">High Performance</h3>
+                        <p class="opacity-70 leading-relaxed">Optimized for milliseconds. We build systems that handle millions of requests without breaking a sweat.</p>
                     </div>
-                    <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100">
-                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600 mb-6">
-                            <LayoutGrid class="w-6 h-6" />
+                    <div class="bg-white dark:bg-neutral-900 p-10 rounded-3xl shadow-sm border border-neutral-100 dark:border-neutral-800 transition-colors duration-300">
+                        <div class="w-14 h-14 bg-blue-100 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center text-blue-600 dark:text-blue-400 mb-8">
+                            <LayoutGrid class="w-7 h-7" />
                         </div>
-                        <h3 class="text-xl font-bold mb-3 text-slate-900">Scalable Architecture</h3>
-                        <p class="text-slate-600 leading-relaxed">Modular, microservices-ready codebases designed to grow with your business needs.</p>
+                        <h3 class="text-2xl font-bold mb-4">Scalable Architecture</h3>
+                        <p class="opacity-70 leading-relaxed">Modular, microservices-ready codebases designed to grow with your business needs.</p>
                     </div>
                 </div>
             </div>
         </section>
 
-
+        <Footer workspace="allianzy" />
     </div>
 
 {:else if workspace === 'beltrix'}

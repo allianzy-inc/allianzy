@@ -3,6 +3,10 @@
     import { User, LayoutDashboard, Briefcase, Ticket, Settings, LogOut, Mail } from 'lucide-svelte';
     import { authClient } from '$lib/auth-client';
     import { goto } from '$app/navigation';
+    import logoLight from '$lib/assets/brand/allianzy/logo-light.svg';
+    import logoDark from '$lib/assets/brand/allianzy/logo-dark.svg';
+    import ThemeToggle from '$lib/components/ThemeToggle.svelte';
+    import LanguageToggle from '$lib/components/LanguageToggle.svelte';
 
     $: workspace = $page.params.workspace;
     $: path = $page.url.pathname;
@@ -18,7 +22,7 @@
 
     async function handleLogout() {
         await authClient.signOut();
-        goto(`/auth/login`);
+        goto(`/${workspace}`);
     }
 
     let isProfileOpen = false;
@@ -28,13 +32,20 @@
     <!-- Sidebar -->
     <aside class="w-64 bg-background border-r flex flex-col">
         <div class="p-6 border-b h-16 flex items-center">
-            <h2 class="text-lg font-bold tracking-tight uppercase truncate">{workspace}</h2>
+            {#if workspace === 'allianzy'}
+                <a href="/{workspace}" class="block">
+                    <img src={logoLight} alt="Allianzy" class="h-8 dark:hidden" />
+                    <img src={logoDark} alt="Allianzy" class="h-8 hidden dark:block" />
+                </a>
+            {:else}
+                <h2 class="text-lg font-bold tracking-tight uppercase truncate">{workspace}</h2>
+            {/if}
         </div>
         <nav class="flex-1 p-4 space-y-1">
             {#each menuItems as item}
                 <a 
                     href={item.href}
-                    class="flex items-center gap-3 px-4 py-2.5 rounded-md text-sm font-medium transition-colors {path === item.href || (item.href !== `/dashboard` && path.startsWith(item.href)) ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'}"
+                    class="flex items-center gap-3 px-4 py-2.5 rounded-md text-sm font-medium transition-colors {path === item.href || (item.href !== `/${workspace}/dashboard` && path.startsWith(item.href)) ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'}"
                 >
                     <item.icon class="w-4 h-4" />
                     {item.label}
@@ -63,7 +74,11 @@
                     </button>
                     
                     {#if isProfileOpen}
-                        <div class="absolute right-0 mt-2 w-48 rounded-md border bg-popover shadow-md z-50 py-1">
+                        <div class="absolute right-0 mt-2 w-56 rounded-md border bg-popover shadow-md z-50 py-1">
+                            <div class="px-4 py-2 border-b flex items-center justify-between gap-2">
+                                <ThemeToggle />
+                                <LanguageToggle />
+                            </div>
                             <a href="/dashboard/profile" class="block px-4 py-2 text-sm hover:bg-accent hover:text-accent-foreground">
                                 Perfil
                             </a>

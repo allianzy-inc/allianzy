@@ -2,14 +2,22 @@
     import { page } from '$app/stores';
     import { authClient } from '$lib/auth-client';
     import { goto } from '$app/navigation';
+    import { Eye, EyeOff } from 'lucide-svelte';
+    import logoLight from '$lib/assets/brand/allianzy/logo-light.svg';
+    import logoDark from '$lib/assets/brand/allianzy/logo-dark.svg';
     
     const workspace = $page.params.workspace;
     let email = '';
     let password = '';
     let name = '';
-    let isRegister = false;
+    let isRegister = $page.url.searchParams.get('mode') === 'register';
     let isLoading = false;
     let error = '';
+    let showPassword = false;
+
+    function togglePassword() {
+        showPassword = !showPassword;
+    }
 
     async function handleSubmit() {
         isLoading = true;
@@ -57,26 +65,35 @@
 
             // Fetch user role to determine redirection
             let targetRoute = `/${workspace}/dashboard`;
+            console.log('Login: checking role for', email);
+
             try {
                 const roleResponse = await fetch('/api/users/get-role', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email })
+                    body: JSON.stringify({ email: email.trim() })
                 });
                 
                 if (roleResponse.ok) {
                     const { role } = await roleResponse.json();
+                    console.log('Login: role found:', role);
                     if (role === 'admin') {
+                        console.log('Login: Redirecting to Admin Dashboard');
                         targetRoute = `/${workspace}/admin`;
+                    } else {
+                        console.log('Login: Redirecting to Client Dashboard (Role: ' + role + ')');
                     }
+                } else {
+                    console.error('Login: failed to fetch role', roleResponse.status);
                 }
             } catch (roleError) {
                 console.error('Failed to fetch user role:', roleError);
                 // Fallback to dashboard if role check fails
             }
             
+            console.log('Login: executing goto', targetRoute);
             // Redirect to appropriate dashboard
-            goto(targetRoute);
+            await goto(targetRoute);
         } catch (e: any) {
             console.error(e);
             error = e.message || 'Authentication failed';
@@ -141,12 +158,25 @@
                             <a href="#" class="text-sm font-medium text-primary hover:underline">Forgot password?</a>
                         {/if}
                     </div>
-                    <input 
-                        type="password" 
-                        bind:value={password}
-                        required
-                        class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" 
-                    />
+                    <div class="relative">
+                        <input 
+                            type={showPassword ? 'text' : 'password'} 
+                            bind:value={password}
+                            required
+                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 pr-10" 
+                        />
+                        <button 
+                            type="button" 
+                            on:click={togglePassword}
+                            class="absolute right-3 top-2.5 text-muted-foreground hover:text-foreground"
+                        >
+                            {#if showPassword}
+                                <EyeOff class="h-4 w-4" />
+                            {:else}
+                                <Eye class="h-4 w-4" />
+                            {/if}
+                        </button>
+                    </div>
                 </div>
 
                 <button 

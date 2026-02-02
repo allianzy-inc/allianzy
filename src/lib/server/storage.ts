@@ -37,19 +37,22 @@ export async function uploadFile(file: File, folder: string = 'uploads'): Promis
 export async function getSignedUrlForFile(url: string | null): Promise<string | null> {
   if (!url) return null;
 
-  // Check if it's a B2 URL
-  if (url.includes('backblazeb2.com') && url.includes(env.B2_BUCKET_NAME!)) {
+  // Robust B2 URL detection using regex
+  // Matches: https://<host>/file/<bucket>/<key>
+  // Example: https://f005.backblazeb2.com/file/allianzy/uploads/123-test.pdf
+  const b2Regex = /https:\/\/[^/]+\.backblazeb2\.com\/file\/([^/]+)\/(.+)/;
+  const match = url.match(b2Regex);
+
+  if (match) {
     try {
-      // Extract key from URL
-      // URL format: https://f005.backblazeb2.com/file/<bucketName>/<key>
-      const parts = url.split(`/file/${env.B2_BUCKET_NAME}/`);
-      if (parts.length === 2) {
-        const key = parts[1];
-        
-        // Generate a local signed proxy URL instead of a direct S3 presigned URL
-        // This hides the backend and allows us to enforce short expiration tied to the app
-        return generateLocalProxyUrl(key);
-      }
+      const bucketInUrl = match[1];
+      const key = match[2];
+
+      // Optional: Check if bucket matches our env, but don't fail hard if env is missing/different
+      // This ensures we at least try to proxy it if it looks like a B2 URL.
+      // We prioritize the key extraction.
+      
+      return generateLocalProxyUrl(key);
     } catch (err) {
       console.error('Error signing URL:', err);
       return url; // Return original if signing fails

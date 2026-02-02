@@ -83,12 +83,6 @@
                 </a>
             {/each}
         </nav>
-        <div class="p-4 border-t">
-             <button on:click={handleLogout} class="flex w-full items-center gap-3 px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors text-red-500 hover:text-red-600 hover:bg-red-50 rounded-md">
-                <LogOut class="w-4 h-4" />
-                Cerrar Sesión
-             </button>
-        </div>
     </aside>
 
     <!-- Main Content -->

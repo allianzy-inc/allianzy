@@ -8,7 +8,16 @@ declare global {
 			user?: {
 				id: string;
 				email: string;
-				role: string;
+				name?: string;
+				role?: string;
+				image?: string;
+			};
+			session?: {
+				id: string;
+				userId: string;
+				expiresAt: Date;
+				ipAddress?: string;
+				userAgent?: string;
 			};
 		}
 		// interface PageData {}

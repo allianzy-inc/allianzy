@@ -628,7 +628,7 @@
                             <span class="text-muted-foreground block text-xs">Fecha de Inicio</span>
                             <span>{formatDate(project.startDate)}</span>
                         </div>
-                        {#if project.endDate}
+                        {#if project.endDate && (project.status === 'Completed' || project.status === 'completed')}
                             <div>
                                 <span class="text-muted-foreground block text-xs">Fecha de Finalización</span>
                                 <span>{formatDate(project.endDate)}</span>
@@ -816,7 +816,7 @@
 
             <!-- Chat Area -->
             <div 
-                class="flex-1 overflow-y-auto p-4 space-y-6 bg-slate-50" 
+                class="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50" 
                 use:scrollToBottom={selectedCaseComments}
             >
                 {#if !selectedCaseComments || selectedCaseComments.length === 0}
@@ -922,47 +922,47 @@
                             ></textarea>
                         </div>
 
-                        <!-- File Attachments -->
-                        <div class="flex items-center gap-2">
-                            <input 
-                                type="file" 
-                                name="files" 
-                                multiple 
-                                class="hidden" 
-                                bind:this={commentFileInput}
-                                on:change={handleCommentFileSelect}
-                            />
-                            <button 
-                                type="button" 
-                                on:click={() => commentFileInput.click()}
-                                class="text-xs flex items-center gap-1 px-2 py-1.5 rounded-md border hover:bg-accent transition-colors text-muted-foreground"
-                            >
-                                <Paperclip class="w-3 h-3" /> Adjuntar archivos
-                            </button>
-                            
-                            {#if commentFiles.length > 0}
-                                <div class="flex gap-2 overflow-x-auto">
-                                    {#each commentFiles as file, i}
-                                        <div class="flex items-center gap-1 text-xs bg-muted px-2 py-1 rounded-md border">
-                                            <span class="max-w-[100px] truncate">{file.name}</span>
-                                            <button type="button" on:click={() => removeCommentFile(i)} class="text-muted-foreground hover:text-red-500">
-                                                <X class="w-3 h-3" />
-                                            </button>
-                                        </div>
-                                    {/each}
-                                </div>
-                            {/if}
-                        </div>
-                    </div>
+                        <!-- Actions Row -->
+                        <div class="flex justify-between items-center pt-2">
+                            <div class="flex items-center gap-2 flex-1 overflow-hidden">
+                                <input 
+                                    type="file" 
+                                    name="files" 
+                                    multiple 
+                                    class="hidden" 
+                                    bind:this={commentFileInput}
+                                    on:change={handleCommentFileSelect}
+                                />
+                                <button 
+                                    type="button" 
+                                    on:click={() => commentFileInput.click()}
+                                    class="text-xs flex items-center gap-1 px-2 py-1.5 rounded-md border hover:bg-accent transition-colors text-muted-foreground shrink-0"
+                                >
+                                    <Paperclip class="w-3 h-3" /> Adjuntar
+                                </button>
+                                
+                                {#if commentFiles.length > 0}
+                                    <div class="flex gap-2 overflow-x-auto no-scrollbar">
+                                        {#each commentFiles as file, i}
+                                            <div class="flex items-center gap-1 text-xs bg-muted px-2 py-1 rounded-md border shrink-0">
+                                                <span class="max-w-[80px] truncate">{file.name}</span>
+                                                <button type="button" on:click={() => removeCommentFile(i)} class="text-muted-foreground hover:text-red-500">
+                                                    <X class="w-3 h-3" />
+                                                </button>
+                                            </div>
+                                        {/each}
+                                    </div>
+                                {/if}
+                            </div>
 
-                    <div class="flex justify-end">
-                        <button 
-                            type="submit" 
-                            disabled={!commentContent.trim()}
-                            class="px-4 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 rounded-md transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            <Send class="w-4 h-4" /> Enviar Respuesta
-                        </button>
+                            <button 
+                                type="submit" 
+                                disabled={!commentContent.trim()}
+                                class="px-3 py-1.5 text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90 rounded-md transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shrink-0 ml-2"
+                            >
+                                <Send class="w-3 h-3" /> Enviar
+                            </button>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -1023,7 +1023,7 @@
 
             <!-- Chat Area -->
             <div 
-                class="flex-1 overflow-y-auto p-4 space-y-6 bg-slate-50" 
+                class="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50" 
                 use:scrollToBottom={selectedRequestComments}
             >
                 {#if !selectedRequestComments || selectedRequestComments.length === 0}
@@ -1131,47 +1131,47 @@
                             ></textarea>
                         </div>
 
-                        <!-- File Attachments -->
-                        <div class="flex items-center gap-2">
-                            <input 
-                                type="file" 
-                                name="files" 
-                                multiple 
-                                class="hidden" 
-                                bind:this={commentFileInput}
-                                on:change={handleCommentFileSelect}
-                            />
-                            <button 
-                                type="button" 
-                                on:click={() => commentFileInput.click()}
-                                class="text-xs flex items-center gap-1 px-2 py-1.5 rounded-md border hover:bg-accent transition-colors text-muted-foreground"
-                            >
-                                <Paperclip class="w-3 h-3" /> Adjuntar archivos
-                            </button>
-                            
-                            {#if commentFiles.length > 0}
-                                <div class="flex gap-2 overflow-x-auto">
-                                    {#each commentFiles as file, i}
-                                        <div class="flex items-center gap-1 text-xs bg-muted px-2 py-1 rounded-md border">
-                                            <span class="max-w-[100px] truncate">{file.name}</span>
-                                            <button type="button" on:click={() => removeCommentFile(i)} class="text-muted-foreground hover:text-red-500">
-                                                <X class="w-3 h-3" />
-                                            </button>
-                                        </div>
-                                    {/each}
-                                </div>
-                            {/if}
-                        </div>
-                    </div>
+                        <!-- Actions Row -->
+                        <div class="flex justify-between items-center pt-2">
+                            <div class="flex items-center gap-2 flex-1 overflow-hidden">
+                                <input 
+                                    type="file" 
+                                    name="files" 
+                                    multiple 
+                                    class="hidden" 
+                                    bind:this={commentFileInput}
+                                    on:change={handleCommentFileSelect}
+                                />
+                                <button 
+                                    type="button" 
+                                    on:click={() => commentFileInput.click()}
+                                    class="text-xs flex items-center gap-1 px-2 py-1.5 rounded-md border hover:bg-accent transition-colors text-muted-foreground shrink-0"
+                                >
+                                    <Paperclip class="w-3 h-3" /> Adjuntar
+                                </button>
+                                
+                                {#if commentFiles.length > 0}
+                                    <div class="flex gap-2 overflow-x-auto no-scrollbar">
+                                        {#each commentFiles as file, i}
+                                            <div class="flex items-center gap-1 text-xs bg-muted px-2 py-1 rounded-md border shrink-0">
+                                                <span class="max-w-[80px] truncate">{file.name}</span>
+                                                <button type="button" on:click={() => removeCommentFile(i)} class="text-muted-foreground hover:text-red-500">
+                                                    <X class="w-3 h-3" />
+                                                </button>
+                                            </div>
+                                        {/each}
+                                    </div>
+                                {/if}
+                            </div>
 
-                    <div class="flex justify-end">
-                        <button 
-                            type="submit" 
-                            disabled={!commentContent.trim()}
-                            class="px-4 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 rounded-md transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            <Send class="w-4 h-4" /> Enviar Respuesta
-                        </button>
+                            <button 
+                                type="submit" 
+                                disabled={!commentContent.trim()}
+                                class="px-3 py-1.5 text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90 rounded-md transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shrink-0 ml-2"
+                            >
+                                <Send class="w-3 h-3" /> Enviar
+                            </button>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -1232,7 +1232,7 @@
 
             <!-- Chat Area -->
             <div 
-                class="flex-1 overflow-y-auto p-4 space-y-6 bg-slate-50" 
+                class="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50" 
                 use:scrollToBottom={selectedRequirementComments}
             >
                 {#if !selectedRequirementComments || selectedRequirementComments.length === 0}
@@ -1340,47 +1340,47 @@
                             ></textarea>
                         </div>
 
-                        <!-- File Attachments -->
-                        <div class="flex items-center gap-2">
-                            <input 
-                                type="file" 
-                                name="files" 
-                                multiple 
-                                class="hidden" 
-                                bind:this={commentFileInput}
-                                on:change={handleCommentFileSelect}
-                            />
-                            <button 
-                                type="button" 
-                                on:click={() => commentFileInput.click()}
-                                class="text-xs flex items-center gap-1 px-2 py-1.5 rounded-md border hover:bg-accent transition-colors text-muted-foreground"
-                            >
-                                <Paperclip class="w-3 h-3" /> Adjuntar archivos
-                            </button>
-                            
-                            {#if commentFiles.length > 0}
-                                <div class="flex gap-2 overflow-x-auto">
-                                    {#each commentFiles as file, i}
-                                        <div class="flex items-center gap-1 text-xs bg-muted px-2 py-1 rounded-md border">
-                                            <span class="max-w-[100px] truncate">{file.name}</span>
-                                            <button type="button" on:click={() => removeCommentFile(i)} class="text-muted-foreground hover:text-red-500">
-                                                <X class="w-3 h-3" />
-                                            </button>
-                                        </div>
-                                    {/each}
-                                </div>
-                            {/if}
-                        </div>
-                    </div>
+                        <!-- Actions Row -->
+                        <div class="flex justify-between items-center pt-2">
+                            <div class="flex items-center gap-2 flex-1 overflow-hidden">
+                                <input 
+                                    type="file" 
+                                    name="files" 
+                                    multiple 
+                                    class="hidden" 
+                                    bind:this={commentFileInput}
+                                    on:change={handleCommentFileSelect}
+                                />
+                                <button 
+                                    type="button" 
+                                    on:click={() => commentFileInput.click()}
+                                    class="text-xs flex items-center gap-1 px-2 py-1.5 rounded-md border hover:bg-accent transition-colors text-muted-foreground shrink-0"
+                                >
+                                    <Paperclip class="w-3 h-3" /> Adjuntar
+                                </button>
+                                
+                                {#if commentFiles.length > 0}
+                                    <div class="flex gap-2 overflow-x-auto no-scrollbar">
+                                        {#each commentFiles as file, i}
+                                            <div class="flex items-center gap-1 text-xs bg-muted px-2 py-1 rounded-md border shrink-0">
+                                                <span class="max-w-[80px] truncate">{file.name}</span>
+                                                <button type="button" on:click={() => removeCommentFile(i)} class="text-muted-foreground hover:text-red-500">
+                                                    <X class="w-3 h-3" />
+                                                </button>
+                                            </div>
+                                        {/each}
+                                    </div>
+                                {/if}
+                            </div>
 
-                    <div class="flex justify-end">
-                        <button 
-                            type="submit" 
-                            disabled={!commentContent.trim()}
-                            class="px-4 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 rounded-md transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            <Send class="w-4 h-4" /> Enviar Respuesta
-                        </button>
+                            <button 
+                                type="submit" 
+                                disabled={!commentContent.trim()}
+                                class="px-3 py-1.5 text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90 rounded-md transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shrink-0 ml-2"
+                            >
+                                <Send class="w-3 h-3" /> Enviar
+                            </button>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -1601,6 +1601,6 @@
 <DocumentPreviewModal 
     isOpen={isPreviewModalOpen} 
     title={previewFile.title} 
-    url={previewFile.url} 
+    fileUrl={previewFile.url} 
     onClose={closePreview} 
 />

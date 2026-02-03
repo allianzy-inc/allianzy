@@ -3,6 +3,9 @@
 	"/api/auth/[...path]": [
 		"src/routes/api/auth/[...path]/+server.ts"
 	],
+	"/api/public/files": [
+		"src/routes/api/public/files/+server.ts"
+	],
 	"/api/users/get-role": [
 		"src/routes/api/users/get-role/+server.ts"
 	],
@@ -37,13 +40,11 @@
 		"src/routes/[workspace]/dashboard/+layout.server.ts",
 		"src/routes/[workspace]/dashboard/+layout.server.ts"
 	],
-	"/[workspace]/dashboard/api/files": [
-		"src/routes/[workspace]/dashboard/api/files/+server.ts"
-	],
 	"/[workspace]/dashboard/contact": [
 		"src/routes/[workspace]/dashboard/+layout.server.ts"
 	],
 	"/[workspace]/dashboard/profile": [
+		"src/routes/[workspace]/dashboard/profile/+page.server.ts",
 		"src/routes/[workspace]/dashboard/+layout.server.ts"
 	],
 	"/[workspace]/dashboard/projects": [
@@ -55,6 +56,7 @@
 		"src/routes/[workspace]/dashboard/+layout.server.ts"
 	],
 	"/[workspace]/dashboard/settings": [
+		"src/routes/[workspace]/dashboard/settings/+page.server.ts",
 		"src/routes/[workspace]/dashboard/+layout.server.ts"
 	],
 	"/[workspace]/dashboard/support": [

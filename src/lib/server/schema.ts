@@ -1,4 +1,5 @@
 import { pgTable, serial, text, timestamp, boolean, integer, jsonb } from 'drizzle-orm/pg-core';
+import { relations } from 'drizzle-orm';
 
 export const workspaces = pgTable('workspaces', {
     id: serial('id').primaryKey(),
@@ -19,6 +20,7 @@ export const users = pgTable('users', {
     phone: text('phone'),
     addresses: jsonb('addresses'), // Array of { label, address, city, country }
     company: text('company'),
+    companyLogo: text('company_logo'),
     companyLinks: jsonb('company_links'), // Array of { title, url }
     jobTitle: text('job_title'),
     identification: jsonb('identification'), // Array of { type: string, value: string }
@@ -174,3 +176,47 @@ export const requestComments = pgTable('request_comments', {
     createdAt: timestamp('created_at').defaultNow(),
 });
 
+export const companies = pgTable('companies', {
+    id: serial('id').primaryKey(),
+    name: text('name').notNull(),
+    description: text('description'),
+    logo: text('logo'),
+    phone: text('phone'),
+    email: text('email'),
+    website: text('website'),
+    region: text('region'),
+    timezone: text('timezone'),
+    address: jsonb('address'), // { street, city, state, postalCode, country, officeName }
+    registrationDetails: jsonb('registration_details'), // { acn, abn, ndisRegistration }
+    workspaceId: integer('workspace_id').references(() => workspaces.id),
+    createdAt: timestamp('created_at').defaultNow(),
+    updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+export const userCompanies = pgTable('user_companies', {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }),
+    companyId: integer('company_id').references(() => companies.id, { onDelete: 'cascade' }),
+    role: text('role').default('member'), // admin, member, owner
+    isPrimary: boolean('is_primary').default(false),
+    createdAt: timestamp('created_at').defaultNow(),
+});
+
+export const usersRelations = relations(users, ({ many }) => ({
+    userCompanies: many(userCompanies),
+}));
+
+export const companiesRelations = relations(companies, ({ many }) => ({
+    userCompanies: many(userCompanies),
+}));
+
+export const userCompaniesRelations = relations(userCompanies, ({ one }) => ({
+    user: one(users, {
+        fields: [userCompanies.userId],
+        references: [users.id],
+    }),
+    company: one(companies, {
+        fields: [userCompanies.companyId],
+        references: [companies.id],
+    }),
+}));

@@ -1,8 +1,9 @@
 import { redirect, type Handle } from '@sveltejs/kit';
 import { validateSession } from '$lib/server/auth';
 import { db } from '$lib/server/db';
-import { users } from '$lib/server/schema';
-import { ilike } from 'drizzle-orm';
+import { users, userCompanies } from '$lib/server/schema';
+import { ilike, eq, and } from 'drizzle-orm';
+import { getSignedUrlForFile } from '$lib/server/storage';
 
 const DOMAIN_MAP: Record<string, string> = {
     'allianzy.com': 'allianzy',
@@ -65,13 +66,28 @@ export const handle: Handle = async ({ event, resolve }) => {
         });
 
         if (localUser) {
+            const avatarUrl = await getSignedUrlForFile(localUser.avatarUrl, event.locals.allowedWorkspace);
+            
+            // Fetch primary company
+            const primaryCompanyLink = await db.query.userCompanies.findFirst({
+                where: and(
+                    eq(userCompanies.userId, localUser.id),
+                    eq(userCompanies.isPrimary, true)
+                ),
+                with: {
+                    company: true
+                }
+            });
+
             event.locals.user = {
                 id: localUser.id.toString(),
                 email: localUser.email,
                 firstName: localUser.firstName || '',
                 lastName: localUser.lastName || '',
                 role: localUser.role || 'client',
-                image: localUser.avatarUrl || ''
+                image: avatarUrl || '',
+                companyId: primaryCompanyLink?.companyId || undefined,
+                companyName: primaryCompanyLink?.company?.name
             };
         }
     }

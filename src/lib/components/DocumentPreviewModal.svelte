@@ -39,9 +39,19 @@
     
     // For handling iframe load errors or fallback
     let loadError = false;
+    let previewUrl: string | null = null;
+    let lastRequestedUrl: string | null = null;
+    let currentAbort: AbortController | null = null;
 
     function handleClose() {
         loadError = false;
+        if (previewUrl) {
+            URL.revokeObjectURL(previewUrl);
+        }
+        previewUrl = null;
+        lastRequestedUrl = null;
+        currentAbort?.abort();
+        currentAbort = null;
         onClose();
     }
 
@@ -54,6 +64,32 @@
 
     $: if (isOpen && fileUrl) {
         console.log('DocumentPreviewModal opening:', { title, fileUrl });
+    }
+
+    $: if (isOpen && fileUrl && fileUrl !== lastRequestedUrl) {
+        loadError = false;
+        if (previewUrl) {
+            URL.revokeObjectURL(previewUrl);
+        }
+        previewUrl = null;
+        lastRequestedUrl = fileUrl;
+        currentAbort?.abort();
+        currentAbort = new AbortController();
+        fetch(fileUrl, { signal: currentAbort.signal })
+            .then((res) => {
+                if (!res.ok) {
+                    loadError = true;
+                    return null;
+                }
+                return res.blob();
+            })
+            .then((blob) => {
+                if (!blob || currentAbort?.signal.aborted) return;
+                previewUrl = URL.createObjectURL(blob);
+            })
+            .catch(() => {
+                if (!currentAbort?.signal.aborted) loadError = true;
+            });
     }
 </script>
 
@@ -92,14 +128,14 @@
                 {#if fileUrl && !loadError}
                     {#if isPdf}
                         <iframe 
-                            src="{fileUrl}#toolbar=0" 
+                            src="{previewUrl || fileUrl}#toolbar=0" 
                             class="w-full h-full rounded-lg border bg-white shadow-sm" 
                             title="Document Preview"
                             on:error={() => loadError = true}
                         ></iframe>
                     {:else if isImage}
                         <img 
-                            src={fileUrl} 
+                            src={previewUrl || fileUrl} 
                             alt={title} 
                             class="max-w-full max-h-full object-contain rounded-lg shadow-sm"
                             on:error={() => loadError = true}

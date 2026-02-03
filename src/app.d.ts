@@ -12,6 +12,8 @@ declare global {
 				lastName?: string;
 				role?: string;
 				image?: string;
+				companyId?: number;
+				companyName?: string;
 			};
 			session?: {
 				id: string;

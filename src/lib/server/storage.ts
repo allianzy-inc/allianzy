@@ -37,6 +37,37 @@ export async function uploadFile(file: File, folder: string = 'uploads'): Promis
 export async function getSignedUrlForFile(url: string | null, workspace: string = 'allianzy'): Promise<string | null> {
   if (!url) return null;
 
+  // Check if it's already a proxy URL and extract the original B2 URL
+  // This handles cases where the DB might have saved a proxy URL instead of the B2 URL
+  if (url.includes('/api/files') && url.includes('url=')) {
+    try {
+      const match = url.match(/url=([^&]+)/);
+      if (match) {
+        const decodedUrl = decodeURIComponent(match[1]);
+        // Recursively call to generate a fresh signature and timestamp
+        return getSignedUrlForFile(decodedUrl, workspace);
+      }
+    } catch (e) {
+      console.error('Error parsing existing proxy URL:', e);
+    }
+  }
+
+  // Check if the URL is already a local proxy URL (legacy or current)
+  // If so, extract the original B2 URL and re-sign it
+  if (url.includes('/api/files') || url.includes('/dashboard/api/files')) {
+    try {
+      // Handle both absolute and relative URLs
+      const urlObj = new URL(url, 'http://dummy.com'); 
+      const originalUrl = urlObj.searchParams.get('url');
+      if (originalUrl) {
+        // Recursively process the original B2 URL
+        return getSignedUrlForFile(originalUrl, workspace);
+      }
+    } catch (e) {
+      console.error('Error parsing existing proxy URL:', e);
+    }
+  }
+
   // Robust B2 URL detection using regex
   // Matches: https://<host>/file/<bucket>/<key>
   // Example: https://f005.backblazeb2.com/file/allianzy/uploads/123-test.pdf
@@ -48,12 +79,14 @@ export async function getSignedUrlForFile(url: string | null, workspace: string 
     // The proxy will handle fetching the file from B2 and streaming it to the client
     // Add timestamp to prevent caching issues and signature for security
     const timestamp = Date.now();
+    // Include workspace in the signature payload to ensure integrity
     const payload = `${url}|${timestamp}|${workspace}`;
     const signature = createHmac('sha256', SIGNING_SECRET)
       .update(payload)
       .digest('hex');
 
-    return `/${workspace}/dashboard/api/files?url=${encodeURIComponent(url)}&t=${timestamp}&sig=${signature}`;
+    // Point to the global public API endpoint
+    return `/api/public/files?url=${encodeURIComponent(url)}&t=${timestamp}&sig=${signature}&w=${workspace}`;
   }
 
   return url;

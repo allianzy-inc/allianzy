@@ -176,8 +176,99 @@ export const translations = {
                     }
                 ]
             }
-        }
-    },
+        },
+        dashboard: {
+            menu: {
+                overview: 'Overview',
+                projects: 'Projects',
+                support: 'Support',
+                settings: 'Settings',
+                contact: 'Contact',
+                admin_panel: 'Admin Panel'
+            },
+            footer: {
+                help_support: 'Help Support',
+                rights: 'All rights reserved.',
+                made_with_love: 'Made with love'
+            },
+            header: {
+                notifications: {
+                    title: 'Notifications',
+                    empty: 'You have no notifications'
+                },
+                profile: {
+                    account: 'My Account',
+                    theme: {
+                        title: 'Theme',
+                        light: 'Light',
+                        dark: 'Dark',
+                        system: 'System'
+                    },
+                    language: {
+                        title: 'Language',
+                        en: 'English',
+                        es: 'Spanish'
+                    },
+                    logout: 'Logout'
+                }
+            },
+            page: {
+                    title: 'My Account',
+                    subtitle: 'Manage your personal information.',
+                    personal_info: {
+                        title: 'Personal Information',
+                        avatar: {
+                            label: 'Profile Photo',
+                            desc: 'Your photo will be shown in your profile and comments.',
+                            delete_confirm: {
+                                title: 'Are you sure?',
+                                desc: 'This action will remove your current profile photo.',
+                                cancel: 'Cancel',
+                                delete: 'Delete'
+                            },
+                            delete_tooltip: 'Remove photo'
+                        },
+                        name: 'First Name',
+                        lastname: 'Last Name',
+                        email: 'Email',
+                        phone: 'Phone'
+                    },
+                    addresses: {
+                        title: 'Addresses',
+                        add_button: 'Add Address',
+                        form: {
+                            label: 'Label (e.g. Home, Office)',
+                            address: 'Full Address',
+                            city: 'City',
+                            country: 'Country',
+                            cancel: 'Cancel',
+                            save: 'Save Address'
+                        }
+                    },
+                    documents: {
+                        title: 'Identity Documents',
+                        add_button: 'Add Document',
+                        form: {
+                            type: 'Type (e.g. ID, Tax ID)',
+                            value: 'Document Number',
+                            cancel: 'Cancel',
+                            save: 'Save Document'
+                        }
+                    },
+                    links: {
+                        title: 'Interest Links',
+                        add_button: 'Add Link',
+                        form: {
+                            title: 'Title (e.g. LinkedIn)',
+                            url: 'URL',
+                            cancel: 'Cancel',
+                            save: 'Save Link'
+                        }
+                    },
+                    saved: 'Saved'
+                }
+            }
+        },
     es: {
         nav: {
             home: 'Inicio',
@@ -346,6 +437,97 @@ export const translations = {
                         a: "Sí, ofrecemos paquetes mensuales para gestión de redes sociales, mantenimiento y mejora continua."
                     }
                 ]
+            }
+        },
+        dashboard: {
+            menu: {
+                overview: 'Inicio',
+                projects: 'Proyectos',
+                support: 'Soporte',
+                settings: 'Configuraciones',
+                contact: 'Contactar',
+                admin_panel: 'Panel de Admin'
+            },
+            footer: {
+                help_support: 'Ayuda y Soporte',
+                rights: 'Todos los derechos reservados.',
+                made_with_love: 'Hecho con amor'
+            },
+            header: {
+                notifications: {
+                    title: 'Notificaciones',
+                    empty: 'No tienes notificaciones'
+                },
+                profile: {
+                    account: 'Mi cuenta',
+                    theme: {
+                        title: 'Tema',
+                        light: 'Claro',
+                        dark: 'Oscuro',
+                        system: 'Sistema'
+                    },
+                    language: {
+                        title: 'Idioma',
+                        en: 'English',
+                        es: 'Español'
+                    },
+                    logout: 'Cerrar Sesión'
+                }
+            },
+            page: {
+                    title: 'Mi Cuenta',
+                    subtitle: 'Gestiona tu información personal.',
+                    personal_info: {
+                        title: 'Información Personal',
+                        avatar: {
+                            label: 'Foto de Perfil',
+                            desc: 'Tu foto se mostrará en tu perfil y comentarios.',
+                            delete_confirm: {
+                                title: '¿Estás seguro?',
+                                desc: 'Esta acción eliminará tu foto de perfil actual.',
+                                cancel: 'Cancelar',
+                                delete: 'Eliminar'
+                            },
+                            delete_tooltip: 'Eliminar foto'
+                        },
+                        name: 'Nombre',
+                        lastname: 'Apellido',
+                        email: 'Email',
+                        phone: 'Teléfono'
+                    },
+                    addresses: {
+                        title: 'Direcciones',
+                        add_button: 'Agregar Dirección',
+                        form: {
+                            label: 'Etiqueta (ej. Casa, Oficina)',
+                            address: 'Dirección completa',
+                            city: 'Ciudad',
+                            country: 'País',
+                            cancel: 'Cancelar',
+                            save: 'Guardar Dirección'
+                        }
+                    },
+                    documents: {
+                        title: 'Documentos de Identidad',
+                        add_button: 'Agregar Documento',
+                        form: {
+                            type: 'Tipo (ej. DNI, RUC)',
+                            value: 'Número de Documento',
+                            cancel: 'Cancelar',
+                            save: 'Guardar Documento'
+                        }
+                    },
+                    links: {
+                        title: 'Enlaces de Interés',
+                        add_button: 'Agregar Enlace',
+                        form: {
+                            title: 'Título (ej. LinkedIn)',
+                            url: 'URL',
+                            cancel: 'Cancelar',
+                            save: 'Guardar Enlace'
+                        }
+                    },
+                    saved: 'Guardado'
             }
         }
     }

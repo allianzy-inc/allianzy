@@ -41,3 +41,23 @@
 [2026-02-03T14:36:38.634Z] Signature valid, bypassing session check
 [2026-02-03T14:36:38.634Z] Extracted bucket: allianzy, key: requests/1770128154162-boarding-pass.jpg
 [2026-02-03T14:36:38.842Z] Serving file successfully
+[2026-02-03T14:54:41.270Z] Request for url: https://f005.backblazeb2.com/file/allianzy/requests/1770128154162-boarding-pass.jpg
+[2026-02-03T14:54:41.272Z] Request Headers: {"accept":"image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8","accept-encoding":"gzip, deflate, br, zstd","accept-language":"en-US,en;q=0.9","connection":"keep-alive","cookie":"[Present, length: 114]","host":"localhost:5174","referer":"http://localhost:5174/allianzy/admin/projects/1","sec-ch-ua":"\"Not(A:Brand\";v=\"8\", \"Chromium\";v=\"144\", \"Google Chrome\";v=\"144\"","sec-ch-ua-mobile":"?0","sec-ch-ua-platform":"\"macOS\"","sec-fetch-dest":"image","sec-fetch-mode":"no-cors","sec-fetch-site":"same-origin","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-02-03T14:54:41.272Z] Signature valid, bypassing session check
+[2026-02-03T14:54:41.273Z] Extracted bucket: allianzy, key: requests/1770128154162-boarding-pass.jpg
+[2026-02-03T14:54:41.823Z] Serving file successfully
+[2026-02-03T14:55:27.691Z] Request for url: https://f005.backblazeb2.com/file/allianzy/requests/1770128154162-boarding-pass.jpg
+[2026-02-03T14:55:27.691Z] Request Headers: {"accept":"*/*","host":"localhost:5174","user-agent":"curl/8.7.1"}
+[2026-02-03T14:55:27.691Z] Signature valid, bypassing session check
+[2026-02-03T14:55:27.691Z] Extracted bucket: allianzy, key: requests/1770128154162-boarding-pass.jpg
+[2026-02-03T14:55:28.208Z] Serving file successfully
+[2026-02-03T14:55:50.600Z] Request for url: https://f005.backblazeb2.com/file/allianzy/requests/1770130541756-Tickets_-_Buenos_Aires_Business_Show__03_03_2026_18_30_00__-_Francisco_Gomez.pdf.zip
+[2026-02-03T14:55:50.600Z] Request Headers: {"accept":"text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7","accept-encoding":"gzip, deflate, br, zstd","accept-language":"en-US,en;q=0.9","connection":"keep-alive","cookie":"[Present, length: 114]","host":"localhost:5174","referer":"http://localhost:5174/allianzy/admin/projects/1","sec-ch-ua":"\"Not(A:Brand\";v=\"8\", \"Chromium\";v=\"144\", \"Google Chrome\";v=\"144\"","sec-ch-ua-mobile":"?0","sec-ch-ua-platform":"\"macOS\"","sec-fetch-dest":"document","sec-fetch-mode":"navigate","sec-fetch-site":"same-origin","sec-fetch-user":"?1","upgrade-insecure-requests":"1","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-02-03T14:55:50.601Z] Signature valid, bypassing session check
+[2026-02-03T14:55:50.601Z] Extracted bucket: allianzy, key: requests/1770130541756-Tickets_-_Buenos_Aires_Business_Show__03_03_2026_18_30_00__-_Francisco_Gomez.pdf.zip
+[2026-02-03T14:55:51.161Z] Serving file successfully
+[2026-02-03T14:56:00.702Z] Request for url: https://f005.backblazeb2.com/file/allianzy/requests/1770128154162-boarding-pass.jpg
+[2026-02-03T14:56:00.702Z] Request Headers: {"accept":"*/*","host":"localhost:5174","user-agent":"curl/8.7.1"}
+[2026-02-03T14:56:00.702Z] Signature valid, bypassing session check
+[2026-02-03T14:56:00.702Z] Extracted bucket: allianzy, key: requests/1770128154162-boarding-pass.jpg
+[2026-02-03T14:56:01.222Z] Serving file successfully

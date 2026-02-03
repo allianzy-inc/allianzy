@@ -1,23 +1,42 @@
 <script lang="ts">
     import { page } from '$app/stores';
-    import { User, LayoutDashboard, Briefcase, Ticket, Settings, LogOut, Mail } from 'lucide-svelte';
+    import { onMount } from 'svelte';
+    import { User, LayoutDashboard, Briefcase, Ticket, Settings, LogOut, Mail, Shield } from 'lucide-svelte';
     import { authClient } from '$lib/auth-client';
     import { goto } from '$app/navigation';
     import logoLight from '$lib/assets/brand/allianzy/logo-light.svg';
     import logoDark from '$lib/assets/brand/allianzy/logo-dark.svg';
     import ThemeToggle from '$lib/components/ThemeToggle.svelte';
     import LanguageToggle from '$lib/components/LanguageToggle.svelte';
+    import type { LayoutData } from './$types';
+
+    export let data: LayoutData;
 
     $: workspace = $page.params.workspace;
     $: path = $page.url.pathname;
     
+    let clientRole = '';
+
+    onMount(async () => {
+        const { data: sessionData } = await authClient.getSession();
+        if (sessionData?.user) {
+             // @ts-ignore
+             if (sessionData.user.role) clientRole = sessionData.user.role;
+        } else {
+             // If NO session client-side, redirect to login
+             // This is the safety net since we removed server-side block
+             goto(`/${workspace}`);
+        }
+    });
+    
     // Client Menu Items
-    const menuItems = [
+    $: menuItems = [
         { href: `/dashboard`, label: 'Overview', icon: LayoutDashboard },
         { href: `/dashboard/projects`, label: 'Proyectos', icon: Briefcase },
         { href: `/dashboard/support`, label: 'Soporte', icon: Ticket },
         { href: `/dashboard/settings`, label: 'Configuraciones', icon: Settings },
         { href: `/dashboard/contact`, label: 'Contactar', icon: Mail },
+        ...( (data.user?.role === 'admin' || clientRole === 'admin') ? [{ href: `/${workspace}/admin`, label: 'Admin Panel', icon: Shield }] : [])
     ];
 
     async function handleLogout() {
@@ -28,7 +47,7 @@
     let isProfileOpen = false;
 </script>
 
-<div class="flex h-screen bg-gray-50/50">
+<div class="flex h-screen bg-background">
     <!-- Sidebar -->
     <aside class="w-64 bg-background border-r flex flex-col">
         <div class="p-6 border-b h-16 flex items-center">

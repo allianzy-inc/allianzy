@@ -1,6 +1,6 @@
 import { db } from '$lib/server/db';
 import { projects, services, users } from '$lib/server/schema';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
@@ -13,7 +13,8 @@ export const load: PageServerLoad = async () => {
             startDate: projects.startDate,
             endDate: projects.endDate,
             serviceName: services.name,
-            clientName: users.name,
+            clientName: sql<string>`TRIM(BOTH ' ' FROM COALESCE(${users.firstName}, '') || ' ' || COALESCE(${users.lastName}, ''))`,
+            clientCompany: users.company,
             clientEmail: users.email
         })
         .from(projects)

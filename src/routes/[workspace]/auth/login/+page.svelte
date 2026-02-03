@@ -63,37 +63,14 @@
                 // We don't block login if sync fails, but it might affect role-based access
             }
 
-            // Fetch user role to determine redirection
-            let targetRoute = `/${workspace}/dashboard`;
-            console.log('Login: checking role for', email);
-
-            try {
-                const roleResponse = await fetch('/api/users/get-role', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: email.trim() })
-                });
-                
-                if (roleResponse.ok) {
-                    const { role } = await roleResponse.json();
-                    console.log('Login: role found:', role);
-                    if (role === 'admin') {
-                        console.log('Login: Redirecting to Admin Dashboard');
-                        targetRoute = `/${workspace}/admin`;
-                    } else {
-                        console.log('Login: Redirecting to Client Dashboard (Role: ' + role + ')');
-                    }
-                } else {
-                    console.error('Login: failed to fetch role', roleResponse.status);
-                }
-            } catch (roleError) {
-                console.error('Failed to fetch user role:', roleError);
-                // Fallback to dashboard if role check fails
-            }
+            // Always redirect to dashboard, admins can switch views later from the dashboard sidebar
+            const targetRoute = `/${workspace}/dashboard`;
+            console.log('Login: Redirecting to Dashboard:', targetRoute);
             
-            console.log('Login: executing goto', targetRoute);
-            // Redirect to appropriate dashboard
-            await goto(targetRoute);
+            // Force full reload to ensure clean state if needed
+            // window.location.href = targetRoute;
+            // Use goto for SPA navigation
+            await goto(targetRoute, { replaceState: true, invalidateAll: true });
         } catch (e: any) {
             console.error(e);
             error = e.message || 'Authentication failed';

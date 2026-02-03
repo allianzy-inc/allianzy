@@ -1,7 +1,7 @@
 <script lang="ts">
     import { page } from '$app/stores';
     import { onMount } from 'svelte';
-    import { User, LayoutDashboard, Briefcase, Calendar, Ticket, Settings, LogOut, MessageSquare, Mail, Users, Package } from 'lucide-svelte';
+    import { User, LayoutDashboard, Briefcase, Calendar, Ticket, Settings, LogOut, MessageSquare, Mail, Users, Package, Home } from 'lucide-svelte';
     import { authClient } from '$lib/auth-client';
     import { goto } from '$app/navigation';
 
@@ -9,6 +9,7 @@
     $: path = $page.url.pathname;
 
     onMount(async () => {
+        console.log('[ADMIN-LAYOUT] Mounted. Path:', path);
         const { data: session } = await authClient.getSession();
         
         if (!session || !session.user) {
@@ -49,6 +50,7 @@
     });
     
     $: menuItems = [
+        { href: `/${workspace}/dashboard`, label: 'Vista Cliente', icon: Home },
         { href: `/${workspace}/admin`, label: 'Overview', icon: LayoutDashboard },
         { href: `/${workspace}/admin/users`, label: 'Usuarios', icon: Users },
         { href: `/${workspace}/admin/services`, label: 'Servicios', icon: Package },

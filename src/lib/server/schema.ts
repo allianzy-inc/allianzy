@@ -7,11 +7,22 @@ export const workspaces = pgTable('workspaces', {
     createdAt: timestamp('created_at').defaultNow(),
 });
 
+
+
 export const users = pgTable('users', {
     id: serial('id').primaryKey(),
     email: text('email').notNull().unique(),
-    name: text('name'),
+    firstName: text('first_name'),
+    lastName: text('last_name'),
     role: text('role').default('staff'), // staff, client, provider
+    avatarUrl: text('avatar_url'),
+    phone: text('phone'),
+    addresses: jsonb('addresses'), // Array of { label, address, city, country }
+    company: text('company'),
+    companyLinks: jsonb('company_links'), // Array of { title, url }
+    jobTitle: text('job_title'),
+    identification: jsonb('identification'), // Array of { type: string, value: string }
+    notes: text('notes'),
     workspaceId: integer('workspace_id').references(() => workspaces.id),
     createdAt: timestamp('created_at').defaultNow(),
 });
@@ -35,6 +46,7 @@ export const projects = pgTable('projects', {
     status: text('status').default('Pending'),
     provider: text('provider').default('Allianzy'), // Allianzy, Beltrix, Provider
     serviceId: integer('service_id').references(() => services.id),
+    links: jsonb('links'), // Array of { title, url }
     startDate: timestamp('start_date'),
     endDate: timestamp('end_date'),
     createdAt: timestamp('created_at').defaultNow(),
@@ -44,10 +56,23 @@ export const cases = pgTable('cases', {
     id: serial('id').primaryKey(),
     title: text('title').notNull(),
     description: text('description'),
-    status: text('status').default('pending'),
+    status: text('status').default('open'), // open, in_progress, closed
     priority: text('priority').default('medium'), // low, medium, high
+    files: jsonb('files'), // Array of { name, url, type }
     projectId: integer('project_id').references(() => projects.id),
     workspaceId: integer('workspace_id').references(() => workspaces.id),
+    createdAt: timestamp('created_at').defaultNow(),
+    closedAt: timestamp('closed_at'),
+});
+
+export const caseComments = pgTable('case_comments', {
+    id: serial('id').primaryKey(),
+    caseId: integer('case_id').references(() => cases.id, { onDelete: 'cascade' }),
+    userId: integer('user_id').references(() => users.id),
+    authorName: text('author_name'),
+    subject: text('subject'),
+    content: text('content').notNull(),
+    files: jsonb('files'),
     createdAt: timestamp('created_at').defaultNow(),
 });
 
@@ -57,7 +82,19 @@ export const requirements = pgTable('requirements', {
     description: text('description'),
     status: text('status').default('pending'), // pending, approved, rejected
     documentUrl: text('document_url'),
+    files: jsonb('files'), // Array of { name, url, type }
     projectId: integer('project_id').references(() => projects.id),
+    createdAt: timestamp('created_at').defaultNow(),
+});
+
+export const requirementComments = pgTable('requirement_comments', {
+    id: serial('id').primaryKey(),
+    requirementId: integer('requirement_id').references(() => requirements.id, { onDelete: 'cascade' }),
+    userId: integer('user_id').references(() => users.id),
+    authorName: text('author_name'),
+    subject: text('subject'),
+    content: text('content').notNull(),
+    files: jsonb('files'),
     createdAt: timestamp('created_at').defaultNow(),
 });
 
@@ -67,7 +104,19 @@ export const proposals = pgTable('project_proposals', {
     description: text('description'),
     status: text('status').default('pending'), // pending, approved, rejected
     documentUrl: text('document_url'),
+    files: jsonb('files'), // Array of { name, url, type }
     projectId: integer('project_id').references(() => projects.id),
+    createdAt: timestamp('created_at').defaultNow(),
+});
+
+export const proposalComments = pgTable('proposal_comments', {
+    id: serial('id').primaryKey(),
+    proposalId: integer('proposal_id').references(() => proposals.id, { onDelete: 'cascade' }),
+    userId: integer('user_id').references(() => users.id),
+    authorName: text('author_name'),
+    subject: text('subject'),
+    content: text('content').notNull(),
+    files: jsonb('files'),
     createdAt: timestamp('created_at').defaultNow(),
 });
 
@@ -101,5 +150,16 @@ export const requests = pgTable('requests', {
     projectId: integer('project_id').references(() => projects.id),
     createdAt: timestamp('created_at').defaultNow(),
     updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+export const requestComments = pgTable('request_comments', {
+    id: serial('id').primaryKey(),
+    requestId: integer('request_id').references(() => requests.id, { onDelete: 'cascade' }),
+    userId: integer('user_id').references(() => users.id),
+    authorName: text('author_name'),
+    subject: text('subject'),
+    content: text('content').notNull(),
+    files: jsonb('files'),
+    createdAt: timestamp('created_at').defaultNow(),
 });
 

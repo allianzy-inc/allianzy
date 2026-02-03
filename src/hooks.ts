@@ -11,7 +11,12 @@ export function reroute({ url }) {
     };
 
     const host = url.host;
-    const assignedWorkspace = DOMAIN_MAP[host];
+    let assignedWorkspace = DOMAIN_MAP[host];
+
+    // Fallback for localhost (any port)
+    if (!assignedWorkspace && (host.includes('localhost') || host.includes('127.0.0.1'))) {
+        assignedWorkspace = 'allianzy';
+    }
 
     // List of valid workspaces to check against to avoid double-nesting
     const VALID_WORKSPACES = ['allianzy', 'beltrix'];

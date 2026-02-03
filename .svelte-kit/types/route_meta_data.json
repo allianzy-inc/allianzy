@@ -25,18 +25,36 @@
 	"/[workspace]/admin/users": [
 		"src/routes/[workspace]/admin/users/+page.server.ts"
 	],
+	"/[workspace]/admin/users/[id]": [
+		"src/routes/[workspace]/admin/users/[id]/+page.server.ts"
+	],
 	"/[workspace]/auth/login": [],
 	"/[workspace]/config": [],
 	"/[workspace]/dashboard": [
-		"src/routes/[workspace]/dashboard/+page.server.ts"
+		"src/routes/[workspace]/dashboard/+page.server.ts",
+		"src/routes/[workspace]/dashboard/+layout.server.ts",
+		"src/routes/[workspace]/dashboard/+layout.server.ts"
 	],
-	"/[workspace]/dashboard/contact": [],
-	"/[workspace]/dashboard/profile": [],
+	"/[workspace]/dashboard/contact": [
+		"src/routes/[workspace]/dashboard/+layout.server.ts"
+	],
+	"/[workspace]/dashboard/profile": [
+		"src/routes/[workspace]/dashboard/+layout.server.ts"
+	],
 	"/[workspace]/dashboard/projects": [
-		"src/routes/[workspace]/dashboard/projects/+page.server.ts"
+		"src/routes/[workspace]/dashboard/projects/+page.server.ts",
+		"src/routes/[workspace]/dashboard/+layout.server.ts"
 	],
-	"/[workspace]/dashboard/settings": [],
-	"/[workspace]/dashboard/support": [],
+	"/[workspace]/dashboard/projects/[id]": [
+		"src/routes/[workspace]/dashboard/projects/[id]/+page.server.ts",
+		"src/routes/[workspace]/dashboard/+layout.server.ts"
+	],
+	"/[workspace]/dashboard/settings": [
+		"src/routes/[workspace]/dashboard/+layout.server.ts"
+	],
+	"/[workspace]/dashboard/support": [
+		"src/routes/[workspace]/dashboard/+layout.server.ts"
+	],
 	"/[workspace]/intake": [],
 	"/[workspace]/portal": [],
 	"/[workspace]/provider": [],

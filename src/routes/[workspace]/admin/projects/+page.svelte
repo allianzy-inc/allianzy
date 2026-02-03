@@ -63,7 +63,12 @@
                         <td class="p-4">
                             <div class="flex items-center gap-2">
                                 <User class="w-3 h-3 text-muted-foreground" />
-                                <span>{project.clientName || 'Sin asignar'}</span>
+                                <div class="flex flex-col">
+                                    <span class="font-medium">{project.clientName || 'Sin asignar'}</span>
+                                    {#if project.clientCompany}
+                                        <span class="text-xs text-muted-foreground font-semibold">{project.clientCompany}</span>
+                                    {/if}
+                                </div>
                             </div>
                             <div class="text-xs text-muted-foreground ml-5">{project.clientEmail}</div>
                         </td>

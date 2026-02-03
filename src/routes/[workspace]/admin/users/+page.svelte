@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onMount } from 'svelte';
     import { Users, MoreVertical, Search, Filter } from 'lucide-svelte';
+    import { page } from '$app/stores';
     import type { PageData } from './$types';
 
     export let data: PageData;
@@ -49,7 +50,11 @@
             <tbody>
                 {#each users as user}
                     <tr class="border-t hover:bg-muted/50 transition-colors">
-                        <td class="p-4 font-medium">{user.name}</td>
+                        <td class="p-4 font-medium">
+                            <a href="/{$page.params.workspace}/admin/users/{user.id}" class="hover:underline text-primary">
+                                {user.firstName} {user.lastName}
+                            </a>
+                        </td>
                         <td class="p-4">{user.email}</td>
                         <td class="p-4">
                             <span class="capitalize px-2 py-1 rounded-full text-xs font-medium 

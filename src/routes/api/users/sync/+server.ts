@@ -40,9 +40,14 @@ export const POST: RequestHandler = async ({ request }) => {
         }
 
         // Create new user (ensure email is lowercase)
+        const parts = (name || '').trim().split(' ');
+        const firstName = parts[0] || '';
+        const lastName = parts.slice(1).join(' ') || '';
+
         const newUser = await db.insert(users).values({
             email: cleanEmail,
-            name: name || '',
+            firstName,
+            lastName,
             role: role || 'client',
             workspaceId: workspaceId
         }).returning();

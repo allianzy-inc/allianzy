@@ -1,4 +1,8 @@
 import { redirect, type Handle } from '@sveltejs/kit';
+import { validateSession } from '$lib/server/auth';
+import { db } from '$lib/server/db';
+import { users } from '$lib/server/schema';
+import { ilike } from 'drizzle-orm';
 
 const DOMAIN_MAP: Record<string, string> = {
     'allianzy.com': 'allianzy',
@@ -10,6 +14,7 @@ const DOMAIN_MAP: Record<string, string> = {
 const VALID_WORKSPACES = ['allianzy', 'beltrix'];
 
 export const handle: Handle = async ({ event, resolve }) => {
+    console.log(`[HOOKS] Request: ${event.request.method} ${event.url.pathname}`);
     const host = event.request.headers.get('host') || '';
     
     // 1. Determine Allowed Workspace based on Domain
@@ -50,7 +55,28 @@ export const handle: Handle = async ({ event, resolve }) => {
         }
     }
 
-    // 3. RBAC Placeholder (To be fully implemented with Server Auth)
+    // 3. Authentication
+    const sessionData = await validateSession(event.request);
+    
+    if (sessionData && sessionData.user) {
+        // Fetch local user details
+        const localUser = await db.query.users.findFirst({
+            where: ilike(users.email, sessionData.user.email)
+        });
+
+        if (localUser) {
+            event.locals.user = {
+                id: localUser.id.toString(),
+                email: localUser.email,
+                firstName: localUser.firstName || '',
+                lastName: localUser.lastName || '',
+                role: localUser.role || 'client',
+                image: localUser.avatarUrl || ''
+            };
+        }
+    }
+
+    // 4. RBAC Placeholder (To be fully implemented with Server Auth)
     // If we had event.locals.user populated, we would check roles here.
     // Example:
     /*

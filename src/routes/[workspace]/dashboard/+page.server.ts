@@ -1,30 +1,40 @@
 import { db } from '$lib/server/db';
-import { services } from '$lib/server/schema';
-import { eq } from 'drizzle-orm';
+import { services, workspaces } from '$lib/server/schema';
+import { eq, and } from 'drizzle-orm';
 import type { PageServerLoad } from './$types';
 import { env } from '$env/dynamic/private';
 
-export const load: PageServerLoad = async ({ params }) => {
-    if (!env.DATABASE_URL) {
+export const load: PageServerLoad = async ({ params, locals }) => {
+    console.log(`[DASHBOARD-PAGE] Loading for user: ${locals.user?.email}`);
+    if (!env.DATABASE_URL || !locals.user) {
         return {
             services: []
         };
     }
 
     try {
-        // TODO: Get real user ID from session context
-        // const userId = locals.user?.id;
-        
-        // Fetching services (mock query for now until we have user context)
-        // In production: .where(eq(services.clientId, userId))
-        const allServices = await db.select().from(services);
+        // Fetching services for the logged-in user in the current workspace
+        const userServices = await db.select({
+            name: services.name,
+            status: services.status,
+            renewal: services.renewalDate,
+            price: services.price
+        })
+        .from(services)
+        .innerJoin(workspaces, eq(services.workspaceId, workspaces.id))
+        .where(
+            and(
+                eq(workspaces.slug, locals.allowedWorkspace),
+                eq(services.clientId, parseInt(locals.user.id))
+            )
+        );
         
         return {
-            services: allServices.map(s => ({
+            services: userServices.map(s => ({
                 name: s.name,
                 status: s.status,
-                renewal: s.renewalDate || '-',
-                price: s.price || '-'
+                renewal: s.renewal ? new Date(s.renewal).toLocaleDateString() : '-',
+                price: s.price ? `$${s.price}` : '-'
             }))
         };
     } catch (error) {

@@ -1,7 +1,7 @@
 {
 	"/": [],
-	"/api/files": [
-		"src/routes/api/files/+server.ts"
+	"/api/auth/[...path]": [
+		"src/routes/api/auth/[...path]/+server.ts"
 	],
 	"/api/users/get-role": [
 		"src/routes/api/users/get-role/+server.ts"
@@ -19,7 +19,9 @@
 	"/[workspace]/admin/projects/[id]": [
 		"src/routes/[workspace]/admin/projects/[id]/+page.server.ts"
 	],
-	"/[workspace]/admin/services": [],
+	"/[workspace]/admin/services": [
+		"src/routes/[workspace]/admin/services/+page.server.ts"
+	],
 	"/[workspace]/admin/settings": [],
 	"/[workspace]/admin/support": [],
 	"/[workspace]/admin/users": [
@@ -34,6 +36,9 @@
 		"src/routes/[workspace]/dashboard/+page.server.ts",
 		"src/routes/[workspace]/dashboard/+layout.server.ts",
 		"src/routes/[workspace]/dashboard/+layout.server.ts"
+	],
+	"/[workspace]/dashboard/api/files": [
+		"src/routes/[workspace]/dashboard/api/files/+server.ts"
 	],
 	"/[workspace]/dashboard/contact": [
 		"src/routes/[workspace]/dashboard/+layout.server.ts"

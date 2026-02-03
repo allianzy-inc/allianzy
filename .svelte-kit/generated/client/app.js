@@ -46,7 +46,7 @@ export const dictionary = {
 		"/[workspace]/admin/profile": [9,[2,3]],
 		"/[workspace]/admin/projects": [~10,[2,3]],
 		"/[workspace]/admin/projects/[id]": [~11,[2,3]],
-		"/[workspace]/admin/services": [12,[2,3]],
+		"/[workspace]/admin/services": [~12,[2,3]],
 		"/[workspace]/admin/settings": [13,[2,3]],
 		"/[workspace]/admin/support": [14,[2,3]],
 		"/[workspace]/admin/users": [~15,[2,3]],

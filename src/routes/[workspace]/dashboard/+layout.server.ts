@@ -5,8 +5,10 @@ import type { LayoutServerLoad } from './$types';
 export const load: LayoutServerLoad = async ({ locals, url, params }) => {
     console.log(`[DASHBOARD-LAYOUT] User: ${locals.user?.email} (${locals.user?.role}) trying to access ${url.pathname}`);
     
-    // Non-blocking return. If user is undefined, the UI will handle it (or show empty state).
-    // This allows the page to load even if server-side session validation is flaky in dev.
+    if (!locals.user) {
+        throw redirect(303, `/${params.workspace}/auth/login`);
+    }
+
     return {
         user: locals.user
     };

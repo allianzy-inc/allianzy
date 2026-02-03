@@ -11,6 +11,16 @@
     $: fileName = (() => {
         if (!fileUrl) return '';
         try {
+            // Handle proxy URLs with url param (e.g. /api/files?url=...)
+            if (fileUrl.includes('url=')) {
+                const urlObj = new URL(fileUrl, 'http://localhost');
+                const embeddedUrl = urlObj.searchParams.get('url');
+                if (embeddedUrl) {
+                    // Extract filename from the embedded B2 URL
+                    return embeddedUrl.split('?')[0].split('/').pop() || '';
+                }
+            }
+            
             // Handle proxy URLs with key param (e.g. /api/files?key=...)
             if (fileUrl.includes('key=')) {
                 const url = new URL(fileUrl, 'http://localhost'); // Base for relative URLs
@@ -40,6 +50,10 @@
             const printWindow = window.open(fileUrl, '_blank');
             printWindow?.print();
         }
+    }
+
+    $: if (isOpen && fileUrl) {
+        console.log('DocumentPreviewModal opening:', { title, fileUrl });
     }
 </script>
 

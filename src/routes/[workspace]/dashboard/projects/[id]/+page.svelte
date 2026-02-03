@@ -884,7 +884,13 @@
                     action="?/addCaseComment" 
                     method="POST" 
                     enctype="multipart/form-data"
-                    use:enhance={() => {
+                    use:enhance={({ formData }) => {
+                        // Append files from local state to formData
+                        formData.delete('files'); // Clear existing empty/partial input
+                        commentFiles.forEach((file) => {
+                            formData.append('files', file);
+                        });
+
                         return async ({ result, update }) => {
                             if (result.type === 'success') {
                                 commentContent = '';
@@ -901,10 +907,8 @@
                     
                     <div class="space-y-2">
                         <input 
-                            type="text" 
+                            type="hidden" 
                             name="subject" 
-                            class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                            placeholder="Asunto (opcional)"
                             value={selectedCase.title}
                         />
                         
@@ -916,13 +920,6 @@
                                 bind:value={commentContent}
                                 required
                             ></textarea>
-                            
-                            <!-- Signature Toggle/Preview could go here -->
-                            <div class="mt-2 text-xs text-muted-foreground p-2 bg-muted/10 rounded border border-dashed">
-                                <p class="font-medium mb-1">Firma:</p>
-                                <pre class="font-sans whitespace-pre-wrap text-[10px]">{signatureContent}</pre>
-                                <input type="hidden" name="content" value={commentContent + '\n\n' + signatureContent} />
-                            </div>
                         </div>
 
                         <!-- File Attachments -->
@@ -1096,7 +1093,13 @@
                     action="?/addRequestComment" 
                     method="POST" 
                     enctype="multipart/form-data"
-                    use:enhance={() => {
+                    use:enhance={({ formData }) => {
+                        // Append files from local state to formData
+                        formData.delete('files'); // Clear existing empty/partial input
+                        commentFiles.forEach((file) => {
+                            formData.append('files', file);
+                        });
+
                         return async ({ result, update }) => {
                             if (result.type === 'success') {
                                 commentContent = '';
@@ -1113,10 +1116,8 @@
                     
                     <div class="space-y-2">
                         <input 
-                            type="text" 
+                            type="hidden" 
                             name="subject" 
-                            class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                            placeholder="Asunto (opcional)"
                             value={selectedRequest.title}
                         />
                         
@@ -1128,12 +1129,6 @@
                                 bind:value={commentContent}
                                 required
                             ></textarea>
-                            
-                            <div class="mt-2 text-xs text-muted-foreground p-2 bg-muted/10 rounded border border-dashed">
-                                <p class="font-medium mb-1">Firma:</p>
-                                <pre class="font-sans whitespace-pre-wrap text-[10px]">{signatureContent}</pre>
-                                <input type="hidden" name="content" value={commentContent + '\n\n' + signatureContent} />
-                            </div>
                         </div>
 
                         <!-- File Attachments -->
@@ -1307,7 +1302,13 @@
                     action="?/addRequirementComment" 
                     method="POST" 
                     enctype="multipart/form-data"
-                    use:enhance={() => {
+                    use:enhance={({ formData }) => {
+                        // Append files from local state to formData
+                        formData.delete('files'); // Clear existing empty/partial input
+                        commentFiles.forEach((file) => {
+                            formData.append('files', file);
+                        });
+
                         return async ({ result, update }) => {
                             if (result.type === 'success') {
                                 commentContent = '';
@@ -1324,10 +1325,8 @@
                     
                     <div class="space-y-2">
                         <input 
-                            type="text" 
+                            type="hidden" 
                             name="subject" 
-                            class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                            placeholder="Asunto (opcional)"
                             value={selectedRequirement.title}
                         />
                         
@@ -1339,12 +1338,6 @@
                                 bind:value={commentContent}
                                 required
                             ></textarea>
-                            
-                            <div class="mt-2 text-xs text-muted-foreground p-2 bg-muted/10 rounded border border-dashed">
-                                <p class="font-medium mb-1">Firma:</p>
-                                <pre class="font-sans whitespace-pre-wrap text-[10px]">{signatureContent}</pre>
-                                <input type="hidden" name="content" value={commentContent + '\n\n' + signatureContent} />
-                            </div>
                         </div>
 
                         <!-- File Attachments -->
@@ -1518,7 +1511,13 @@
                     action="?/addProposalComment" 
                     method="POST" 
                     enctype="multipart/form-data"
-                    use:enhance={() => {
+                    use:enhance={({ formData }) => {
+                        // Append files from local state to formData
+                        formData.delete('files'); // Clear existing empty/partial input
+                        commentFiles.forEach((file) => {
+                            formData.append('files', file);
+                        });
+
                         return async ({ result, update }) => {
                             if (result.type === 'success') {
                                 commentContent = '';
@@ -1535,10 +1534,8 @@
                     
                     <div class="space-y-2">
                         <input 
-                            type="text" 
+                            type="hidden" 
                             name="subject" 
-                            class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                            placeholder="Asunto (opcional)"
                             value={selectedProposal.title}
                         />
                         
@@ -1550,12 +1547,6 @@
                                 bind:value={commentContent}
                                 required
                             ></textarea>
-                            
-                            <div class="mt-2 text-xs text-muted-foreground p-2 bg-muted/10 rounded border border-dashed">
-                                <p class="font-medium mb-1">Firma:</p>
-                                <pre class="font-sans whitespace-pre-wrap text-[10px]">{signatureContent}</pre>
-                                <input type="hidden" name="content" value={commentContent + '\n\n' + signatureContent} />
-                            </div>
                         </div>
 
                         <!-- File Attachments -->

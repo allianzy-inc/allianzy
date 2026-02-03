@@ -39,12 +39,23 @@ export const services = pgTable('services', {
     createdAt: timestamp('created_at').defaultNow(),
 });
 
+export const subservices = pgTable('subservices', {
+    id: serial('id').primaryKey(),
+    name: text('name').notNull(),
+    description: text('description'),
+    status: text('status').default('Active'),
+    price: text('price'),
+    serviceId: integer('service_id').references(() => services.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at').defaultNow(),
+});
+
 export const projects = pgTable('projects', {
     id: serial('id').primaryKey(),
     name: text('name').notNull(),
     description: text('description'),
     status: text('status').default('Pending'),
     provider: text('provider').default('Allianzy'), // Allianzy, Beltrix, Provider
+    clientId: integer('client_id').references(() => users.id),
     serviceId: integer('service_id').references(() => services.id),
     links: jsonb('links'), // Array of { title, url }
     startDate: timestamp('start_date'),

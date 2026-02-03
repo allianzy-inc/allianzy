@@ -1,6 +1,6 @@
 import { db } from '$lib/server/db';
 import { projects, services, workspaces } from '$lib/server/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, or, isNull } from 'drizzle-orm';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, params }) => {
@@ -14,8 +14,10 @@ export const load: PageServerLoad = async ({ locals, params }) => {
         };
     }
 
+    console.log('[Dashboard Projects] User:', locals.user.id, 'Workspace:', locals.allowedWorkspace);
+
     // We join projects -> services -> workspaces to filter by slug
-    // And filter by services.clientId for the logged-in user
+    // And filter by services.clientId or projects.clientId for the logged-in user
     const workspaceProjects = await db.select({
         id: projects.id,
         name: projects.name,
@@ -26,12 +28,19 @@ export const load: PageServerLoad = async ({ locals, params }) => {
         serviceName: services.name
     })
     .from(projects)
-    .innerJoin(services, eq(projects.serviceId, services.id))
-    .innerJoin(workspaces, eq(services.workspaceId, workspaces.id))
+    .leftJoin(services, eq(projects.serviceId, services.id))
+    .leftJoin(workspaces, eq(services.workspaceId, workspaces.id))
     .where(
-        and(
-            eq(workspaces.slug, locals.allowedWorkspace),
-            eq(services.clientId, parseInt(locals.user.id))
+        or(
+            // 1. Direct Project Assignment (Highest Priority)
+            eq(projects.clientId, parseInt(locals.user.id)),
+
+            // 2. Service Fallback (Only if Project has NO specific client assigned)
+            and(
+                eq(workspaces.slug, locals.allowedWorkspace),
+                eq(services.clientId, parseInt(locals.user.id)),
+                isNull(projects.clientId)
+            )
         )
     );
 

@@ -1,0 +1,43 @@
+[2026-02-03T13:53:15.368Z] Request for url: https://f005.backblazeb2.com/file/allianzy/proposals/1770063507549-2026-01-28_at_13.13.19.jpeg
+[2026-02-03T13:53:15.369Z] Session validation failed: No session data
+[2026-02-03T13:53:15.369Z] Session validation error: {"message":"Unauthorized"}
+[2026-02-03T14:13:22.473Z] Request for url: https://f005.backblazeb2.com/file/allianzy/requests/1770078209059-boarding-pass.jpg
+[2026-02-03T14:13:22.473Z] locals.user missing, attempting manual validation
+[2026-02-03T14:13:22.473Z] Cookie present: false, Length: 0
+[2026-02-03T14:13:22.473Z] Session validation failed: No session data returned from validateSession
+[2026-02-03T14:13:22.473Z] Session validation error/throw: {"status":401,"body":{"message":"Unauthorized"}}
+[2026-02-03T14:15:59.719Z] Request for url: https://f005.backblazeb2.com/file/allianzy/requests/1770128154162-boarding-pass.jpg
+[2026-02-03T14:15:59.719Z] Session validated via locals for user: admin@allianzy.us
+[2026-02-03T14:15:59.719Z] Extracted bucket: allianzy, key: requests/1770128154162-boarding-pass.jpg
+[2026-02-03T14:15:59.910Z] Serving file successfully
+[2026-02-03T14:17:14.263Z] Request for url: https://f005.backblazeb2.com/file/allianzy/requests/1770128225221-boarding-pass.jpg
+[2026-02-03T14:17:14.264Z] Request Headers: {"accept":"image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8","accept-encoding":"gzip, deflate, br, zstd","accept-language":"en-US,en;q=0.9","connection":"keep-alive","cookie":"[Present, length: 114]","host":"localhost:5174","referer":"http://localhost:5174/allianzy/admin/projects/1?requestId=7","sec-ch-ua":"\"Not(A:Brand\";v=\"8\", \"Chromium\";v=\"144\", \"Google Chrome\";v=\"144\"","sec-ch-ua-mobile":"?0","sec-ch-ua-platform":"\"macOS\"","sec-fetch-dest":"image","sec-fetch-mode":"no-cors","sec-fetch-site":"same-origin","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-02-03T14:17:14.265Z] Session validated via locals for user: admin@allianzy.us
+[2026-02-03T14:17:14.265Z] Extracted bucket: allianzy, key: requests/1770128225221-boarding-pass.jpg
+[2026-02-03T14:17:14.772Z] Serving file successfully
+[2026-02-03T14:18:32.308Z] Request for url: https://f005.backblazeb2.com/file/allianzy/requests/1770128294888-boarding-pass.jpg
+[2026-02-03T14:18:32.309Z] Request Headers: {"accept":"image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8","accept-encoding":"gzip, deflate, br, zstd","accept-language":"en-US,en;q=0.9","connection":"keep-alive","cookie":"[Present, length: 114]","host":"localhost:5174","referer":"http://localhost:5174/allianzy/admin/projects/1?requestId=7","sec-ch-ua":"\"Not(A:Brand\";v=\"8\", \"Chromium\";v=\"144\", \"Google Chrome\";v=\"144\"","sec-ch-ua-mobile":"?0","sec-ch-ua-platform":"\"macOS\"","sec-fetch-dest":"image","sec-fetch-mode":"no-cors","sec-fetch-site":"same-origin","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-02-03T14:18:32.309Z] Session validated via locals for user: admin@allianzy.us
+[2026-02-03T14:18:32.309Z] Extracted bucket: allianzy, key: requests/1770128294888-boarding-pass.jpg
+[2026-02-03T14:18:32.822Z] Serving file successfully
+[2026-02-03T14:20:02.890Z] Request for url: https://f005.backblazeb2.com/file/allianzy/requirements/1770062880308-boarding-pass.jpg
+[2026-02-03T14:20:02.891Z] Request Headers: {"accept":"image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8","accept-encoding":"gzip, deflate, br, zstd","accept-language":"en-US,en;q=0.9","connection":"keep-alive","cookie":"[Present, length: 114]","host":"localhost:5174","referer":"http://localhost:5174/allianzy/admin/projects/1","sec-ch-ua":"\"Not(A:Brand\";v=\"8\", \"Chromium\";v=\"144\", \"Google Chrome\";v=\"144\"","sec-ch-ua-mobile":"?0","sec-ch-ua-platform":"\"macOS\"","sec-fetch-dest":"image","sec-fetch-mode":"no-cors","sec-fetch-site":"same-origin","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-02-03T14:20:02.891Z] Session validated via locals for user: admin@allianzy.us
+[2026-02-03T14:20:02.892Z] Extracted bucket: allianzy, key: requirements/1770062880308-boarding-pass.jpg
+[2026-02-03T14:20:04.022Z] Serving file successfully
+[2026-02-03T14:29:18.153Z] Request for url: null
+[2026-02-03T14:29:18.154Z] Request Headers: {"accept":"*/*","host":"localhost:5174","user-agent":"curl/8.7.1"}
+[2026-02-03T14:29:18.154Z] locals.user missing, attempting manual validation
+[2026-02-03T14:29:18.154Z] Cookie present: false, Length: 0
+[2026-02-03T14:29:18.154Z] Session validation failed: No session data returned from validateSession
+[2026-02-03T14:29:18.154Z] Session validation error/throw: {"status":401,"body":{"message":"Unauthorized"}}
+[2026-02-03T14:36:33.712Z] Request for url: https://f005.backblazeb2.com/file/allianzy/requirements/1770062880308-boarding-pass.jpg
+[2026-02-03T14:36:33.712Z] Request Headers: {"accept":"image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8","accept-encoding":"gzip, deflate, br, zstd","accept-language":"en-US,en;q=0.9","connection":"keep-alive","cookie":"[Present, length: 114]","host":"localhost:5174","referer":"http://localhost:5174/allianzy/admin/projects/1?requirementId=7","sec-ch-ua":"\"Not(A:Brand\";v=\"8\", \"Chromium\";v=\"144\", \"Google Chrome\";v=\"144\"","sec-ch-ua-mobile":"?0","sec-ch-ua-platform":"\"macOS\"","sec-fetch-dest":"image","sec-fetch-mode":"no-cors","sec-fetch-site":"same-origin","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-02-03T14:36:33.713Z] Signature valid, bypassing session check
+[2026-02-03T14:36:33.713Z] Extracted bucket: allianzy, key: requirements/1770062880308-boarding-pass.jpg
+[2026-02-03T14:36:34.379Z] Serving file successfully
+[2026-02-03T14:36:38.633Z] Request for url: https://f005.backblazeb2.com/file/allianzy/requests/1770128154162-boarding-pass.jpg
+[2026-02-03T14:36:38.634Z] Request Headers: {"accept":"image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8","accept-encoding":"gzip, deflate, br, zstd","accept-language":"en-US,en;q=0.9","connection":"keep-alive","cookie":"[Present, length: 114]","host":"localhost:5174","referer":"http://localhost:5174/allianzy/admin/projects/1","sec-ch-ua":"\"Not(A:Brand\";v=\"8\", \"Chromium\";v=\"144\", \"Google Chrome\";v=\"144\"","sec-ch-ua-mobile":"?0","sec-ch-ua-platform":"\"macOS\"","sec-fetch-dest":"image","sec-fetch-mode":"no-cors","sec-fetch-site":"same-origin","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"}
+[2026-02-03T14:36:38.634Z] Signature valid, bypassing session check
+[2026-02-03T14:36:38.634Z] Extracted bucket: allianzy, key: requests/1770128154162-boarding-pass.jpg
+[2026-02-03T14:36:38.842Z] Serving file successfully

@@ -1,6 +1,6 @@
 import { db } from '$lib/server/db';
 import { users, projects, services, cases, payments } from '$lib/server/schema';
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, or } from 'drizzle-orm';
 import { error, fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -22,7 +22,7 @@ export const load: PageServerLoad = async ({ params }) => {
         throw error(404, 'User not found');
     }
 
-    // Fetch projects related to the user (via services)
+    // Fetch projects related to the user (via direct link or services)
     const userProjects = await db.select({
         id: projects.id,
         name: projects.name,
@@ -32,8 +32,11 @@ export const load: PageServerLoad = async ({ params }) => {
         serviceName: services.name
     })
     .from(projects)
-    .innerJoin(services, eq(projects.serviceId, services.id))
-    .where(eq(services.clientId, userId))
+    .leftJoin(services, eq(projects.serviceId, services.id))
+    .where(or(
+        eq(projects.clientId, userId),
+        eq(services.clientId, userId)
+    ))
     .orderBy(desc(projects.createdAt));
 
     // Fetch payments related to the user's projects
@@ -47,8 +50,11 @@ export const load: PageServerLoad = async ({ params }) => {
     })
     .from(payments)
     .innerJoin(projects, eq(payments.projectId, projects.id))
-    .innerJoin(services, eq(projects.serviceId, services.id))
-    .where(eq(services.clientId, userId))
+    .leftJoin(services, eq(projects.serviceId, services.id))
+    .where(or(
+        eq(projects.clientId, userId),
+        eq(services.clientId, userId)
+    ))
     .orderBy(desc(payments.dueDate));
 
     // Fetch support cases related to the user's projects
@@ -62,8 +68,11 @@ export const load: PageServerLoad = async ({ params }) => {
     })
     .from(cases)
     .innerJoin(projects, eq(cases.projectId, projects.id))
-    .innerJoin(services, eq(projects.serviceId, services.id))
-    .where(eq(services.clientId, userId))
+    .leftJoin(services, eq(projects.serviceId, services.id))
+    .where(or(
+        eq(projects.clientId, userId),
+        eq(services.clientId, userId)
+    ))
     .orderBy(desc(cases.createdAt));
 
     return {

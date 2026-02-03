@@ -2,6 +2,7 @@ import { db } from '$lib/server/db';
 import { projects, services, users, requirements, projectMilestones, cases, proposals, payments, requests, caseComments, requestComments, requirementComments, proposalComments } from '$lib/server/schema';
 import { uploadFile, getSignedUrlForFile } from '$lib/server/storage';
 import { eq, asc, desc, sql } from 'drizzle-orm';
+import { alias } from 'drizzle-orm/pg-core';
 import { error, fail } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 
@@ -14,6 +15,29 @@ export const load: PageServerLoad = async ({ params, url }) => {
 
     try {
         // 1. Fetch Project with Client and Service info
+        const serviceUsers = alias(users, 'service_users');
+
+        // Fetch all clients for the edit modal
+        const allClients = await db.select({
+            id: users.id,
+            firstName: users.firstName,
+            lastName: users.lastName,
+            company: users.company,
+            email: users.email
+        })
+        .from(users)
+        .where(eq(users.role, 'client'));
+
+        // Fetch all services for the edit modal
+        const allServices = await db.select({
+            id: services.id,
+            name: services.name,
+            clientId: services.clientId,
+            status: services.status
+        })
+        .from(services)
+        .where(eq(services.status, 'Active'));
+
         const projectData = await db.select({
             id: projects.id,
             name: projects.name,
@@ -25,14 +49,21 @@ export const load: PageServerLoad = async ({ params, url }) => {
             startDate: projects.startDate,
             endDate: projects.endDate,
             serviceName: services.name,
-            clientName: sql<string>`TRIM(BOTH ' ' FROM COALESCE(${users.firstName}, '') || ' ' || COALESCE(${users.lastName}, ''))`,
-            clientCompany: users.company,
-            clientEmail: users.email,
-            clientId: users.id
+            // Prefer direct client link, fallback to service client link
+            clientName: sql<string>`
+                CASE 
+                    WHEN ${users.id} IS NOT NULL THEN TRIM(BOTH ' ' FROM COALESCE(${users.firstName}, '') || ' ' || COALESCE(${users.lastName}, ''))
+                    ELSE TRIM(BOTH ' ' FROM COALESCE(${serviceUsers.firstName}, '') || ' ' || COALESCE(${serviceUsers.lastName}, ''))
+                END
+            `,
+            clientCompany: sql<string>`COALESCE(${users.company}, ${serviceUsers.company})`,
+            clientEmail: sql<string>`COALESCE(${users.email}, ${serviceUsers.email})`,
+            clientId: sql<number>`COALESCE(${users.id}, ${serviceUsers.id})`
         })
         .from(projects)
         .leftJoin(services, eq(projects.serviceId, services.id))
-        .leftJoin(users, eq(services.clientId, users.id))
+        .leftJoin(users, eq(projects.clientId, users.id))
+        .leftJoin(serviceUsers, eq(services.clientId, serviceUsers.id))
         .where(eq(projects.id, projectId))
         .limit(1);
 
@@ -53,13 +84,13 @@ export const load: PageServerLoad = async ({ params, url }) => {
             if (files && Array.isArray(files)) {
                 files = await Promise.all(files.map(async (f) => ({
                     ...f,
-                    url: await getSignedUrlForFile(f.url)
+                    url: await getSignedUrlForFile(f.url, params.workspace)
                 })));
             }
             return { 
                 ...r, 
                 files,
-                documentUrl: await getSignedUrlForFile(r.documentUrl) // Keep backward compatibility for a moment if needed
+                documentUrl: await getSignedUrlForFile(r.documentUrl, params.workspace) // Keep backward compatibility for a moment if needed
             };
         }));
 
@@ -80,7 +111,7 @@ export const load: PageServerLoad = async ({ params, url }) => {
             if (files && Array.isArray(files)) {
                 files = await Promise.all(files.map(async (f) => ({
                     ...f,
-                    url: await getSignedUrlForFile(f.url)
+                    url: await getSignedUrlForFile(f.url, params.workspace)
                 })));
             }
             return { ...c, files };
@@ -110,7 +141,7 @@ export const load: PageServerLoad = async ({ params, url }) => {
                  if (files && Array.isArray(files)) {
                      files = await Promise.all(files.map(async (f) => ({
                          ...f,
-                         url: await getSignedUrlForFile(f.url)
+                         url: await getSignedUrlForFile(f.url, params.workspace)
                      })));
                  }
                  return { ...c, files };
@@ -141,7 +172,7 @@ export const load: PageServerLoad = async ({ params, url }) => {
                  if (files && Array.isArray(files)) {
                      files = await Promise.all(files.map(async (f) => ({
                          ...f,
-                         url: await getSignedUrlForFile(f.url)
+                         url: await getSignedUrlForFile(f.url, params.workspace)
                      })));
                  }
                  return { ...c, files };
@@ -172,7 +203,7 @@ export const load: PageServerLoad = async ({ params, url }) => {
                  if (files && Array.isArray(files)) {
                      files = await Promise.all(files.map(async (f) => ({
                          ...f,
-                         url: await getSignedUrlForFile(f.url)
+                         url: await getSignedUrlForFile(f.url, params.workspace)
                      })));
                  }
                  return { ...c, files };
@@ -203,7 +234,7 @@ export const load: PageServerLoad = async ({ params, url }) => {
                  if (files && Array.isArray(files)) {
                      files = await Promise.all(files.map(async (f) => ({
                          ...f,
-                         url: await getSignedUrlForFile(f.url)
+                         url: await getSignedUrlForFile(f.url, params.workspace)
                      })));
                  }
                  return { ...c, files };
@@ -221,13 +252,13 @@ export const load: PageServerLoad = async ({ params, url }) => {
             if (files && Array.isArray(files)) {
                 files = await Promise.all(files.map(async (f) => ({
                     ...f,
-                    url: await getSignedUrlForFile(f.url)
+                    url: await getSignedUrlForFile(f.url, params.workspace)
                 })));
             }
             return {
                 ...p,
                 files,
-                documentUrl: await getSignedUrlForFile(p.documentUrl)
+                documentUrl: await getSignedUrlForFile(p.documentUrl, params.workspace)
             };
         }));
 
@@ -239,7 +270,7 @@ export const load: PageServerLoad = async ({ params, url }) => {
         
         const projectPayments = await Promise.all(rawPayments.map(async (p) => ({
             ...p,
-            documentUrl: await getSignedUrlForFile(p.documentUrl)
+            documentUrl: await getSignedUrlForFile(p.documentUrl, params.workspace)
         })));
 
         // 7. Fetch Requests
@@ -253,28 +284,24 @@ export const load: PageServerLoad = async ({ params, url }) => {
             if (files && Array.isArray(files)) {
                 files = await Promise.all(files.map(async (f) => ({
                     ...f,
-                    url: await getSignedUrlForFile(f.url)
+                    url: await getSignedUrlForFile(f.url, params.workspace)
                 })));
             }
             return { ...r, files };
         }));
-
-        // 8. Fetch All Clients and Services (for editing)
-        const allClients = await db.select().from(users).where(eq(users.role, 'client'));
-        const allServices = await db.select().from(services);
 
         return {
             project,
             requirements: projectRequirements,
             milestones,
             supportCases,
+            proposals: projectProposals,
+            payments: projectPayments,
+            requests: projectRequests,
             selectedCaseComments,
             selectedRequestComments,
             selectedRequirementComments,
             selectedProposalComments,
-            proposals: projectProposals,
-            payments: projectPayments,
-            requests: projectRequests,
             allClients,
             allServices
         };
@@ -292,6 +319,7 @@ export const actions: Actions = {
         const name = formData.get('name') as string;
         const status = formData.get('status') as string;
         const provider = formData.get('provider') as string;
+        const clientId = formData.get('clientId') ? Number(formData.get('clientId')) : null;
         const serviceId = Number(formData.get('serviceId'));
         const startDateStr = formData.get('startDate') as string;
         const startTimeStr = formData.get('startTime') as string;
@@ -319,6 +347,7 @@ export const actions: Actions = {
                     name,
                     status,
                     provider,
+                    clientId,
                     serviceId,
                     startDate,
                     links

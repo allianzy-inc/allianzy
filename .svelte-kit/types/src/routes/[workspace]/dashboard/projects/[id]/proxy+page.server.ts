@@ -2,9 +2,21 @@
 import { db } from '$lib/server/db';
 import { projects, services, users, requirements, projectMilestones, cases, proposals, payments, requests, caseComments, requestComments, requirementComments, proposalComments, workspaces } from '$lib/server/schema';
 import { uploadFile, getSignedUrlForFile } from '$lib/server/storage';
-import { eq, asc, desc, sql, and } from 'drizzle-orm';
+import { eq, asc, desc, sql, and, or, isNull } from 'drizzle-orm';
 import { error, fail } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
+import * as fs from 'fs';
+import * as path from 'path';
+
+function logUrlDebug(message: string) {
+    try {
+        const logPath = path.resolve('debug-urls.log');
+        const timestamp = new Date().toISOString();
+        fs.appendFileSync(logPath, `[${timestamp}] ${message}\n`);
+    } catch (e) {
+        // ignore
+    }
+}
 
 export const load = async ({ params, url, locals }: Parameters<PageServerLoad>[0]) => {
     const projectId = Number(params.id);
@@ -38,13 +50,22 @@ export const load = async ({ params, url, locals }: Parameters<PageServerLoad>[0
         })
         .from(projects)
         .leftJoin(services, eq(projects.serviceId, services.id))
-        .leftJoin(users, eq(services.clientId, users.id))
+        .leftJoin(users, eq(users.id, parseInt(locals.user.id)))
         .innerJoin(workspaces, eq(services.workspaceId, workspaces.id))
         .where(
             and(
                 eq(projects.id, projectId),
-                eq(workspaces.slug, locals.allowedWorkspace),
-                eq(services.clientId, parseInt(locals.user.id)) // STRICT FILTER BY USER
+                or(
+                    // 1. Direct Project Assignment (Highest Priority)
+                    eq(projects.clientId, parseInt(locals.user.id)),
+
+                    // 2. Service Fallback (Only if Project has NO specific client assigned)
+                    and(
+                        eq(workspaces.slug, locals.allowedWorkspace),
+                        eq(services.clientId, parseInt(locals.user.id)),
+                        isNull(projects.clientId)
+                    )
+                )
             )
         )
         .limit(1);
@@ -64,15 +85,19 @@ export const load = async ({ params, url, locals }: Parameters<PageServerLoad>[0
         const projectRequirements = await Promise.all(rawRequirements.map(async (r) => {
             let files = r.files as any[];
             if (files && Array.isArray(files)) {
-                files = await Promise.all(files.map(async (f) => ({
-                    ...f,
-                    url: await getSignedUrlForFile(f.url)
-                })));
+                files = await Promise.all(files.map(async (f) => {
+                    const newUrl = await getSignedUrlForFile(f.url, params.workspace);
+                    logUrlDebug(`Requirement File: ${f.name}, Original: ${f.url}, Proxy: ${newUrl}`);
+                    return {
+                        ...f,
+                        url: newUrl
+                    };
+                }));
             }
             return { 
                 ...r, 
                 files,
-                documentUrl: await getSignedUrlForFile(r.documentUrl)
+                documentUrl: await getSignedUrlForFile(r.documentUrl, params.workspace)
             };
         }));
 
@@ -91,10 +116,14 @@ export const load = async ({ params, url, locals }: Parameters<PageServerLoad>[0
         const supportCases = await Promise.all(rawSupportCases.map(async (c) => {
             let files = c.files as any[];
             if (files && Array.isArray(files)) {
-                files = await Promise.all(files.map(async (f) => ({
-                    ...f,
-                    url: await getSignedUrlForFile(f.url)
-                })));
+                files = await Promise.all(files.map(async (f) => {
+                    const newUrl = await getSignedUrlForFile(f.url, params.workspace);
+                    logUrlDebug(`Case File: ${f.name}, Original: ${f.url}, Proxy: ${newUrl}`);
+                    return {
+                        ...f,
+                        url: newUrl
+                    };
+                }));
             }
             return { ...c, files };
         }));
@@ -123,7 +152,7 @@ export const load = async ({ params, url, locals }: Parameters<PageServerLoad>[0
                  if (files && Array.isArray(files)) {
                      files = await Promise.all(files.map(async (f) => ({
                          ...f,
-                         url: await getSignedUrlForFile(f.url)
+                         url: await getSignedUrlForFile(f.url, params.workspace)
                      })));
                  }
                  return { ...c, files };
@@ -154,7 +183,7 @@ export const load = async ({ params, url, locals }: Parameters<PageServerLoad>[0
                  if (files && Array.isArray(files)) {
                      files = await Promise.all(files.map(async (f) => ({
                          ...f,
-                         url: await getSignedUrlForFile(f.url)
+                         url: await getSignedUrlForFile(f.url, params.workspace)
                      })));
                  }
                  return { ...c, files };
@@ -185,7 +214,7 @@ export const load = async ({ params, url, locals }: Parameters<PageServerLoad>[0
                  if (files && Array.isArray(files)) {
                      files = await Promise.all(files.map(async (f) => ({
                          ...f,
-                         url: await getSignedUrlForFile(f.url)
+                         url: await getSignedUrlForFile(f.url, params.workspace)
                      })));
                  }
                  return { ...c, files };
@@ -216,7 +245,7 @@ export const load = async ({ params, url, locals }: Parameters<PageServerLoad>[0
                  if (files && Array.isArray(files)) {
                      files = await Promise.all(files.map(async (f) => ({
                          ...f,
-                         url: await getSignedUrlForFile(f.url)
+                         url: await getSignedUrlForFile(f.url, params.workspace)
                      })));
                  }
                  return { ...c, files };
@@ -232,15 +261,19 @@ export const load = async ({ params, url, locals }: Parameters<PageServerLoad>[0
         const projectProposals = await Promise.all(rawProposals.map(async (p) => {
             let files = p.files as any[];
             if (files && Array.isArray(files)) {
-                files = await Promise.all(files.map(async (f) => ({
-                    ...f,
-                    url: await getSignedUrlForFile(f.url)
-                })));
+                files = await Promise.all(files.map(async (f) => {
+                    const newUrl = await getSignedUrlForFile(f.url, params.workspace);
+                    logUrlDebug(`Proposal File: ${f.name}, Original: ${f.url}, Proxy: ${newUrl}`);
+                    return {
+                        ...f,
+                        url: newUrl
+                    };
+                }));
             }
             return {
                 ...p,
                 files,
-                documentUrl: await getSignedUrlForFile(p.documentUrl)
+                documentUrl: await getSignedUrlForFile(p.documentUrl, params.workspace)
             };
         }));
 
@@ -252,7 +285,7 @@ export const load = async ({ params, url, locals }: Parameters<PageServerLoad>[0
         
         const projectPayments = await Promise.all(rawPayments.map(async (p) => ({
             ...p,
-            documentUrl: await getSignedUrlForFile(p.documentUrl)
+            documentUrl: await getSignedUrlForFile(p.documentUrl, params.workspace)
         })));
 
         // 7. Fetch Requests
@@ -264,10 +297,14 @@ export const load = async ({ params, url, locals }: Parameters<PageServerLoad>[0
         const projectRequests = await Promise.all(rawRequests.map(async (r) => {
             let files = r.files as any[];
             if (files && Array.isArray(files)) {
-                files = await Promise.all(files.map(async (f) => ({
-                    ...f,
-                    url: await getSignedUrlForFile(f.url)
-                })));
+                files = await Promise.all(files.map(async (f) => {
+                    const newUrl = await getSignedUrlForFile(f.url, params.workspace);
+                    logUrlDebug(`Request File: ${f.name}, Original: ${f.url}, Proxy: ${newUrl}`);
+                    return {
+                        ...f,
+                        url: newUrl
+                    };
+                }));
             }
             return { ...r, files };
         }));

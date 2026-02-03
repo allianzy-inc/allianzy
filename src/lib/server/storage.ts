@@ -34,7 +34,7 @@ export async function uploadFile(file: File, folder: string = 'uploads'): Promis
   return `https://f005.backblazeb2.com/file/${env.B2_BUCKET_NAME}/${key}`;
 }
 
-export async function getSignedUrlForFile(url: string | null): Promise<string | null> {
+export async function getSignedUrlForFile(url: string | null, workspace: string = 'allianzy'): Promise<string | null> {
   if (!url) return null;
 
   // Robust B2 URL detection using regex
@@ -44,31 +44,24 @@ export async function getSignedUrlForFile(url: string | null): Promise<string | 
   const match = url.match(b2Regex);
 
   if (match) {
-    try {
-      const bucketInUrl = match[1];
-      const key = match[2];
+    // Return a local proxy URL to avoid CORS issues with direct B2 links
+    // The proxy will handle fetching the file from B2 and streaming it to the client
+    // Add timestamp to prevent caching issues and signature for security
+    const timestamp = Date.now();
+    const payload = `${url}|${timestamp}|${workspace}`;
+    const signature = createHmac('sha256', SIGNING_SECRET)
+      .update(payload)
+      .digest('hex');
 
-      // Generate a direct S3 presigned URL
-      // This is simpler and more reliable than the local proxy
-      const command = new GetObjectCommand({
-        Bucket: bucketInUrl, // Use the bucket from the URL to be safe
-        Key: key
-      });
-      
-      // Expire in 1 hour (3600 seconds)
-      return await getSignedUrl(s3, command, { expiresIn: 3600 });
-    } catch (err) {
-      console.error('Error signing URL:', err);
-      return url; // Return original if signing fails
-    }
+    return `/${workspace}/dashboard/api/files?url=${encodeURIComponent(url)}&t=${timestamp}&sig=${signature}`;
   }
 
   return url;
 }
 
-export async function getFileStream(key: string) {
+export async function getFileStream(key: string, bucket?: string) {
   const command = new GetObjectCommand({
-    Bucket: env.B2_BUCKET_NAME,
+    Bucket: bucket || env.B2_BUCKET_NAME,
     Key: key
   });
   

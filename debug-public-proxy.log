@@ -1038,3 +1038,7 @@
 [2026-02-04T13:31:09.235Z] Request: http://localhost:5174/api/public/files?url=https%3A%2F%2Ff005.backblazeb2.com%2Ffile%2Fallianzy%2Fproject-covers%2F1770167409498-bot-ia.webp&t=1770211868388&sig=034eb9af5ce59ae86e450c2a5a3e2dbd99d3ac2e24bddb18db0ebcb3cbdfcdf1&w=allianzy
 [2026-02-04T13:31:09.257Z] Serving file successfully
 [2026-02-04T13:31:09.841Z] Serving file successfully
+[2026-02-04T13:43:58.960Z] Request: http://localhost:5174/api/public/files?url=https%3A%2F%2Ff005.backblazeb2.com%2Ffile%2Fallianzy%2Fproject-covers%2F1770167409498-bot-ia.webp&t=1770212638394&sig=014940ba32c427b6a04c18109392ab113d17a6d9b51beaa9fad3eedae361f187&w=allianzy
+[2026-02-04T13:43:59.253Z] Request: http://localhost:5174/api/public/files?url=https%3A%2F%2Ff005.backblazeb2.com%2Ffile%2Fallianzy%2Fproject-covers%2F1770167381485-agora.jpg&t=1770212638394&sig=21e51ddf65c9674ce0c683a4bf9ff0d72625efa669f3600693b6e2c8ea9c2b1d&w=allianzy
+[2026-02-04T13:43:59.664Z] Serving file successfully
+[2026-02-04T13:44:00.232Z] Serving file successfully

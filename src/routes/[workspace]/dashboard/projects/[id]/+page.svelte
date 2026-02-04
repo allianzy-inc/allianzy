@@ -545,13 +545,7 @@
                 {:else if activeTab === 'support'}
                     <div class="space-y-4">
                         <div class="flex justify-between items-center mb-4">
-                            <h3 class="font-semibold">Tickets de Soporte</h3>
-                            <button 
-                                on:click={openCreateCaseModal}
-                                class="text-xs bg-primary text-primary-foreground hover:bg-primary/90 px-3 py-1.5 rounded-md transition-colors flex items-center gap-1"
-                            >
-                                <Plus class="w-3 h-3" /> Nuevo Ticket
-                            </button>
+                            <h3 class="font-semibold">Historial de soporte</h3>
                         </div>
 
                         {#if !supportCases || supportCases.length === 0}
@@ -891,7 +885,7 @@
             <!-- Chat Area -->
             <div class="flex-1 relative min-h-0">
                 <div 
-                    class="absolute inset-0 overflow-y-auto p-4 space-y-4 bg-slate-50" 
+                    class="absolute inset-0 overflow-y-auto p-4 space-y-4 bg-muted/10" 
                     use:scrollToBottom={{ dependency: selectedCaseComments }}
                     bind:this={chatContainer}
                 >
@@ -903,7 +897,7 @@
                 {:else}
                     {#each selectedCaseComments as comment}
                         {@const isMe = comment.userId === (user ? parseInt(user.id) : -1)}
-                        <div class="border rounded-lg bg-white shadow-sm overflow-hidden {isMe ? 'border-primary/20' : ''}">
+                        <div class="border rounded-lg bg-card shadow-sm overflow-hidden {isMe ? 'border-primary/20' : ''}">
                             <!-- Email Header -->
                             <div class="{isMe ? 'bg-primary/5' : 'bg-muted/10'} px-4 py-3 border-b">
                                 <div class="flex justify-between items-center">
@@ -1104,7 +1098,7 @@
             <!-- Chat Area -->
             <div class="flex-1 relative min-h-0">
                 <div 
-                    class="absolute inset-0 overflow-y-auto p-4 space-y-4 bg-slate-50" 
+                    class="absolute inset-0 overflow-y-auto p-4 space-y-4 bg-muted/10" 
                     use:scrollToBottom={{ dependency: selectedRequestComments }}
                     bind:this={chatContainer}
                 >
@@ -1116,7 +1110,7 @@
                 {:else}
                     {#each selectedRequestComments as comment}
                         {@const isMe = comment.userId === (user ? parseInt(user.id) : -1)}
-                        <div class="border rounded-lg bg-white shadow-sm overflow-hidden {isMe ? 'border-primary/20' : ''}">
+                        <div class="border rounded-lg bg-card shadow-sm overflow-hidden {isMe ? 'border-primary/20' : ''}">
                             <div class="{isMe ? 'bg-primary/5' : 'bg-muted/10'} px-4 py-3 border-b">
                                 <div class="flex justify-between items-center">
                                     <div class="flex items-center gap-2">
@@ -1321,7 +1315,7 @@
             <!-- Chat Area -->
             <div class="flex-1 relative min-h-0">
                 <div 
-                    class="absolute inset-0 overflow-y-auto p-4 space-y-4 bg-slate-50" 
+                    class="absolute inset-0 overflow-y-auto p-4 space-y-4 bg-muted/10" 
                     use:scrollToBottom={{ dependency: selectedRequirementComments }}
                     bind:this={chatContainer}
                 >
@@ -1333,7 +1327,7 @@
                 {:else}
                     {#each selectedRequirementComments as comment}
                         {@const isMe = comment.userId === (user ? parseInt(user.id) : -1)}
-                        <div class="border rounded-lg bg-white shadow-sm overflow-hidden {isMe ? 'border-primary/20' : ''}">
+                        <div class="border rounded-lg bg-card shadow-sm overflow-hidden {isMe ? 'border-primary/20' : ''}">
                             <div class="{isMe ? 'bg-primary/5' : 'bg-muted/10'} px-4 py-3 border-b">
                                 <div class="flex justify-between items-center">
                                     <div class="flex items-center gap-2">
@@ -1538,7 +1532,7 @@
             <!-- Chat Area -->
             <div class="flex-1 relative min-h-0">
                 <div 
-                    class="absolute inset-0 overflow-y-auto p-4 space-y-6 bg-slate-50" 
+                    class="absolute inset-0 overflow-y-auto p-4 space-y-6 bg-muted/10" 
                     use:scrollToBottom={{ dependency: selectedProposalComments }}
                     bind:this={chatContainer}
                 >
@@ -1550,7 +1544,7 @@
                 {:else}
                     {#each selectedProposalComments as comment}
                         {@const isMe = comment.userId === (user ? parseInt(user.id) : -1)}
-                        <div class="border rounded-lg bg-white shadow-sm overflow-hidden {isMe ? 'border-primary/20' : ''}">
+                        <div class="border rounded-lg bg-card shadow-sm overflow-hidden {isMe ? 'border-primary/20' : ''}">
                             <div class="{isMe ? 'bg-primary/5' : 'bg-muted/10'} px-4 py-3 border-b">
                                 <div class="flex justify-between items-center">
                                     <div class="flex items-center gap-2">

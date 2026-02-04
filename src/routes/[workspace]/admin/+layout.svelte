@@ -59,8 +59,23 @@
         { href: `/${workspace}/admin/settings`, label: 'Configuraciones', icon: Settings },
     ];
 
+    function clearAllCookies() {
+        const cookies = document.cookie.split(';');
+        for (const cookie of cookies) {
+            const eqPos = cookie.indexOf('=');
+            const name = (eqPos > -1 ? cookie.slice(0, eqPos) : cookie).trim();
+            if (!name) continue;
+            document.cookie = `${name}=; Max-Age=0; path=/;`;
+        }
+    }
+
     async function handleLogout() {
-        await authClient.signOut();
+        try {
+            await authClient.signOut();
+        } catch (error) {
+            console.error('Logout error:', error);
+        }
+        clearAllCookies();
         goto(`/${workspace}`);
     }
 

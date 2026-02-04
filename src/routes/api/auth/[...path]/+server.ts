@@ -31,12 +31,20 @@ async function proxy(request: Request, path: string) {
 
     const body = request.method !== 'GET' && request.method !== 'HEAD' ? await request.blob() : undefined;
 
+    const authUrlObj = new URL(AUTH_URL);
     const requestUrl = new URL(request.url);
     const origin = headers.get('origin');
-    if (origin && origin.startsWith('https://www.')) {
-        headers.set('origin', origin.replace('https://www.', 'https://'));
-    } else if (!origin) {
-        headers.set('origin', requestUrl.origin);
+    
+    // Normalize Origin for production (www -> root) and localhost
+    if (origin) {
+        if (origin.startsWith('https://www.')) {
+            headers.set('origin', origin.replace('https://www.', 'https://'));
+        } else if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
+            // Spoof Origin for localhost to match Auth Server expectation
+            headers.set('origin', authUrlObj.origin);
+        }
+    } else {
+         headers.set('origin', requestUrl.origin);
     }
 
     const referer = headers.get('referer');
@@ -44,13 +52,13 @@ async function proxy(request: Request, path: string) {
         headers.set('referer', referer.replace('https://www.', 'https://'));
     }
 
-    headers.set('host', requestUrl.host);
-    headers.set('x-forwarded-host', requestUrl.host);
-    headers.set('x-forwarded-proto', requestUrl.protocol.replace(':', ''));
-    if (requestUrl.port) {
-        headers.set('x-forwarded-port', requestUrl.port);
-    }
-    headers.set('forwarded', `host=${requestUrl.host};proto=${requestUrl.protocol.replace(':', '')}`);
+    headers.set('host', authUrlObj.host);
+    headers.set('x-forwarded-host', authUrlObj.host); // Spoof host to match Neon Auth expectation
+    headers.set('x-forwarded-proto', 'https'); // Force HTTPS
+    // if (requestUrl.port) {
+    //     headers.set('x-forwarded-port', requestUrl.port);
+    // }
+    // headers.set('forwarded', `host=${requestUrl.host};proto=https`);
 
     try {
         const response = await fetch(targetUrl, {
@@ -76,9 +84,12 @@ async function proxy(request: Request, path: string) {
             responseHeaders.set('set-cookie', newSetCookie);
         }
 
-        // Add CORS headers if needed (though we are same-origin now)
-        // responseHeaders.set('Access-Control-Allow-Origin', url.origin);
-        // responseHeaders.set('Access-Control-Allow-Credentials', 'true');
+        // Rewrite CORS for localhost
+        const requestOrigin = request.headers.get('origin') || requestUrl.origin;
+        if (requestOrigin && (requestOrigin.includes('localhost') || requestOrigin.includes('127.0.0.1'))) {
+             responseHeaders.set('Access-Control-Allow-Origin', requestOrigin);
+             responseHeaders.set('Access-Control-Allow-Credentials', 'true');
+        }
 
         return new Response(response.body, {
             status: response.status,

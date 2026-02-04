@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { env } from '$env/dynamic/private';
 import { createHmac } from 'crypto';
@@ -32,6 +32,29 @@ export async function uploadFile(file: File, folder: string = 'uploads'): Promis
   // Return the standard B2 Native URL format
   // This is stored in DB. We will proxy it when displaying.
   return `https://f005.backblazeb2.com/file/${env.B2_BUCKET_NAME}/${key}`;
+}
+
+export async function deleteFile(fileUrl: string): Promise<void> {
+  if (!fileUrl) return;
+
+  // Extract key from URL
+  // URL format: https://f005.backblazeb2.com/file/<bucket>/<key>
+  const b2Regex = /https:\/\/[^/]+\.backblazeb2\.com\/file\/([^/]+)\/(.+)/;
+  const match = fileUrl.match(b2Regex);
+
+  if (match) {
+    const key = match[2]; // The key is the second capture group
+    
+    try {
+      await s3.send(new DeleteObjectCommand({
+        Bucket: env.B2_BUCKET_NAME,
+        Key: key
+      }));
+    } catch (error) {
+      console.error('Error deleting file from storage:', error);
+      // We don't throw here to allow the DB deletion to proceed even if file deletion fails
+    }
+  }
 }
 
 export async function getSignedUrlForFile(url: string | null, workspace: string = 'allianzy'): Promise<string | null> {

@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { db } from '$lib/server/db';
-import { projects, services, users } from '$lib/server/schema';
+import { projects, services, users, cases, requests, requirements, proposals, payments } from '$lib/server/schema';
 import { eq, sql, and, or } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import type { PageServerLoad, Actions } from './$types';
@@ -154,6 +154,14 @@ export const actions = {
         if (!id) return fail(400, { missing: true });
 
         try {
+            // Delete related records manually first (manual cascade)
+            await db.delete(cases).where(eq(cases.projectId, id));
+            await db.delete(requests).where(eq(requests.projectId, id));
+            await db.delete(requirements).where(eq(requirements.projectId, id));
+            await db.delete(proposals).where(eq(proposals.projectId, id));
+            await db.delete(payments).where(eq(payments.projectId, id));
+
+            // Finally delete the project
             await db.delete(projects).where(eq(projects.id, id));
             return { success: true };
         } catch (error) {

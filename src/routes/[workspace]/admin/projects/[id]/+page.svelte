@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ArrowLeft, CheckCircle2, Circle, Clock, MessageSquare, FileText, User, Calendar, Briefcase, AlertCircle, DollarSign, CreditCard, ExternalLink, Download, Pencil, Trash2, Plus, X, Eye, Inbox, Send, Paperclip } from 'lucide-svelte';
+    import { ArrowLeft, CheckCircle2, Circle, Clock, MessageSquare, FileText, User, Calendar, Briefcase, AlertCircle, DollarSign, CreditCard, ExternalLink, Download, Pencil, Trash2, Plus, X, Eye, Inbox, Send, Paperclip, Loader2 } from 'lucide-svelte';
     import type { PageData } from './$types';
     import { enhance } from '$app/forms';
     import DocumentPreviewModal from '$lib/components/DocumentPreviewModal.svelte';
@@ -147,13 +147,6 @@
     let commentFiles: File[] = [];
     let commentFileInput: HTMLInputElement;
     let commentContent = '';
-    const DEFAULT_SIGNATURE_TEXT = '--\nEquipo de Allianzy Inc\nSoporte Técnico\nwww.allianzy.com';
-    let signatureContent = DEFAULT_SIGNATURE_TEXT;
-
-    // Reset content when case opens
-    $: if (isCaseDetailsOpen || isRequestDetailsOpen || isRequirementDetailsOpen || isProposalDetailsOpen) {
-        if (!signatureContent) signatureContent = DEFAULT_SIGNATURE_TEXT;
-    }
 
     function handleCommentFileSelect(event: Event) {
         const target = event.target as HTMLInputElement;
@@ -306,6 +299,21 @@
     let isCaseModalOpen = false;
     let editingCase: any = null;
     let caseFilesToKeep: any[] = [];
+
+    // Delete Case Modal Logic
+    let isDeleteCaseModalOpen = false;
+    let caseToDelete: any = null;
+    let isDeleting = false;
+
+    function openDeleteCaseModal(ticket: any) {
+        caseToDelete = ticket;
+        isDeleteCaseModalOpen = true;
+    }
+
+    function closeDeleteCaseModal() {
+        isDeleteCaseModalOpen = false;
+        caseToDelete = null;
+    }
     
     // Case Details Logic
     let isCaseDetailsOpen = false;
@@ -374,10 +382,14 @@
     let isEditProjectModalOpen = false;
     let selectedClientId: number | null = null;
     let projectLinks: { title: string; url: string }[] = [];
+    let removeProjectImage = false;
+    let previewImageUrl: string | null = null;
 
     function openEditProjectModal() {
         selectedClientId = project.clientId;
         projectLinks = project.links ? [...project.links] : [];
+        removeProjectImage = false;
+        previewImageUrl = null;
         isEditProjectModalOpen = true;
     }
 
@@ -387,6 +399,21 @@
 
     function removeProjectLink(index: number) {
         projectLinks = projectLinks.filter((_, i) => i !== index);
+    }
+
+    function handleImageSelect(event: Event) {
+        const target = event.target as HTMLInputElement;
+        if (target.files && target.files[0]) {
+            const file = target.files[0];
+            previewImageUrl = URL.createObjectURL(file);
+            removeProjectImage = false;
+        }
+    }
+
+    function clearImageSelection() {
+        previewImageUrl = null;
+        const input = document.getElementById('edit-image') as HTMLInputElement;
+        if (input) input.value = '';
     }
 
     function closeEditProjectModal() {
@@ -511,7 +538,7 @@
                         </div>
 
                         <div class="relative pl-8 border-l-2 border-muted space-y-8">
-                            {#each milestones as step}
+                            {#each milestones as step (step.id)}
                                 <div class="relative group">
                                     <div class="absolute -left-[41px] bg-background p-1">
                                         {#if step.status === 'completed'}
@@ -579,7 +606,7 @@
                         {#if !requests || requests.length === 0}
                             <p class="text-muted-foreground text-sm">No hay solicitudes registradas.</p>
                         {:else}
-                            {#each requests as req}
+                            {#each requests as req (req.id)}
                                 <!-- svelte-ignore a11y-click-events-have-key-events -->
                                 <!-- svelte-ignore a11y-no-static-element-interactions -->
                                 <div 
@@ -657,7 +684,7 @@
                         {#if requirements.length === 0}
                             <p class="text-muted-foreground text-sm">No hay requerimientos registrados.</p>
                         {:else}
-                            {#each requirements as req}
+                            {#each requirements as req (req.id)}
                                 <!-- svelte-ignore a11y-click-events-have-key-events -->
                                 <!-- svelte-ignore a11y-no-static-element-interactions -->
                                 <div 
@@ -735,7 +762,7 @@
                         {#if supportCases.length === 0}
                             <p class="text-muted-foreground text-sm">No hay tickets de soporte.</p>
                         {:else}
-                            {#each supportCases as ticket}
+                            {#each supportCases as ticket (ticket.id)}
                                 <!-- svelte-ignore a11y-click-events-have-key-events -->
                                 <!-- svelte-ignore a11y-no-static-element-interactions -->
                                 <div 
@@ -780,6 +807,13 @@
                                         >
                                             <Pencil class="w-4 h-4" />
                                         </button>
+                                        <button 
+                                            on:click|stopPropagation={() => openDeleteCaseModal(ticket)}
+                                            class="p-1.5 hover:bg-red-50 rounded text-muted-foreground hover:text-red-600"
+                                            title="Eliminar"
+                                        >
+                                            <Trash2 class="w-4 h-4" />
+                                        </button>
                                     </div>
                                 </div>
                             {/each}
@@ -801,7 +835,7 @@
                         {#if proposals.length === 0}
                             <p class="text-muted-foreground text-sm">No hay propuestas registradas.</p>
                         {:else}
-                            {#each proposals as prop}
+                            {#each proposals as prop (prop.id)}
                                 <!-- svelte-ignore a11y-click-events-have-key-events -->
                                 <!-- svelte-ignore a11y-no-static-element-interactions -->
                                 <div 
@@ -891,7 +925,7 @@
                                         </tr>
                                     </thead>
                                     <tbody class="divide-y">
-                                        {#each payments as pay}
+                                        {#each payments as pay (pay.id)}
                                             <tr class="hover:bg-muted/50 transition-colors">
                                                 <td class="p-3">
                                                     <div class="font-medium flex items-center gap-2">
@@ -907,7 +941,13 @@
                                                     {/if}
                                                 </td>
                                                 <td class="p-3 text-muted-foreground">{formatDate(pay.dueDate)}</td>
-                                                <td class="p-3 font-medium">{pay.amount}</td>
+                                                <td class="p-3 font-medium">
+                                                    {#if pay.amountUsd}
+                                                        USD {pay.amountUsd}
+                                                    {:else}
+                                                        {pay.amount}
+                                                    {/if}
+                                                </td>
                                                 <td class="p-3 text-right">
                                                     <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium capitalize
                                                         {pay.status === 'paid' ? 'bg-green-100 text-green-700' : 
@@ -1384,7 +1424,7 @@
                         });
                         
                         // Combine body and signature
-                        formData.set('content', commentContent + '\n\n' + signatureContent);
+                        formData.set('content', commentContent);
 
                         return async ({ result, update }) => {
                             if (result.type === 'success') {
@@ -1441,19 +1481,6 @@
                             class="w-full bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none resize-none font-sans leading-relaxed"
                             placeholder="Escribe tu mensaje..."
                         ></textarea>
-                        
-                        <!-- Signature -->
-                        <div class="bg-muted/5 border-t px-3 py-2">
-                             <div class="flex justify-between items-center mb-1">
-                                <label class="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Firma</label>
-                             </div>
-                             <textarea 
-                                bind:value={signatureContent}
-                                rows="4"
-                                class="w-full bg-transparent text-xs text-muted-foreground border-none resize-none focus:outline-none p-0 font-sans"
-                                placeholder="Firma..."
-                            ></textarea>
-                        </div>
                     </div>
                     
                     <div class="flex justify-between items-center">
@@ -1623,7 +1650,7 @@
                         });
                         
                         // Combine body and signature
-                        formData.set('content', commentContent + '\n\n' + signatureContent);
+                        formData.set('content', commentContent);
 
                         return async ({ result, update }) => {
                             if (result.type === 'success') {
@@ -1680,19 +1707,6 @@
                             class="w-full bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none resize-none font-sans leading-relaxed"
                             placeholder="Escribe tu mensaje..."
                         ></textarea>
-                        
-                        <!-- Signature -->
-                        <div class="bg-muted/5 border-t px-3 py-2">
-                             <div class="flex justify-between items-center mb-1">
-                                <label class="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Firma</label>
-                             </div>
-                             <textarea 
-                                bind:value={signatureContent}
-                                rows="4"
-                                class="w-full bg-transparent text-xs text-muted-foreground border-none resize-none focus:outline-none p-0 font-sans"
-                                placeholder="Firma..."
-                            ></textarea>
-                        </div>
                     </div>
                     
                     <div class="flex justify-between items-center">
@@ -1862,7 +1876,7 @@
                         });
                         
                         // Combine body and signature
-                        formData.set('content', commentContent + '\n\n' + signatureContent);
+                        formData.set('content', commentContent);
 
                         return async ({ result, update }) => {
                             if (result.type === 'success') {
@@ -1919,19 +1933,6 @@
                             class="w-full bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none resize-none font-sans leading-relaxed"
                             placeholder="Escribe tu mensaje..."
                         ></textarea>
-                        
-                        <!-- Signature -->
-                        <div class="bg-muted/5 border-t px-3 py-2">
-                             <div class="flex justify-between items-center mb-1">
-                                <label class="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Firma</label>
-                             </div>
-                             <textarea 
-                                bind:value={signatureContent}
-                                rows="4"
-                                class="w-full bg-transparent text-xs text-muted-foreground border-none resize-none focus:outline-none p-0 font-sans"
-                                placeholder="Firma..."
-                            ></textarea>
-                        </div>
                     </div>
                     
                     <div class="flex justify-between items-center">
@@ -2101,7 +2102,7 @@
                         });
                         
                         // Combine body and signature
-                        formData.set('content', commentContent + '\n\n' + signatureContent);
+                        formData.set('content', commentContent);
 
                         return async ({ result, update }) => {
                             if (result.type === 'success') {
@@ -2158,19 +2159,6 @@
                             class="w-full bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none resize-none font-sans leading-relaxed"
                             placeholder="Escribe tu mensaje..."
                         ></textarea>
-                        
-                        <!-- Signature -->
-                        <div class="bg-muted/5 border-t px-3 py-2">
-                             <div class="flex justify-between items-center mb-1">
-                                <label class="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Firma</label>
-                             </div>
-                             <textarea 
-                                bind:value={signatureContent}
-                                rows="4"
-                                class="w-full bg-transparent text-xs text-muted-foreground border-none resize-none focus:outline-none p-0 font-sans"
-                                placeholder="Firma..."
-                            ></textarea>
-                        </div>
                     </div>
                     
                     <div class="flex justify-between items-center">
@@ -2212,6 +2200,66 @@
     onClose={closePreview}
 />
 
+<!-- Delete Case Confirmation Modal -->
+{#if isDeleteCaseModalOpen && caseToDelete}
+    <div class="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50">
+        <div class="bg-card border rounded-lg shadow-lg p-6 w-full max-w-md relative">
+            <button on:click={closeDeleteCaseModal} class="absolute top-4 right-4 text-muted-foreground hover:text-foreground">
+                <X class="w-4 h-4" />
+            </button>
+            
+            <h2 class="text-lg font-bold mb-4 text-red-600 flex items-center gap-2">
+                <AlertCircle class="w-5 h-5" />
+                Eliminar Ticket
+            </h2>
+            
+            <p class="text-sm text-muted-foreground mb-6">
+                ¿Estás seguro de que deseas eliminar el ticket <strong>{caseToDelete.title}</strong>? <br><br>
+                Se eliminarán todos los comentarios y archivos asociados. Esta acción no se puede deshacer.
+            </p>
+            
+            <div class="flex justify-end gap-2">
+                <button 
+                    type="button" 
+                    on:click={closeDeleteCaseModal}
+                    disabled={isDeleting}
+                    class="px-4 py-2 text-sm font-medium border rounded-md hover:bg-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    Cancelar
+                </button>
+                <form 
+                    action="?/deleteCase" 
+                    method="POST" 
+                    use:enhance={() => {
+                        isDeleting = true;
+                        return async ({ result }) => {
+                            if (result.type === 'success') {
+                                closeDeleteCaseModal();
+                                await invalidateAll();
+                            }
+                            isDeleting = false;
+                        };
+                    }}
+                >
+                    <input type="hidden" name="id" value={caseToDelete.id} />
+                    <button 
+                        type="submit" 
+                        disabled={isDeleting}
+                        class="px-4 py-2 text-sm font-medium bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        {#if isDeleting}
+                            <Loader2 class="w-4 h-4 animate-spin" />
+                            Eliminando...
+                        {:else}
+                            Eliminar
+                        {/if}
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+{/if}
+
 <!-- Edit Project Modal -->
 {#if isEditProjectModalOpen}
     <div class="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50">
@@ -2225,6 +2273,7 @@
             <form 
                 action="?/updateProject" 
                 method="POST" 
+                enctype="multipart/form-data"
                 use:enhance={() => {
                     return async ({ result, update }) => {
                         if (result.type === 'success') {
@@ -2333,6 +2382,59 @@
                 </div>
 
                 <div class="space-y-2">
+                    <label for="edit-image" class="text-sm font-medium">Imagen de Portada</label>
+                    <input 
+                        type="file" 
+                        name="image" 
+                        id="edit-image"
+                        accept="image/*"
+                        class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        on:change={handleImageSelect}
+                    />
+                    
+                    <input type="hidden" name="removeImage" value={removeProjectImage ? 'true' : 'false'} />
+
+                    {#if project.imageUrl && !removeProjectImage}
+                        <div class="relative mt-2 w-full h-32 rounded-md overflow-hidden border">
+                            <img 
+                                src={project.imageUrl} 
+                                alt="Portada actual" 
+                                class="w-full h-full object-cover"
+                            />
+                            <button 
+                                type="button" 
+                                class="absolute top-2 right-2 bg-destructive text-destructive-foreground p-1 rounded-full hover:bg-destructive/90"
+                                on:click={() => removeProjectImage = true}
+                                title="Eliminar imagen"
+                            >
+                                <X class="w-4 h-4" />
+                            </button>
+                        </div>
+                    {:else if previewImageUrl}
+                        <div class="relative mt-2 w-full h-32 rounded-md overflow-hidden border">
+                            <img 
+                                src={previewImageUrl} 
+                                alt="Vista previa" 
+                                class="w-full h-full object-cover"
+                            />
+                            <button 
+                                type="button" 
+                                class="absolute top-2 right-2 bg-destructive text-destructive-foreground p-1 rounded-full hover:bg-destructive/90"
+                                on:click={clearImageSelection}
+                                title="Cancelar selección"
+                            >
+                                <X class="w-4 h-4" />
+                            </button>
+                        </div>
+                    {:else if removeProjectImage}
+                        <div class="mt-2 text-sm text-destructive flex items-center gap-2">
+                            <Trash2 class="w-4 h-4" /> La imagen actual será eliminada al guardar.
+                            <button type="button" class="text-primary hover:underline text-xs" on:click={() => removeProjectImage = false}>Deshacer</button>
+                        </div>
+                    {/if}
+                </div>
+
+                <div class="space-y-2">
                     <label class="text-sm font-medium">Enlaces del Proyecto</label>
                     <input type="hidden" name="links" value={JSON.stringify(projectLinks)} />
                     
@@ -2406,8 +2508,10 @@
                     return async ({ result, update }) => {
                         if (result.type === 'success') {
                             closePaymentModal();
+                            await invalidateAll();
+                        } else {
+                            await update();
                         }
-                        await update();
                     };
                 }}
                 class="space-y-4"
@@ -2415,6 +2519,25 @@
                 {#if editingPayment}
                     <input type="hidden" name="id" value={editingPayment.id} />
                 {/if}
+
+                <div class="space-y-2">
+                    <label class="text-sm font-medium">Proyectos Asociados</label>
+                    <div class="max-h-32 overflow-y-auto border rounded-md p-2 space-y-2 bg-background">
+                        {#each data.allProjects as proj}
+                            <label class="flex items-center gap-2 text-sm cursor-pointer hover:bg-muted/50 p-1 rounded">
+                                <input 
+                                    type="checkbox" 
+                                    name="projectIds" 
+                                    value={proj.id}
+                                    checked={editingPayment ? editingPayment.projectIds?.includes(proj.id) : proj.id === data.project.id}
+                                    class="rounded border-input text-primary focus:ring-primary"
+                                />
+                                <span>{proj.name}</span>
+                            </label>
+                        {/each}
+                    </div>
+                    <p class="text-[10px] text-muted-foreground">Selecciona uno o más proyectos para este pago.</p>
+                </div>
 
                 <div class="space-y-2">
                     <label for="pay-title" class="text-sm font-medium">Concepto</label>
@@ -2444,8 +2567,66 @@
                     {/if}
                 </div>
 
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-2">
+                        <label for="pay-amountOriginal" class="text-sm font-medium">Monto Original</label>
+                        <input 
+                            type="number" 
+                            step="0.01"
+                            name="amountOriginal" 
+                            id="pay-amountOriginal"
+                            required
+                            value={editingPayment?.amountOriginal || ''}
+                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            placeholder="0.00"
+                        />
+                    </div>
+                    <div class="space-y-2">
+                        <label for="pay-currencyOriginal" class="text-sm font-medium">Moneda Original</label>
+                        <input 
+                            type="text" 
+                            name="currencyOriginal" 
+                            id="pay-currencyOriginal"
+                            required
+                            maxlength="3"
+                            value={editingPayment?.currencyOriginal || 'USD'}
+                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            placeholder="USD"
+                        />
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-2">
+                        <label for="pay-exchangeRate" class="text-sm font-medium">Tasa de Cambio</label>
+                        <input 
+                            type="number" 
+                            step="0.000001"
+                            name="exchangeRate" 
+                            id="pay-exchangeRate"
+                            required
+                            value={editingPayment?.exchangeRate || '1.000000'}
+                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            placeholder="1.000000"
+                        />
+                    </div>
+                    <div class="space-y-2">
+                        <label for="pay-amountUsd" class="text-sm font-medium">Monto USD</label>
+                        <input 
+                            type="number" 
+                            step="0.01"
+                            name="amountUsd" 
+                            id="pay-amountUsd"
+                            required
+                            value={editingPayment?.amountUsd || ''}
+                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            placeholder="0.00"
+                        />
+                    </div>
+                </div>
+
                 <div class="space-y-2">
-                    <label for="pay-amount" class="text-sm font-medium">Monto</label>
+                    <label for="pay-amount" class="text-sm font-medium">Monto (Texto/Display)</label>
                     <input 
                         type="text" 
                         name="amount" 
@@ -2453,19 +2634,53 @@
                         required
                         value={editingPayment?.amount || ''}
                         class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        placeholder="$0.00"
+                        placeholder="$0.00 (Texto)"
                     />
                 </div>
 
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-2">
+                        <label for="pay-paymentMethod" class="text-sm font-medium">Método de Pago</label>
+                        <input 
+                            type="text" 
+                            name="paymentMethod" 
+                            id="pay-paymentMethod"
+                            value={editingPayment?.paymentMethod || ''}
+                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            placeholder="stripe, transfer, etc."
+                        />
+                    </div>
+                    <div class="space-y-2">
+                        <label for="pay-providerPaymentId" class="text-sm font-medium">ID Pago Proveedor</label>
+                        <input 
+                            type="text" 
+                            name="providerPaymentId" 
+                            id="pay-providerPaymentId"
+                            value={editingPayment?.providerPaymentId || ''}
+                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            placeholder="ID de transacción"
+                        />
+                    </div>
+                </div>
+
                 <div class="space-y-2">
-                    <label for="pay-dueDate" class="text-sm font-medium">Fecha de Vencimiento</label>
-                    <input 
-                        type="date" 
-                        name="dueDate" 
-                        id="pay-dueDate"
-                        class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        value={editingPayment?.dueDate ? new Date(editingPayment.dueDate).toISOString().split('T')[0] : ''}
-                    />
+                    <label for="pay-dueDate" class="text-sm font-medium">Fecha y Hora de Vencimiento</label>
+                    <div class="flex gap-2">
+                        <input 
+                            type="date" 
+                            name="dueDate" 
+                            id="pay-dueDate"
+                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            value={editingPayment?.dueDate ? new Date(editingPayment.dueDate).toISOString().split('T')[0] : ''}
+                        />
+                        <input 
+                            type="time" 
+                            name="dueTime" 
+                            id="pay-dueTime"
+                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            value={editingPayment?.dueDate ? new Date(editingPayment.dueDate).toTimeString().split(' ')[0].slice(0, 5) : '12:00'}
+                        />
+                    </div>
                 </div>
 
                 <div class="space-y-2">
@@ -2483,14 +2698,23 @@
                 </div>
 
                 <div class="space-y-2">
-                    <label for="pay-paidAt" class="text-sm font-medium">Fecha de Pago</label>
-                    <input 
-                        type="date" 
-                        name="paidAt" 
-                        id="pay-paidAt"
-                        class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        value={editingPayment?.paidAt ? new Date(editingPayment.paidAt).toISOString().split('T')[0] : ''}
-                    />
+                    <label for="pay-paidAt" class="text-sm font-medium">Fecha y Hora de Pago</label>
+                    <div class="flex gap-2">
+                        <input 
+                            type="date" 
+                            name="paidAt" 
+                            id="pay-paidAt"
+                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            value={editingPayment?.paidAt ? new Date(editingPayment.paidAt).toISOString().split('T')[0] : ''}
+                        />
+                        <input 
+                            type="time" 
+                            name="paidTime" 
+                            id="pay-paidTime"
+                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            value={editingPayment?.paidAt ? new Date(editingPayment.paidAt).toTimeString().split(' ')[0].slice(0, 5) : '12:00'}
+                        />
+                    </div>
                 </div>
 
                 <div class="flex justify-end gap-2 mt-6">

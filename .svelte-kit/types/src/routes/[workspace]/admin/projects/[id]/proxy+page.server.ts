@@ -1,8 +1,8 @@
 // @ts-nocheck
 import { db } from '$lib/server/db';
-import { projects, services, users, requirements, projectMilestones, cases, proposals, payments, requests, caseComments, requestComments, requirementComments, proposalComments } from '$lib/server/schema';
-import { uploadFile, getSignedUrlForFile } from '$lib/server/storage';
-import { eq, asc, desc, sql } from 'drizzle-orm';
+import { projects, services, users, requirements, projectMilestones, cases, proposals, payments, requests, caseComments, requestComments, requirementComments, proposalComments, projectPayments as projectPaymentsTable } from '$lib/server/schema';
+import { uploadFile, getSignedUrlForFile, deleteFile } from '$lib/server/storage';
+import { eq, asc, desc, sql, getTableColumns, inArray } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import { error, fail } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
@@ -50,6 +50,7 @@ export const load = async ({ params, url }: Parameters<PageServerLoad>[0]) => {
             startDate: projects.startDate,
             endDate: projects.endDate,
             serviceName: services.name,
+            imageUrl: projects.imageUrl,
             // Prefer direct client link, fallback to service client link
             clientName: sql<string>`
                 CASE 
@@ -73,6 +74,17 @@ export const load = async ({ params, url }: Parameters<PageServerLoad>[0]) => {
         }
 
         const project = projectData[0];
+        if (project.imageUrl) {
+            project.imageUrl = await getSignedUrlForFile(project.imageUrl, params.workspace);
+        }
+
+        // Fetch all projects for the payment modal (same client only)
+        const allProjects = await db.select({
+            id: projects.id,
+            name: projects.name
+        })
+        .from(projects)
+        .where(eq(projects.clientId, project.clientId));
 
         // 2. Fetch Requirements
         const rawRequirements = await db.select()
@@ -90,8 +102,7 @@ export const load = async ({ params, url }: Parameters<PageServerLoad>[0]) => {
             }
             return { 
                 ...r, 
-                files,
-                documentUrl: await getSignedUrlForFile(r.documentUrl, params.workspace) // Keep backward compatibility for a moment if needed
+                files
             };
         }));
 
@@ -263,16 +274,29 @@ export const load = async ({ params, url }: Parameters<PageServerLoad>[0]) => {
             };
         }));
 
-        // 6. Fetch Payments
-        const rawPayments = await db.select()
-            .from(payments)
-            .where(eq(payments.projectId, projectId))
-            .orderBy(asc(payments.dueDate));
+        // 6. Fetch Payments (Many-to-Many)
+        const rawPayments = await db.select({
+            ...getTableColumns(payments)
+        })
+        .from(payments)
+        .innerJoin(projectPaymentsTable, eq(payments.id, projectPaymentsTable.paymentId))
+        .where(eq(projectPaymentsTable.projectId, projectId))
+        .orderBy(asc(payments.dueDate));
         
-        const projectPayments = await Promise.all(rawPayments.map(async (p) => ({
-            ...p,
-            documentUrl: await getSignedUrlForFile(p.documentUrl, params.workspace)
-        })));
+        const projectPayments = await Promise.all(rawPayments.map(async (p) => {
+            // Fetch all associated projects for this payment
+            const associatedProjects = await db.select({
+                projectId: projectPaymentsTable.projectId
+            })
+            .from(projectPaymentsTable)
+            .where(eq(projectPaymentsTable.paymentId, p.id));
+
+            return {
+                ...p,
+                projectIds: associatedProjects.map(ap => ap.projectId),
+                documentUrl: await getSignedUrlForFile(p.documentUrl, params.workspace)
+            };
+        }));
 
         // 7. Fetch Requests
         const rawRequests = await db.select()
@@ -304,7 +328,8 @@ export const load = async ({ params, url }: Parameters<PageServerLoad>[0]) => {
             selectedRequirementComments,
             selectedProposalComments,
             allClients,
-            allServices
+            allServices,
+            allProjects
         };
     } catch (err) {
         console.error('Error fetching project details:', err);
@@ -325,6 +350,8 @@ export const actions = {
         const startDateStr = formData.get('startDate') as string;
         const startTimeStr = formData.get('startTime') as string;
         const linksJson = formData.get('links') as string;
+        const imageFile = formData.get('image') as File;
+        const removeImage = formData.get('removeImage') === 'true';
 
         if (!name || !status || !provider || !serviceId || !startDateStr) {
             return fail(400, { message: 'All fields are required' });
@@ -343,16 +370,24 @@ export const actions = {
                 }
             }
 
+            const updateData: any = {
+                name,
+                status,
+                provider,
+                clientId,
+                serviceId,
+                startDate,
+                links
+            };
+
+            if (removeImage) {
+                updateData.imageUrl = null;
+            } else if (imageFile && imageFile.size > 0) {
+                updateData.imageUrl = await uploadFile(imageFile, 'project-covers');
+            }
+
             await db.update(projects)
-                .set({
-                    name,
-                    status,
-                    provider,
-                    clientId,
-                    serviceId,
-                    startDate,
-                    links
-                })
+                .set(updateData)
                 .where(eq(projects.id, projectId));
             return { success: true };
         } catch (err) {
@@ -721,13 +756,31 @@ export const actions = {
     // Payment Actions
     createPayment: async ({ request, params }: import('./$types').RequestEvent) => {
         const formData = await request.formData();
-        const projectId = Number(params.id);
+        const currentProjectId = Number(params.id); // Context project
         const title = formData.get('title') as string;
-        const amount = formData.get('amount') as string;
+        const amount = formData.get('amount') as string; // Legacy/Display amount
         const status = formData.get('status') as string;
         const dueDateStr = formData.get('dueDate') as string;
+        const dueTime = formData.get('dueTime') as string;
         const paidAtStr = formData.get('paidAt') as string;
+        const paidTime = formData.get('paidTime') as string;
         const file = formData.get('file') as File;
+        
+        // New fields
+        const amountOriginal = formData.get('amountOriginal') as string;
+        const currencyOriginal = formData.get('currencyOriginal') as string;
+        const exchangeRate = formData.get('exchangeRate') as string;
+        const amountUsd = formData.get('amountUsd') as string;
+        const paymentMethod = formData.get('paymentMethod') as string;
+        const providerPaymentId = formData.get('providerPaymentId') as string;
+
+        // Get all selected project IDs
+        const projectIds = formData.getAll('projectIds').map(id => Number(id));
+
+        // Ensure at least one project is selected (if none, default to current)
+        if (projectIds.length === 0) {
+            projectIds.push(currentProjectId);
+        }
 
         if (!title || !amount) {
             return fail(400, { message: 'Title and amount are required' });
@@ -739,18 +792,46 @@ export const actions = {
                 documentUrl = await uploadFile(file, 'payments');
             }
 
-            const dueDate = dueDateStr ? new Date(dueDateStr) : null;
-            const paidAt = paidAtStr ? new Date(paidAtStr) : null;
+            let dueDate = null;
+            if (dueDateStr) {
+                const timeStr = dueTime || '12:00';
+                dueDate = new Date(`${dueDateStr}T${timeStr}`);
+            }
 
-            await db.insert(payments).values({
-                projectId,
+            let paidAt = null;
+            if (paidAtStr) {
+                const timeStr = paidTime || '12:00';
+                paidAt = new Date(`${paidAtStr}T${timeStr}`);
+            }
+
+            // Insert payment and return ID
+            const [newPayment] = await db.insert(payments).values({
+                projectId: currentProjectId, // Keep for backward compatibility/primary context
                 title,
                 amount,
                 status: status || 'pending',
                 dueDate,
                 paidAt,
-                documentUrl
-            });
+                documentUrl,
+                amountOriginal,
+                currencyOriginal,
+                exchangeRate,
+                amountUsd,
+                paymentMethod,
+                providerPaymentId
+            }).returning({ id: payments.id });
+
+            // Insert Many-to-Many relationships
+            if (newPayment && projectIds.length > 0) {
+                const uniqueProjectIds = [...new Set(projectIds)]; // Remove duplicates
+                await db.insert(projectPaymentsTable).values(
+                    uniqueProjectIds.map(pid => ({
+                        paymentId: newPayment.id,
+                        projectId: pid
+                    }))
+                );
+            }
+
             return { success: true };
         } catch (err) {
             console.error('Error creating payment:', err);
@@ -765,20 +846,51 @@ export const actions = {
         const amount = formData.get('amount') as string;
         const status = formData.get('status') as string;
         const dueDateStr = formData.get('dueDate') as string;
+        const dueTime = formData.get('dueTime') as string;
         const paidAtStr = formData.get('paidAt') as string;
+        const paidTime = formData.get('paidTime') as string;
         const file = formData.get('file') as File;
+        
+        // New fields
+        const amountOriginal = formData.get('amountOriginal') as string;
+        const currencyOriginal = formData.get('currencyOriginal') as string;
+        const exchangeRate = formData.get('exchangeRate') as string;
+        const amountUsd = formData.get('amountUsd') as string;
+        const paymentMethod = formData.get('paymentMethod') as string;
+        const providerPaymentId = formData.get('providerPaymentId') as string;
+
+        // Get all selected project IDs
+        const projectIds = formData.getAll('projectIds').map(pid => Number(pid));
 
         if (!id || !title || !amount) {
             return fail(400, { message: 'ID, Title and Amount are required' });
         }
 
         try {
+            let dueDate = null;
+            if (dueDateStr) {
+                const timeStr = dueTime || '12:00';
+                dueDate = new Date(`${dueDateStr}T${timeStr}`);
+            }
+
+            let paidAt = null;
+            if (paidAtStr) {
+                const timeStr = paidTime || '12:00';
+                paidAt = new Date(`${paidAtStr}T${timeStr}`);
+            }
+
             const updateData: any = {
                 title,
                 amount,
                 status,
-                dueDate: dueDateStr ? new Date(dueDateStr) : null,
-                paidAt: paidAtStr ? new Date(paidAtStr) : null
+                dueDate,
+                paidAt,
+                amountOriginal,
+                currencyOriginal,
+                exchangeRate,
+                amountUsd,
+                paymentMethod,
+                providerPaymentId
             };
 
             if (file && file.size > 0) {
@@ -788,6 +900,22 @@ export const actions = {
             await db.update(payments)
                 .set(updateData)
                 .where(eq(payments.id, id));
+
+            // Update Many-to-Many relationships
+            // 1. Delete existing for this payment
+            await db.delete(projectPaymentsTable).where(eq(projectPaymentsTable.paymentId, id));
+
+            // 2. Insert new selections
+            if (projectIds.length > 0) {
+                const uniqueProjectIds = [...new Set(projectIds)];
+                await db.insert(projectPaymentsTable).values(
+                    uniqueProjectIds.map(pid => ({
+                        paymentId: id,
+                        projectId: pid
+                    }))
+                );
+            }
+
             return { success: true };
         } catch (err) {
             console.error('Error updating payment:', err);
@@ -986,6 +1114,7 @@ export const actions = {
                 projectId,
                 title,
                 description,
+                content: description || '', // Use description as content since content is required
                 priority,
                 status,
                 files: uploadedFiles
@@ -1053,6 +1182,7 @@ export const actions = {
                 .set({
                     title,
                     description,
+                    content: description || '', // Keep content in sync with description
                     priority,
                     status,
                     files: updatedFiles,
@@ -1104,6 +1234,53 @@ export const actions = {
         } catch (err) {
             console.error('Error adding comment:', err);
             return fail(500, { message: 'Failed to add comment' });
+        }
+    },
+
+    deleteCase: async ({ request }: import('./$types').RequestEvent) => {
+        const formData = await request.formData();
+        const id = Number(formData.get('id'));
+
+        if (!id) {
+            return fail(400, { message: 'ID is required' });
+        }
+
+        try {
+            // 1. Fetch case to get files
+            const caseData = await db.select().from(cases).where(eq(cases.id, id)).limit(1);
+            if (caseData.length === 0) {
+                return fail(404, { message: 'Case not found' });
+            }
+
+            // 2. Fetch comments to get files
+            const comments = await db.select().from(caseComments).where(eq(caseComments.caseId, id));
+
+            // 3. Delete case files from storage
+            if (caseData[0].files && Array.isArray(caseData[0].files)) {
+                for (const file of caseData[0].files as any[]) {
+                    if (file.url) await deleteFile(file.url);
+                }
+            }
+
+            // 4. Delete comment files from storage
+            for (const comment of comments) {
+                if (comment.files && Array.isArray(comment.files)) {
+                    for (const file of comment.files as any[]) {
+                        if (file.url) await deleteFile(file.url);
+                    }
+                }
+            }
+
+            // 5. Delete comments from DB
+            await db.delete(caseComments).where(eq(caseComments.caseId, id));
+
+            // 6. Delete case from DB
+            await db.delete(cases).where(eq(cases.id, id));
+
+            return { success: true };
+        } catch (err) {
+            console.error('Error deleting case:', err);
+            return fail(500, { message: 'Failed to delete case' });
         }
     },
 

@@ -17,20 +17,24 @@ export const translations = {
         },
         hero: {
             title: 'Empowering Your Business',
-            subtitle: 'Premium Engineering & Creative Solutions',
+            subtitle: 'Premium Technical & Creative Solutions',
             cta: 'Get Started'
         },
         services: {
             title: 'Our Services',
             beltix: {
                 title: 'Beltix Agency',
+                tag: 'Creative',
                 desc: 'Creative marketing and design solutions.',
-                link: 'Go to Beltix'
+                link: 'Go to Beltix',
+                features: ['Branding', 'UI/UX Design', 'Marketing']
             },
             allianzy: {
                 title: 'Allianzy Consulting',
-                desc: 'Top-tier engineering and technical consultancy.',
-                link: 'Go to Allianzy'
+                tag: 'Enterprise',
+                desc: 'Top-tier technical consultancy and strategy.',
+                link: 'Go to Allianzy',
+                features: ['Technical Strategy', 'Consulting', 'Staff Augmentation']
             }
         },
         allianzy: {
@@ -44,7 +48,7 @@ export const translations = {
                 dashboard: 'Dashboard'
             },
             hero: {
-                title: 'Engineering the Future',
+                title: 'Innovating the Future',
                 subtitle: 'We build robust, scalable, and high-performance software solutions for enterprise needs.',
                 cta: 'Start a Project'
             },
@@ -184,6 +188,8 @@ export const translations = {
                 support: 'Support',
                 settings: 'Settings',
                 contact: 'Contact',
+                billing: 'Billing',
+                manage_stripe: 'Manage in Stripe',
                 admin_panel: 'Admin Panel'
             },
             footer: {
@@ -213,6 +219,22 @@ export const translations = {
                 }
             },
             page: {
+                projects: {
+                    title: 'Projects',
+                    subtitle: 'Manage and track your ongoing projects.'
+                },
+                billing: {
+                    title: 'Billing',
+                    subtitle: 'Manage your payments and invoices.'
+                },
+                support: {
+                    title: 'Support',
+                    subtitle: 'Get help and track your support requests.'
+                },
+                settings: {
+                    title: 'Settings',
+                    subtitle: 'Manage your account and preferences.'
+                },
                     title: 'My Account',
                     subtitle: 'Manage your personal information.',
                     personal_info: {
@@ -279,20 +301,24 @@ export const translations = {
         },
         hero: {
             title: 'Potenciando tu Negocio',
-            subtitle: 'Ingeniería Premium y Soluciones Creativas',
+            subtitle: 'Soluciones Técnicas y Creativas Premium',
             cta: 'Comenzar'
         },
         services: {
             title: 'Nuestros Servicios',
             beltix: {
                 title: 'Beltix Agency',
+                tag: 'Creativo',
                 desc: 'Soluciones creativas de marketing y diseño.',
-                link: 'Ir a Beltix'
+                link: 'Ir a Beltix',
+                features: ['Branding', 'Diseño UI/UX', 'Marketing']
             },
             allianzy: {
                 title: 'Allianzy Consulting',
-                desc: 'Consultoría técnica e ingeniería de alto nivel.',
-                link: 'Ir a Allianzy'
+                tag: 'Empresarial',
+                desc: 'Consultoría técnica y estratégica de alto nivel.',
+                link: 'Ir a Allianzy',
+                features: ['Estrategia Técnica', 'Consultoría', 'Staff Augmentation']
             }
         },
         allianzy: {
@@ -306,7 +332,7 @@ export const translations = {
                 dashboard: 'Dashboard'
             },
             hero: {
-                title: 'Ingeniería del Futuro',
+                title: 'Innovando el Futuro',
                 subtitle: 'Construimos soluciones de software robustas, escalables y de alto rendimiento para necesidades empresariales.',
                 cta: 'Iniciar Proyecto'
             },
@@ -446,6 +472,8 @@ export const translations = {
                 support: 'Soporte',
                 settings: 'Configuraciones',
                 contact: 'Contactar',
+                billing: 'Facturación',
+                manage_stripe: 'Administrar en Stripe',
                 admin_panel: 'Panel de Admin'
             },
             footer: {
@@ -475,6 +503,22 @@ export const translations = {
                 }
             },
             page: {
+                projects: {
+                    title: 'Proyectos',
+                    subtitle: 'Gestiona y sigue tus proyectos en curso.'
+                },
+                billing: {
+                    title: 'Facturación',
+                    subtitle: 'Gestiona tus pagos y facturas.'
+                },
+                support: {
+                    title: 'Soporte',
+                    subtitle: 'Obtén ayuda y sigue tus solicitudes de soporte.'
+                },
+                settings: {
+                    title: 'Configuraciones',
+                    subtitle: 'Gestiona tu cuenta y preferencias.'
+                },
                     title: 'Mi Cuenta',
                     subtitle: 'Gestiona tu información personal.',
                     personal_info: {

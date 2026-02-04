@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { db } from '$lib/server/db';
 import { projects, services, workspaces } from '$lib/server/schema';
+import { uploadFile, getSignedUrlForFile } from '$lib/server/storage';
 import { eq, and, or, isNull } from 'drizzle-orm';
 import type { PageServerLoad } from './$types';
 
@@ -26,6 +27,7 @@ export const load = async ({ locals, params }: Parameters<PageServerLoad>[0]) =>
         status: projects.status,
         startDate: projects.startDate,
         endDate: projects.endDate,
+        imageUrl: projects.imageUrl,
         serviceName: services.name
     })
     .from(projects)
@@ -45,8 +47,16 @@ export const load = async ({ locals, params }: Parameters<PageServerLoad>[0]) =>
         )
     );
 
+    // Sign URLs for project images
+    const projectsWithSignedUrls = await Promise.all(workspaceProjects.map(async (p) => {
+        if (p.imageUrl) {
+            p.imageUrl = await getSignedUrlForFile(p.imageUrl, params.workspace);
+        }
+        return p;
+    }));
+
     return {
-        projects: workspaceProjects,
+        projects: projectsWithSignedUrls,
         workspace: params.workspace
     };
 };

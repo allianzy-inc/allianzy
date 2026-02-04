@@ -94,7 +94,7 @@
 </script>
 
 {#if isOpen}
-    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 sm:p-6" transition:fade={{ duration: 200 }}>
+    <div class="fixed inset-0 z-[1000] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 sm:p-6" transition:fade={{ duration: 200 }}>
         <div class="bg-background w-full max-w-5xl h-[85vh] rounded-xl shadow-2xl flex flex-col overflow-hidden" transition:scale={{ duration: 200, start: 0.95 }}>
             <!-- Header -->
             <div class="flex items-center justify-between px-6 py-4 border-b bg-muted/30">

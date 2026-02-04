@@ -1,6 +1,6 @@
 <script lang="ts">
     import { enhance, applyAction } from '$app/forms';
-    import { Briefcase, MoreVertical, Search, Filter, Calendar, User, Package, Plus, X, Pencil, Trash2 } from 'lucide-svelte';
+    import { Briefcase, MoreVertical, Search, Filter, Calendar, User, Package, Plus, X, Pencil, Trash2, Loader2 } from 'lucide-svelte';
     import type { PageData } from './$types';
     import { slide } from 'svelte/transition';
 
@@ -16,6 +16,7 @@
     let editingProject: any = null;
     let deleteTarget: any = null;
     let showActionsFor: number | null = null;
+    let isDeleting = false;
 
     function formatDate(date: Date | null) {
         if (!date) return '-';
@@ -366,6 +367,7 @@
                 method="POST" 
                 action="?/deleteProject"
                 use:enhance={() => {
+                    isDeleting = true;
                     return async ({ result, update }) => {
                         if (result.type === 'success') {
                             closeModal();
@@ -373,16 +375,22 @@
                         } else {
                             alert('Error al eliminar el proyecto.');
                         }
+                        isDeleting = false;
                     };
                 }}
             >
                 <input type="hidden" name="id" value={deleteTarget.id} />
                 <div class="flex justify-end gap-3">
-                    <button type="button" on:click={closeModal} class="px-4 py-2 text-sm font-medium hover:bg-muted rounded-md">
+                    <button type="button" on:click={closeModal} disabled={isDeleting} class="px-4 py-2 text-sm font-medium hover:bg-muted rounded-md disabled:opacity-50 disabled:cursor-not-allowed">
                         Cancelar
                     </button>
-                    <button type="submit" class="px-4 py-2 text-sm font-medium bg-red-500 text-white rounded-md hover:bg-red-600">
-                        Eliminar Proyecto
+                    <button type="submit" disabled={isDeleting} class="px-4 py-2 text-sm font-medium bg-red-500 text-white rounded-md hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+                        {#if isDeleting}
+                            <Loader2 class="w-4 h-4 animate-spin" />
+                            Eliminando...
+                        {:else}
+                            Eliminar Proyecto
+                        {/if}
                     </button>
                 </div>
             </form>

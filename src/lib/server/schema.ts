@@ -1,4 +1,4 @@
-import { pgTable, serial, text, timestamp, boolean, integer, jsonb } from 'drizzle-orm/pg-core';
+import { pgTable, serial, text, timestamp, boolean, integer, jsonb, primaryKey, decimal, char } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
 export const workspaces = pgTable('workspaces', {
@@ -60,6 +60,7 @@ export const projects = pgTable('projects', {
     clientId: integer('client_id').references(() => users.id),
     serviceId: integer('service_id').references(() => services.id),
     links: jsonb('links'), // Array of { title, url }
+    imageUrl: text('image_url'),
     startDate: timestamp('start_date'),
     endDate: timestamp('end_date'),
     createdAt: timestamp('created_at').defaultNow(),
@@ -71,11 +72,14 @@ export const cases = pgTable('cases', {
     description: text('description'),
     status: text('status').default('open'), // open, in_progress, closed
     priority: text('priority').default('medium'), // low, medium, high
-    files: jsonb('files'), // Array of { name, url, type }
+    clientId: integer('client_id').references(() => users.id), // Creator
     projectId: integer('project_id').references(() => projects.id),
-    workspaceId: integer('workspace_id').references(() => workspaces.id),
-    createdAt: timestamp('created_at').defaultNow(),
+    assignedTo: integer('assigned_to').references(() => users.id), // Admin/Staff
+    subject: text('subject'),
+    content: text('content').notNull(),
+    files: jsonb('files'),
     closedAt: timestamp('closed_at'),
+    createdAt: timestamp('created_at').defaultNow(),
 });
 
 export const caseComments = pgTable('case_comments', {
@@ -89,25 +93,24 @@ export const caseComments = pgTable('case_comments', {
     createdAt: timestamp('created_at').defaultNow(),
 });
 
-export const requirements = pgTable('requirements', {
+export const requestComments = pgTable('request_comments', {
     id: serial('id').primaryKey(),
-    title: text('title').notNull(),
-    description: text('description'),
-    status: text('status').default('pending'), // pending, approved, rejected
-    documentUrl: text('document_url'),
-    files: jsonb('files'), // Array of { name, url, type }
-    projectId: integer('project_id').references(() => projects.id),
-    createdAt: timestamp('created_at').defaultNow(),
-});
-
-export const requirementComments = pgTable('requirement_comments', {
-    id: serial('id').primaryKey(),
-    requirementId: integer('requirement_id').references(() => requirements.id, { onDelete: 'cascade' }),
+    requestId: integer('request_id').references(() => requests.id, { onDelete: 'cascade' }),
     userId: integer('user_id').references(() => users.id),
     authorName: text('author_name'),
     subject: text('subject'),
     content: text('content').notNull(),
     files: jsonb('files'),
+    createdAt: timestamp('created_at').defaultNow(),
+});
+
+export const projectMilestones = pgTable('project_milestones', {
+    id: serial('id').primaryKey(),
+    projectId: integer('project_id').references(() => projects.id, { onDelete: 'cascade' }),
+    title: text('title').notNull(),
+    order: integer('order').notNull(),
+    status: text('status').default('pending'),
+    completedAt: timestamp('completed_at'),
     createdAt: timestamp('created_at').defaultNow(),
 });
 
@@ -141,33 +144,43 @@ export const payments = pgTable('payments', {
     documentUrl: text('document_url'),
     dueDate: timestamp('due_date'),
     paidAt: timestamp('paid_at'),
-    projectId: integer('project_id').references(() => projects.id),
-    createdAt: timestamp('created_at').defaultNow(),
-});
+    projectId: integer('project_id').references(() => projects.id), // Keeping for backward compatibility/migration, but moving to join table
+    
+    // New fields requested
+    amountOriginal: decimal('amount_original', { precision: 14, scale: 2 }),
+    currencyOriginal: char('currency_original', { length: 3 }),
+    exchangeRate: decimal('exchange_rate', { precision: 14, scale: 6 }),
+    amountUsd: decimal('amount_usd', { precision: 14, scale: 2 }),
+    paymentMethod: text('payment_method'),
+    providerPaymentId: text('provider_payment_id'),
 
-export const projectMilestones = pgTable('project_milestones', {
-    id: serial('id').primaryKey(),
-    title: text('title').notNull(),
-    status: text('status').default('pending'), // pending, in_progress, completed
-    order: integer('order').notNull(),
-    projectId: integer('project_id').references(() => projects.id),
-    completedAt: timestamp('completed_at'),
+    createdAt: timestamp('created_at').defaultNow(),
 });
 
 export const requests = pgTable('requests', {
     id: serial('id').primaryKey(),
+    projectId: integer('project_id').references(() => projects.id),
+    clientId: integer('client_id').references(() => users.id),
     title: text('title').notNull(),
     description: text('description'),
-    status: text('status').default('pending'), // pending, in_progress, completed
-    files: jsonb('files'), // Array of { name, url, type }
-    projectId: integer('project_id').references(() => projects.id),
+    status: text('status').default('pending'),
+    files: jsonb('files'),
     createdAt: timestamp('created_at').defaultNow(),
-    updatedAt: timestamp('updated_at').defaultNow(),
 });
 
-export const requestComments = pgTable('request_comments', {
+export const requirements = pgTable('requirements', {
     id: serial('id').primaryKey(),
-    requestId: integer('request_id').references(() => requests.id, { onDelete: 'cascade' }),
+    projectId: integer('project_id').references(() => projects.id),
+    title: text('title').notNull(),
+    description: text('description'),
+    status: text('status').default('pending'),
+    files: jsonb('files'),
+    createdAt: timestamp('created_at').defaultNow(),
+});
+
+export const requirementComments = pgTable('requirement_comments', {
+    id: serial('id').primaryKey(),
+    requirementId: integer('requirement_id').references(() => requirements.id, { onDelete: 'cascade' }),
     userId: integer('user_id').references(() => users.id),
     authorName: text('author_name'),
     subject: text('subject'),
@@ -202,6 +215,14 @@ export const userCompanies = pgTable('user_companies', {
     createdAt: timestamp('created_at').defaultNow(),
 });
 
+// New Many-to-Many Relationship for Payments and Projects
+export const projectPayments = pgTable('project_payments', {
+    projectId: integer('project_id').references(() => projects.id, { onDelete: 'cascade' }).notNull(),
+    paymentId: integer('payment_id').references(() => payments.id, { onDelete: 'cascade' }).notNull(),
+}, (t) => ({
+    pk: primaryKey({ columns: [t.projectId, t.paymentId] }),
+}));
+
 export const usersRelations = relations(users, ({ many }) => ({
     userCompanies: many(userCompanies),
 }));
@@ -218,5 +239,24 @@ export const userCompaniesRelations = relations(userCompanies, ({ one }) => ({
     company: one(companies, {
         fields: [userCompanies.companyId],
         references: [companies.id],
+    }),
+}));
+
+export const paymentsRelations = relations(payments, ({ many }) => ({
+    projectPayments: many(projectPayments),
+}));
+
+export const projectsRelations = relations(projects, ({ many }) => ({
+    projectPayments: many(projectPayments),
+}));
+
+export const projectPaymentsRelations = relations(projectPayments, ({ one }) => ({
+    project: one(projects, {
+        fields: [projectPayments.projectId],
+        references: [projects.id],
+    }),
+    payment: one(payments, {
+        fields: [projectPayments.paymentId],
+        references: [payments.id],
     }),
 }));

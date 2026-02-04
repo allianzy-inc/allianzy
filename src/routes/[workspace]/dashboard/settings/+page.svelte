@@ -1,9 +1,11 @@
 <script lang="ts">
     import { fade } from 'svelte/transition';
     import { Pencil, Plus, Upload, Building2, Users, FileText, ShieldCheck, Mail, Globe, MapPin, Calendar, Clock, CreditCard } from 'lucide-svelte';
+    import { currentLang, translations } from '$lib/i18n';
     import type { PageData } from './$types';
 
     export let data: PageData;
+    $: t = translations[$currentLang];
     
     interface Address {
         street?: string;
@@ -62,8 +64,8 @@
     <!-- Header -->
     <div class="flex items-center justify-between">
         <div>
-            <h1 class="text-3xl font-bold tracking-tight">Setting</h1>
-            <p class="text-muted-foreground mt-1">NDIS {registrationDetails.ndisRegistration || 'N/A'}</p>
+            <h2 class="text-2xl font-bold tracking-tight">{t.dashboard.page.settings.title}</h2>
+            <p class="text-muted-foreground">{t.dashboard.page.settings.subtitle}</p>
         </div>
     </div>
 

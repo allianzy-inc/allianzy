@@ -40,6 +40,10 @@
 		"src/routes/[workspace]/dashboard/+layout.server.ts",
 		"src/routes/[workspace]/dashboard/+layout.server.ts"
 	],
+	"/[workspace]/dashboard/billing": [
+		"src/routes/[workspace]/dashboard/billing/+page.server.ts",
+		"src/routes/[workspace]/dashboard/+layout.server.ts"
+	],
 	"/[workspace]/dashboard/contact": [
 		"src/routes/[workspace]/dashboard/+layout.server.ts"
 	],
@@ -60,6 +64,7 @@
 		"src/routes/[workspace]/dashboard/+layout.server.ts"
 	],
 	"/[workspace]/dashboard/support": [
+		"src/routes/[workspace]/dashboard/support/+page.server.ts",
 		"src/routes/[workspace]/dashboard/+layout.server.ts"
 	],
 	"/[workspace]/intake": [],

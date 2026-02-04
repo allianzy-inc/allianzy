@@ -5,11 +5,30 @@
     import DocumentPreviewModal from '$lib/components/DocumentPreviewModal.svelte';
     import { goto, invalidateAll } from '$app/navigation';
     import { page } from '$app/stores';
-    import { onMount, tick } from 'svelte';
+    import { onMount, tick, onDestroy } from 'svelte';
 
     export let data: PageData;
 
     $: ({ project, requirements, milestones, supportCases, proposals, payments, requests, selectedCaseComments, selectedRequestComments, selectedRequirementComments, selectedProposalComments, user } = data);
+
+    // Polling for real-time updates
+    let pollInterval: ReturnType<typeof setInterval>;
+
+    function startPolling() {
+        pollInterval = setInterval(async () => {
+            if (document.visibilityState === 'visible') {
+                await invalidateAll();
+            }
+        }, 5000);
+    }
+
+    function stopPolling() {
+        if (pollInterval) clearInterval(pollInterval);
+    }
+
+    onDestroy(() => {
+        stopPolling();
+    });
 
     // Keep selectedCase in sync with latest data
     $: if (isCaseDetailsOpen && selectedCase && supportCases) {
@@ -56,6 +75,16 @@
     }
 
     onMount(() => {
+        startPolling();
+        
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                invalidateAll(); 
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
         const caseId = $page.url.searchParams.get('caseId');
         if (caseId && supportCases) {
             const foundCase = supportCases.find((c: any) => c.id == caseId);
@@ -91,6 +120,11 @@
                 isProposalDetailsOpen = true;
             }
         }
+
+        return () => {
+            stopPolling();
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
     });
 
     function formatDate(date: Date | null) {
@@ -344,10 +378,13 @@
                             <h3 class="font-semibold">Etapas del Proyecto</h3>
                         </div>
 
-                        <div class="relative pl-8 border-l-2 border-muted space-y-8">
-                            {#each milestones as step}
-                                <div class="relative group">
-                                    <div class="absolute -left-[41px] bg-background p-1">
+                        <div class="space-y-0">
+                            {#each milestones as step, i}
+                                <div class="relative pl-10 pb-12 last:pb-0">
+                                    {#if i !== milestones.length - 1}
+                                        <div class="absolute left-[11px] top-0 bottom-0 w-[2px] bg-border"></div>
+                                    {/if}
+                                    <div class="absolute left-0 top-0 z-10 bg-background rounded-full flex items-center justify-center">
                                         {#if step.status === 'completed'}
                                             <CheckCircle2 class="w-6 h-6 text-green-500" />
                                         {:else if step.status === 'in_progress'}
@@ -355,24 +392,21 @@
                                         {:else}
                                             <Circle class="w-6 h-6 text-muted-foreground" />
                                         {/if}
-
                                     </div>
-                                    <div class="flex items-start justify-between">
-                                        <div>
-                                            <h3 class="font-semibold text-base {step.status === 'pending' ? 'text-muted-foreground' : ''}">
-                                                {step.title}
-                                            </h3>
-                                            {#if step.completedAt}
-                                                <p class="text-xs text-muted-foreground mt-1">
-                                                    Completado el {formatDate(step.completedAt)}
-                                                </p>
-                                            {/if}
-                                            {#if step.status === 'in_progress'}
-                                                <span class="inline-block mt-2 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
-                                                    En curso
-                                                </span>
-                                            {/if}
-                                        </div>
+                                    <div class="pt-0.5">
+                                        <h3 class="font-semibold text-base {step.status === 'pending' ? 'text-muted-foreground' : ''}">
+                                            {step.title}
+                                        </h3>
+                                        {#if step.completedAt}
+                                            <p class="text-xs text-muted-foreground mt-1">
+                                                Completado el {formatDate(step.completedAt)}
+                                            </p>
+                                        {/if}
+                                        {#if step.status === 'in_progress'}
+                                            <span class="inline-block mt-2 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
+                                                En curso
+                                            </span>
+                                        {/if}
                                     </div>
                                 </div>
                             {/each}
@@ -575,43 +609,45 @@
                         {#if !payments || payments.length === 0}
                             <p class="text-muted-foreground text-sm">No hay pagos registrados.</p>
                         {:else}
-                            {#each payments as pay}
-                                <div class="flex items-start justify-between p-4 border rounded-lg bg-background/50">
-                                    <div class="flex-1">
-                                        <div class="flex items-center gap-2">
-                                            <h4 class="font-medium text-sm flex items-center gap-2">
-                                                {pay.title}
-                                            </h4>
-                                            <span class="px-2 py-0.5 rounded text-[10px] capitalize border
-                                                {pay.status === 'paid' ? 'bg-green-100 text-green-700 border-green-200' : 
-                                                 pay.status === 'overdue' ? 'bg-red-100 text-red-700 border-red-200' : 
-                                                 'bg-yellow-100 text-yellow-700 border-yellow-200'}">
-                                                {pay.status}
-                                            </span>
-                                        </div>
-                                        <div class="flex items-center gap-4 mt-2">
-                                            <span class="font-medium text-sm">{pay.amount}</span>
-                                            <span class="text-xs text-muted-foreground flex items-center gap-1">
-                                                <Calendar class="w-3 h-3" /> Vence: {formatDate(pay.dueDate)}
-                                            </span>
-                                            {#if pay.paidAt}
-                                                <span class="text-xs text-green-600 flex items-center gap-1">
-                                                    <CheckCircle2 class="w-3 h-3" /> Pagado: {formatDate(pay.paidAt)}
+                            <div class="space-y-3">
+                                {#each payments as pay}
+                                    <div class="flex items-start justify-between p-4 border rounded-lg bg-background/50 hover:bg-accent/5 transition-colors">
+                                        <div class="flex-1">
+                                            <div class="flex items-center gap-2">
+                                                <h4 class="font-medium text-sm flex items-center gap-2">
+                                                    {pay.title}
+                                                </h4>
+                                                <span class="px-2 py-0.5 rounded text-[10px] capitalize border
+                                                    {pay.status === 'paid' ? 'bg-green-100 text-green-700 border-green-200' : 
+                                                     pay.status === 'overdue' ? 'bg-red-100 text-red-700 border-red-200' : 
+                                                     'bg-yellow-100 text-yellow-700 border-yellow-200'}">
+                                                    {pay.status}
                                                 </span>
-                                            {/if}
+                                            </div>
+                                            <div class="flex items-center gap-4 mt-2">
+                                                <span class="font-medium text-sm">{pay.amount}</span>
+                                                <span class="text-xs text-muted-foreground flex items-center gap-1">
+                                                    <Calendar class="w-3 h-3" /> Vence: {formatDate(pay.dueDate)}
+                                                </span>
+                                                {#if pay.paidAt}
+                                                    <span class="text-xs text-green-600 flex items-center gap-1">
+                                                        <CheckCircle2 class="w-3 h-3" /> Pagado: {formatDate(pay.paidAt)}
+                                                    </span>
+                                                {/if}
+                                            </div>
                                         </div>
+                                        {#if pay.documentUrl}
+                                            <button 
+                                                on:click={() => openPreview(pay.title, pay.documentUrl)}
+                                                class="p-2 hover:bg-accent rounded-full transition-colors text-muted-foreground hover:text-foreground"
+                                                title="Ver comprobante"
+                                            >
+                                                <Eye class="w-4 h-4" />
+                                            </button>
+                                        {/if}
                                     </div>
-                                    {#if pay.documentUrl}
-                                        <button 
-                                            on:click={() => openPreview(pay.title, pay.documentUrl)}
-                                            class="p-2 hover:bg-accent rounded-full transition-colors text-muted-foreground hover:text-foreground"
-                                            title="Ver comprobante"
-                                        >
-                                            <Eye class="w-4 h-4" />
-                                        </button>
-                                    {/if}
-                                </div>
-                            {/each}
+                                {/each}
+                            </div>
                         {/if}
                     </div>
                 {/if}
@@ -1297,93 +1333,95 @@
             </div>
 
             <!-- Reply Box -->
-            <div class="p-4 bg-background border-t">
-                <form 
-                    action="?/addRequirementComment" 
-                    method="POST" 
-                    enctype="multipart/form-data"
-                    use:enhance={({ formData }) => {
-                        // Append files from local state to formData
-                        formData.delete('files'); // Clear existing empty/partial input
-                        commentFiles.forEach((file) => {
-                            formData.append('files', file);
-                        });
+            {#if selectedRequirement.status === 'pending'}
+                <div class="p-4 bg-background border-t">
+                    <form 
+                        action="?/addRequirementComment" 
+                        method="POST" 
+                        enctype="multipart/form-data"
+                        use:enhance={({ formData }) => {
+                            // Append files from local state to formData
+                            formData.delete('files'); // Clear existing empty/partial input
+                            commentFiles.forEach((file) => {
+                                formData.append('files', file);
+                            });
 
-                        return async ({ result, update }) => {
-                            if (result.type === 'success') {
-                                commentContent = '';
-                                commentFiles = [];
-                                await invalidateAll();
-                            } else {
-                                await update();
-                            }
-                        };
-                    }}
-                    class="space-y-4"
-                >
-                    <input type="hidden" name="requirementId" value={selectedRequirement.id} />
-                    
-                    <div class="space-y-2">
-                        <input 
-                            type="hidden" 
-                            name="subject" 
-                            value={selectedRequirement.title}
-                        />
+                            return async ({ result, update }) => {
+                                if (result.type === 'success') {
+                                    commentContent = '';
+                                    commentFiles = [];
+                                    await invalidateAll();
+                                } else {
+                                    await update();
+                                }
+                            };
+                        }}
+                        class="space-y-4"
+                    >
+                        <input type="hidden" name="requirementId" value={selectedRequirement.id} />
                         
-                        <div class="relative">
-                            <textarea 
-                                name="content" 
-                                class="flex min-h-[100px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 resize-none"
-                                placeholder="Escribe tu respuesta..."
-                                bind:value={commentContent}
-                                required
-                            ></textarea>
-                        </div>
-
-                        <!-- Actions Row -->
-                        <div class="flex justify-between items-center pt-2">
-                            <div class="flex items-center gap-2 flex-1 overflow-hidden">
-                                <input 
-                                    type="file" 
-                                    name="files" 
-                                    multiple 
-                                    class="hidden" 
-                                    bind:this={commentFileInput}
-                                    on:change={handleCommentFileSelect}
-                                />
-                                <button 
-                                    type="button" 
-                                    on:click={() => commentFileInput.click()}
-                                    class="text-xs flex items-center gap-1 px-2 py-1.5 rounded-md border hover:bg-accent transition-colors text-muted-foreground shrink-0"
-                                >
-                                    <Paperclip class="w-3 h-3" /> Adjuntar
-                                </button>
-                                
-                                {#if commentFiles.length > 0}
-                                    <div class="flex gap-2 overflow-x-auto no-scrollbar">
-                                        {#each commentFiles as file, i}
-                                            <div class="flex items-center gap-1 text-xs bg-muted px-2 py-1 rounded-md border shrink-0">
-                                                <span class="max-w-[80px] truncate">{file.name}</span>
-                                                <button type="button" on:click={() => removeCommentFile(i)} class="text-muted-foreground hover:text-red-500">
-                                                    <X class="w-3 h-3" />
-                                                </button>
-                                            </div>
-                                        {/each}
-                                    </div>
-                                {/if}
+                        <div class="space-y-2">
+                            <input 
+                                type="hidden" 
+                                name="subject" 
+                                value={selectedRequirement.title}
+                            />
+                            
+                            <div class="relative">
+                                <textarea 
+                                    name="content" 
+                                    class="flex min-h-[100px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 resize-none"
+                                    placeholder="Escribe tu respuesta..."
+                                    bind:value={commentContent}
+                                    required
+                                ></textarea>
                             </div>
 
-                            <button 
-                                type="submit" 
-                                disabled={!commentContent.trim()}
-                                class="px-3 py-1.5 text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90 rounded-md transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shrink-0 ml-2"
-                            >
-                                <Send class="w-3 h-3" /> Enviar
-                            </button>
+                            <!-- Actions Row -->
+                            <div class="flex justify-between items-center pt-2">
+                                <div class="flex items-center gap-2 flex-1 overflow-hidden">
+                                    <input 
+                                        type="file" 
+                                        name="files" 
+                                        multiple 
+                                        class="hidden" 
+                                        bind:this={commentFileInput}
+                                        on:change={handleCommentFileSelect}
+                                    />
+                                    <button 
+                                        type="button" 
+                                        on:click={() => commentFileInput.click()}
+                                        class="text-xs flex items-center gap-1 px-2 py-1.5 rounded-md border hover:bg-accent transition-colors text-muted-foreground shrink-0"
+                                    >
+                                        <Paperclip class="w-3 h-3" /> Adjuntar
+                                    </button>
+                                    
+                                    {#if commentFiles.length > 0}
+                                        <div class="flex gap-2 overflow-x-auto no-scrollbar">
+                                            {#each commentFiles as file, i}
+                                                <div class="flex items-center gap-1 text-xs bg-muted px-2 py-1 rounded-md border shrink-0">
+                                                    <span class="max-w-[80px] truncate">{file.name}</span>
+                                                    <button type="button" on:click={() => removeCommentFile(i)} class="text-muted-foreground hover:text-red-500">
+                                                        <X class="w-3 h-3" />
+                                                    </button>
+                                                </div>
+                                            {/each}
+                                        </div>
+                                    {/if}
+                                </div>
+
+                                <button 
+                                    type="submit" 
+                                    disabled={!commentContent.trim()}
+                                    class="px-3 py-1.5 text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90 rounded-md transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shrink-0 ml-2"
+                                >
+                                    <Send class="w-3 h-3" /> Enviar
+                                </button>
+                            </div>
                         </div>
-                    </div>
-                </form>
-            </div>
+                    </form>
+                </div>
+            {/if}
         </div>
     </div>
 {/if}

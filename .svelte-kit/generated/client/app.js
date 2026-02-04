@@ -33,7 +33,8 @@ export const nodes = [
 	() => import('./nodes/27'),
 	() => import('./nodes/28'),
 	() => import('./nodes/29'),
-	() => import('./nodes/30')
+	() => import('./nodes/30'),
+	() => import('./nodes/31')
 ];
 
 export const server_loads = [4];
@@ -54,17 +55,18 @@ export const dictionary = {
 		"/[workspace]/auth/login": [17,[2]],
 		"/[workspace]/config": [18,[2]],
 		"/[workspace]/dashboard": [~19,[2,4]],
-		"/[workspace]/dashboard/contact": [20,[2,4]],
-		"/[workspace]/dashboard/profile": [~21,[2,4]],
-		"/[workspace]/dashboard/projects": [~22,[2,4]],
-		"/[workspace]/dashboard/projects/[id]": [~23,[2,4]],
-		"/[workspace]/dashboard/settings": [~24,[2,4]],
-		"/[workspace]/dashboard/support": [25,[2,4]],
-		"/[workspace]/intake": [26,[2]],
-		"/[workspace]/portal": [27,[2]],
-		"/[workspace]/provider": [28,[2]],
-		"/[workspace]/schedule": [29,[2]],
-		"/[workspace]/tickets": [30,[2]]
+		"/[workspace]/dashboard/billing": [~20,[2,4]],
+		"/[workspace]/dashboard/contact": [21,[2,4]],
+		"/[workspace]/dashboard/profile": [~22,[2,4]],
+		"/[workspace]/dashboard/projects": [~23,[2,4]],
+		"/[workspace]/dashboard/projects/[id]": [~24,[2,4]],
+		"/[workspace]/dashboard/settings": [~25,[2,4]],
+		"/[workspace]/dashboard/support": [~26,[2,4]],
+		"/[workspace]/intake": [27,[2]],
+		"/[workspace]/portal": [28,[2]],
+		"/[workspace]/provider": [29,[2]],
+		"/[workspace]/schedule": [30,[2]],
+		"/[workspace]/tickets": [31,[2]]
 	};
 
 export const hooks = {

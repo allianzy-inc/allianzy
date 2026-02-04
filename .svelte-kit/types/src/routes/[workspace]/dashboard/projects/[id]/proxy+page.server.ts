@@ -1,8 +1,8 @@
 // @ts-nocheck
 import { db } from '$lib/server/db';
-import { projects, services, users, requirements, projectMilestones, cases, proposals, payments, requests, caseComments, requestComments, requirementComments, proposalComments, workspaces } from '$lib/server/schema';
+import { projects, services, users, requirements, projectMilestones, cases, proposals, payments, requests, caseComments, requestComments, requirementComments, proposalComments, workspaces, projectPayments as projectPaymentsTable } from '$lib/server/schema';
 import { uploadFile, getSignedUrlForFile } from '$lib/server/storage';
-import { eq, asc, desc, sql, and, or, isNull } from 'drizzle-orm';
+import { eq, asc, desc, sql, and, or, isNull, getTableColumns } from 'drizzle-orm';
 import { error, fail } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 import * as fs from 'fs';
@@ -42,6 +42,7 @@ export const load = async ({ params, url, locals }: Parameters<PageServerLoad>[0
             links: projects.links,
             startDate: projects.startDate,
             endDate: projects.endDate,
+            imageUrl: projects.imageUrl,
             serviceName: services.name,
             clientName: sql<string>`TRIM(BOTH ' ' FROM COALESCE(${users.firstName}, '') || ' ' || COALESCE(${users.lastName}, ''))`,
             clientCompany: users.company,
@@ -75,6 +76,10 @@ export const load = async ({ params, url, locals }: Parameters<PageServerLoad>[0
         }
 
         const project = projectData[0];
+        
+        if (project.imageUrl) {
+            project.imageUrl = await getSignedUrlForFile(project.imageUrl, params.workspace);
+        }
 
         // 2. Fetch Requirements
         const rawRequirements = await db.select()
@@ -96,8 +101,7 @@ export const load = async ({ params, url, locals }: Parameters<PageServerLoad>[0
             }
             return { 
                 ...r, 
-                files,
-                documentUrl: await getSignedUrlForFile(r.documentUrl, params.workspace)
+                files
             };
         }));
 
@@ -278,9 +282,12 @@ export const load = async ({ params, url, locals }: Parameters<PageServerLoad>[0
         }));
 
         // 6. Fetch Payments
-        const rawPayments = await db.select()
+        const rawPayments = await db.select({
+            ...getTableColumns(payments)
+        })
             .from(payments)
-            .where(eq(payments.projectId, projectId))
+            .innerJoin(projectPaymentsTable, eq(payments.id, projectPaymentsTable.paymentId))
+            .where(eq(projectPaymentsTable.projectId, projectId))
             .orderBy(asc(payments.dueDate));
         
         const projectPayments = await Promise.all(rawPayments.map(async (p) => ({
@@ -365,6 +372,7 @@ export const actions = {
                 projectId,
                 title,
                 description,
+                content: description, // Mapping description to content as required by schema
                 priority,
                 status,
                 files: uploadedFiles

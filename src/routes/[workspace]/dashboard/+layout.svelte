@@ -1,7 +1,7 @@
 <script lang="ts">
     import { page } from '$app/stores';
     import { onMount } from 'svelte';
-    import { User, LayoutDashboard, Briefcase, Ticket, Settings, LogOut, Mail, Shield, Bell, BellOff, Moon, Sun, Monitor, Languages, Check, ChevronRight, HelpCircle, Heart } from 'lucide-svelte';
+    import { User, LayoutDashboard, Briefcase, Ticket, Settings, LogOut, Shield, Bell, BellOff, Moon, Sun, Monitor, Languages, Check, ChevronRight, HelpCircle, Heart, CreditCard, ChevronsUpDown, Building } from 'lucide-svelte';
     import { authClient } from '$lib/auth-client';
     import { goto } from '$app/navigation';
     import logoLight from '$lib/assets/brand/allianzy/logo-light.svg';
@@ -61,9 +61,9 @@
     $: menuItems = [
         { href: `/${workspace}/dashboard`, label: t.dashboard.menu.overview, icon: LayoutDashboard },
         { href: `/${workspace}/dashboard/projects`, label: t.dashboard.menu.projects, icon: Briefcase },
+        { href: `/${workspace}/dashboard/billing`, label: t.dashboard.menu.billing, icon: CreditCard },
         { href: `/${workspace}/dashboard/support`, label: t.dashboard.menu.support, icon: Ticket },
         { href: `/${workspace}/dashboard/settings`, label: t.dashboard.menu.settings, icon: Settings },
-        { href: `/${workspace}/dashboard/contact`, label: t.dashboard.menu.contact, icon: Mail },
         ...( (data.user?.role === 'admin' || clientRole === 'admin') ? [{ href: `/${workspace}/admin`, label: t.dashboard.menu.admin_panel, icon: Shield }] : [])
     ];
 
@@ -76,6 +76,19 @@
     let isNotificationsOpen = false;
     let isThemeMenuOpen = false;
     let isLangMenuOpen = false;
+    let isCompanyMenuOpen = false;
+    
+    $: companies = data.companies || [];
+    let selectedCompany: any = null;
+
+    $: if (companies.length > 0 && !selectedCompany) {
+        // Try to match with user's companyId if available, otherwise first
+        if (data.user?.companyId) {
+            selectedCompany = companies.find((c: any) => c.id === data.user.companyId) || companies[0];
+        } else {
+            selectedCompany = companies[0];
+        }
+    }
 
     function clickOutside(node: HTMLElement) {
         const handleClick = (event: MouseEvent) => {
@@ -98,6 +111,7 @@
         isNotificationsOpen = false;
         isThemeMenuOpen = false;
         isLangMenuOpen = false;
+        isCompanyMenuOpen = false;
     }
 
     function closeProfileMenu() {
@@ -108,6 +122,15 @@
 
     function closeNotificationsMenu() {
         isNotificationsOpen = false;
+    }
+
+    function closeCompanyMenu() {
+        isCompanyMenuOpen = false;
+    }
+    
+    function selectCompany(company: any) {
+        selectedCompany = company;
+        isCompanyMenuOpen = false;
     }
 </script>
 
@@ -124,6 +147,56 @@
                 <h2 class="text-lg font-bold tracking-tight uppercase truncate">{workspace}</h2>
             {/if}
         </div>
+        
+        {#if companies.length > 0}
+        <div class="px-4 pb-2 pt-4">
+            <div class="relative" use:clickOutside on:click_outside={closeCompanyMenu}>
+                <button
+                    on:click={() => isCompanyMenuOpen = !isCompanyMenuOpen}
+                    class="w-full flex items-center justify-between p-2 rounded-md border bg-card hover:bg-accent transition-colors shadow-sm"
+                    disabled={companies.length <= 1}
+                >
+                    <div class="flex items-center gap-2 overflow-hidden">
+                        <div class="w-6 h-6 rounded flex items-center justify-center shrink-0 bg-muted/50 border">
+                            {#if selectedCompany?.logo}
+                                <img src={selectedCompany.logo} alt={selectedCompany.name} class="w-full h-full object-cover rounded" />
+                            {:else}
+                                <Building class="w-3.5 h-3.5 text-muted-foreground" />
+                            {/if}
+                        </div>
+                        <span class="text-sm font-medium truncate">{selectedCompany?.name || 'Empresa'}</span>
+                    </div>
+                    {#if companies.length > 1}
+                        <ChevronsUpDown class="w-4 h-4 text-muted-foreground ml-2 shrink-0 opacity-50" />
+                    {/if}
+                </button>
+
+                {#if isCompanyMenuOpen && companies.length > 1}
+                     <div class="absolute top-full left-0 w-full mt-1 z-50 rounded-md border bg-popover shadow-md py-1 animate-in fade-in zoom-in-95 duration-100">
+                        {#each companies as company}
+                            <button
+                                class="w-full flex items-center gap-2 px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground transition-colors"
+                                on:click={() => selectCompany(company)}
+                            >
+                                 <div class="w-5 h-5 rounded flex items-center justify-center shrink-0 bg-muted/50 border">
+                                    {#if company.logo}
+                                        <img src={company.logo} alt={company.name} class="w-full h-full object-cover rounded" />
+                                    {:else}
+                                        <Building class="w-3 h-3 text-muted-foreground" />
+                                    {/if}
+                                </div>
+                                <span class="flex-1 text-left truncate">{company.name}</span>
+                                {#if selectedCompany?.id === company.id}
+                                    <Check class="w-3 h-3 text-primary" />
+                                {/if}
+                            </button>
+                        {/each}
+                     </div>
+                {/if}
+            </div>
+        </div>
+        {/if}
+
         <nav class="flex-1 p-4 space-y-1">
             {#each menuItems as item}
                 <a 

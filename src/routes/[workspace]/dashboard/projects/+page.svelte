@@ -1,11 +1,18 @@
 <script lang="ts">
     import type { PageData } from './$types';
+    import { Layers } from 'lucide-svelte';
+    import { currentLang, translations } from '$lib/i18n';
+    
     export let data: PageData;
+    $: t = translations[$currentLang];
 </script>
 
 <div class="space-y-6">
     <div class="flex items-center justify-between">
-        <h2 class="text-3xl font-bold tracking-tight">Proyectos</h2>
+        <div>
+            <h2 class="text-2xl font-bold tracking-tight">{t.dashboard.page.projects.title}</h2>
+            <p class="text-muted-foreground">{t.dashboard.page.projects.subtitle}</p>
+        </div>
     </div>
 
     <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -19,13 +26,17 @@
                     <div class="h-full rounded-xl border bg-card text-card-foreground shadow-sm transition-all duration-200 hover:shadow-lg hover:border-primary/50 overflow-hidden flex flex-col">
                         <!-- Decorative Header / Image Placeholder -->
                         <div class="h-32 w-full bg-muted border-b relative overflow-hidden">
-                            <img 
-                                src="https://picsum.photos/seed/{project.id}/800/400" 
-                                alt="Project Cover"
-                                class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 opacity-90 group-hover:opacity-100"
-                                loading="lazy"
-                            />
-                            <div class="absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent"></div>
+                            {#if project.imageUrl}
+                                <img 
+                                    src={project.imageUrl} 
+                                    alt="Project Cover"
+                                    class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 opacity-90 group-hover:opacity-100"
+                                    loading="lazy"
+                                />
+                                <div class="absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent"></div>
+                            {:else}
+                                <div class="w-full h-full bg-neutral-200 dark:bg-neutral-800"></div>
+                            {/if}
                         </div>
                         
                         <div class="p-6 flex flex-col flex-grow space-y-4">
@@ -59,7 +70,7 @@
                             
                             {#if project.serviceName}
                                 <div class="text-xs text-muted-foreground font-medium pt-2 flex items-center gap-1">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                                    <Layers class="w-3 h-3" />
                                     {project.serviceName}
                                 </div>
                             {/if}

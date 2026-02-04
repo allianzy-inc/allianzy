@@ -57,7 +57,7 @@ export async function deleteFile(fileUrl: string): Promise<void> {
   }
 }
 
-export async function getSignedUrlForFile(url: string | null, workspace: string = 'allianzy'): Promise<string | null> {
+export function getSignedUrlForFile(url: string | null, workspace: string = 'allianzy'): string | null {
   if (!url) return null;
 
   // Check if it's already a proxy URL and extract the original B2 URL

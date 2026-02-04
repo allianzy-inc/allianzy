@@ -25,21 +25,22 @@ export const load: PageServerLoad = async ({ params, url }) => {
         .where(eq(caseComments.caseId, Number(selectedCaseId)))
         .orderBy(asc(caseComments.createdAt));
 
-        selectedCaseComments = await Promise.all(rawComments.map(async (c) => {
+        selectedCaseComments = rawComments.map((c) => {
              let files = c.files as any[];
              if (files && Array.isArray(files)) {
-                 files = await Promise.all(files.map(async (f) => ({
+                 files = files.map((f) => ({
                      ...f,
-                     url: await getSignedUrlForFile(f.url, params.workspace)
-                 })));
+                     url: getSignedUrlForFile(f.url, params.workspace)
+                 }));
              }
              return { ...c, files };
-        }));
+        });
     }
 
     // Fetch comments for selected request
     let selectedRequestComments: any[] = [];
     const selectedRequestId = url.searchParams.get('requestId');
+
     if (selectedRequestId) {
         const rawComments = await db.select({
             id: requestComments.id,
@@ -56,16 +57,16 @@ export const load: PageServerLoad = async ({ params, url }) => {
         .where(eq(requestComments.requestId, Number(selectedRequestId)))
         .orderBy(asc(requestComments.createdAt));
 
-        selectedRequestComments = await Promise.all(rawComments.map(async (c) => {
+        selectedRequestComments = rawComments.map((c) => {
              let files = c.files as any[];
              if (files && Array.isArray(files)) {
-                 files = await Promise.all(files.map(async (f) => ({
+                 files = files.map((f) => ({
                      ...f,
-                     url: await getSignedUrlForFile(f.url, params.workspace)
-                 })));
+                     url: getSignedUrlForFile(f.url, params.workspace)
+                 }));
              }
              return { ...c, files };
-        }));
+        });
     }
 
     // Fetch comments for selected requirement
@@ -87,16 +88,16 @@ export const load: PageServerLoad = async ({ params, url }) => {
         .where(eq(requirementComments.requirementId, Number(selectedRequirementId)))
         .orderBy(asc(requirementComments.createdAt));
 
-        selectedRequirementComments = await Promise.all(rawComments.map(async (c) => {
+        selectedRequirementComments = rawComments.map((c) => {
              let files = c.files as any[];
              if (files && Array.isArray(files)) {
-                 files = await Promise.all(files.map(async (f) => ({
+                 files = files.map((f) => ({
                      ...f,
-                     url: await getSignedUrlForFile(f.url, params.workspace)
-                 })));
+                     url: getSignedUrlForFile(f.url, params.workspace)
+                 }));
              }
              return { ...c, files };
-        }));
+        });
     }
 
     // Fetch comments for selected proposal
@@ -118,16 +119,16 @@ export const load: PageServerLoad = async ({ params, url }) => {
         .where(eq(proposalComments.proposalId, Number(selectedProposalId)))
         .orderBy(asc(proposalComments.createdAt));
 
-        selectedProposalComments = await Promise.all(rawComments.map(async (c) => {
+        selectedProposalComments = rawComments.map((c) => {
              let files = c.files as any[];
              if (files && Array.isArray(files)) {
-                 files = await Promise.all(files.map(async (f) => ({
+                 files = files.map((f) => ({
                      ...f,
-                     url: await getSignedUrlForFile(f.url, params.workspace)
-                 })));
+                     url: getSignedUrlForFile(f.url, params.workspace)
+                 }));
              }
              return { ...c, files };
-        }));
+        });
     }
 
     return {

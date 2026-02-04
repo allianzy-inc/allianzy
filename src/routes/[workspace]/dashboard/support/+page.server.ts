@@ -96,16 +96,16 @@ export const load: PageServerLoad = async ({ locals, url, params }) => {
             .where(eq(caseComments.caseId, Number(selectedCaseId)))
             .orderBy(asc(caseComments.createdAt));
 
-            selectedCaseComments = await Promise.all(rawComments.map(async (c) => {
+            selectedCaseComments = rawComments.map((c) => {
                  let files = c.files as any[];
                  if (files && Array.isArray(files)) {
-                     files = await Promise.all(files.map(async (f) => ({
+                     files = files.map((f) => ({
                          ...f,
-                         url: await getSignedUrlForFile(f.url, params.workspace)
-                     })));
+                         url: getSignedUrlForFile(f.url, params.workspace)
+                     }));
                  }
                  return { ...c, files };
-            }));
+            });
         }
     }
 

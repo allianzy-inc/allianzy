@@ -1,4 +1,4 @@
-import { pgTable, serial, text, timestamp, boolean, integer, jsonb, primaryKey, decimal, char } from 'drizzle-orm/pg-core';
+import { pgTable, serial, text, timestamp, boolean, integer, jsonb, primaryKey, decimal, char, index } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
 export const workspaces = pgTable('workspaces', {
@@ -91,7 +91,9 @@ export const caseComments = pgTable('case_comments', {
     content: text('content').notNull(),
     files: jsonb('files'),
     createdAt: timestamp('created_at').defaultNow(),
-});
+}, (t) => ({
+    caseIdIdx: index('case_comments_case_id_idx').on(t.caseId),
+}));
 
 export const requestComments = pgTable('request_comments', {
     id: serial('id').primaryKey(),
@@ -102,7 +104,9 @@ export const requestComments = pgTable('request_comments', {
     content: text('content').notNull(),
     files: jsonb('files'),
     createdAt: timestamp('created_at').defaultNow(),
-});
+}, (t) => ({
+    requestIdIdx: index('request_comments_request_id_idx').on(t.requestId),
+}));
 
 export const projectMilestones = pgTable('project_milestones', {
     id: serial('id').primaryKey(),
@@ -134,7 +138,9 @@ export const proposalComments = pgTable('proposal_comments', {
     content: text('content').notNull(),
     files: jsonb('files'),
     createdAt: timestamp('created_at').defaultNow(),
-});
+}, (t) => ({
+    proposalIdIdx: index('proposal_comments_proposal_id_idx').on(t.proposalId),
+}));
 
 export const payments = pgTable('payments', {
     id: serial('id').primaryKey(),
@@ -187,7 +193,9 @@ export const requirementComments = pgTable('requirement_comments', {
     content: text('content').notNull(),
     files: jsonb('files'),
     createdAt: timestamp('created_at').defaultNow(),
-});
+}, (t) => ({
+    requirementIdIdx: index('requirement_comments_requirement_id_idx').on(t.requirementId),
+}));
 
 export const companies = pgTable('companies', {
     id: serial('id').primaryKey(),

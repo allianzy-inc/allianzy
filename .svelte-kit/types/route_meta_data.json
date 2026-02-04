@@ -3,6 +3,9 @@
 	"/api/auth/[...path]": [
 		"src/routes/api/auth/[...path]/+server.ts"
 	],
+	"/api/debug-env": [
+		"src/routes/api/debug-env/+server.ts"
+	],
 	"/api/public/files": [
 		"src/routes/api/public/files/+server.ts"
 	],

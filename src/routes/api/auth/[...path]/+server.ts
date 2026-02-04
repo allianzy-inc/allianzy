@@ -5,7 +5,10 @@ const AUTH_URL = import.meta.env.VITE_NEON_AUTH_URL || env.VITE_NEON_AUTH_URL ||
 
 async function proxy(request: Request, path: string) {
     if (!AUTH_URL) {
-        return new Response('Auth URL not configured', { status: 500 });
+        return new Response(JSON.stringify({ message: 'Auth URL not configured on server' }), { 
+            status: 500,
+            headers: { 'Content-Type': 'application/json' }
+        });
     }
 
     // Handle query parameters
@@ -62,9 +65,15 @@ async function proxy(request: Request, path: string) {
             statusText: response.statusText,
             headers: responseHeaders
         });
-    } catch (error) {
+    } catch (error: any) {
         console.error('Auth proxy error:', error);
-        return new Response('Auth proxy error', { status: 502 });
+        return new Response(JSON.stringify({ 
+            message: 'Auth proxy error', 
+            details: error?.message || String(error) 
+        }), { 
+            status: 502,
+            headers: { 'Content-Type': 'application/json' }
+        });
     }
 }
 

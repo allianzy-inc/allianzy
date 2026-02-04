@@ -58,8 +58,25 @@
             const targetRoute = `/${workspace}/dashboard`;
             await goto(targetRoute, { replaceState: true, invalidateAll: true });
         } catch (e: any) {
-            console.error(e);
-            error = e.message || 'Authentication failed';
+            console.error('Login error:', e);
+            
+            // Handle different error structures
+            if (e?.body?.message) {
+                // Better Auth specific error structure
+                error = e.body.message;
+            } else if (e?.message) {
+                // Standard Error object
+                error = e.message;
+            } else if (typeof e === 'string') {
+                error = e;
+            } else {
+                error = 'Authentication failed. Please check your credentials or try again later.';
+            }
+            
+            // Add status code if available for debugging
+            if (e?.status) {
+                error += ` (Status: ${e.status})`;
+            }
         } finally {
             isLoading = false;
         }

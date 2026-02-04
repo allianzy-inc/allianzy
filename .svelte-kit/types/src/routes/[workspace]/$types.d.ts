@@ -14,12 +14,16 @@ export type Snapshot<T = any> = Kit.Snapshot<T>;
 type PageParentData = Omit<EnsureDefined<import('../$types.js').LayoutData>, keyof LayoutData> & EnsureDefined<LayoutData>;
 type LayoutRouteId = RouteId | "/[workspace]" | "/[workspace]/admin" | "/[workspace]/admin/cases" | "/[workspace]/admin/profile" | "/[workspace]/admin/projects" | "/[workspace]/admin/projects/[id]" | "/[workspace]/admin/services" | "/[workspace]/admin/settings" | "/[workspace]/admin/support" | "/[workspace]/admin/users" | "/[workspace]/admin/users/[id]" | "/[workspace]/auth/login" | "/[workspace]/config" | "/[workspace]/dashboard" | "/[workspace]/dashboard/billing" | "/[workspace]/dashboard/contact" | "/[workspace]/dashboard/profile" | "/[workspace]/dashboard/projects" | "/[workspace]/dashboard/projects/[id]" | "/[workspace]/dashboard/settings" | "/[workspace]/dashboard/support" | "/[workspace]/intake" | "/[workspace]/portal" | "/[workspace]/provider" | "/[workspace]/schedule" | "/[workspace]/tickets"
 type LayoutParams = RouteParams & { workspace?: string; id?: string }
+type LayoutServerParentData = EnsureDefined<import('../$types.js').LayoutServerData>;
 type LayoutParentData = EnsureDefined<import('../$types.js').LayoutData>;
 
 export type EntryGenerator = () => Promise<Array<RouteParams>> | Array<RouteParams>;
 export type PageServerData = null;
 export type PageData = Expand<PageParentData>;
 export type PageProps = { params: RouteParams; data: PageData }
-export type LayoutServerData = null;
-export type LayoutData = Expand<LayoutParentData>;
+export type LayoutServerLoad<OutputData extends OutputDataShape<LayoutServerParentData> = OutputDataShape<LayoutServerParentData>> = Kit.ServerLoad<LayoutParams, LayoutServerParentData, OutputData, LayoutRouteId>;
+export type LayoutServerLoadEvent = Parameters<LayoutServerLoad>[0];
+export type LayoutServerData = Expand<OptionalUnion<EnsureDefined<Kit.LoadProperties<Awaited<ReturnType<typeof import('./proxy+layout.server.js').load>>>>>>;
+export type LayoutData = Expand<Omit<LayoutParentData, keyof LayoutServerData> & EnsureDefined<LayoutServerData>>;
 export type LayoutProps = { params: LayoutParams; data: LayoutData; children: import("svelte").Snippet }
+export type RequestEvent = Kit.RequestEvent<RouteParams, RouteId>;

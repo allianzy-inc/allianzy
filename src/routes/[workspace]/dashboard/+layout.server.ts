@@ -2,8 +2,8 @@
 import { redirect } from '@sveltejs/kit';
 import type { LayoutServerLoad } from './$types';
 import { db } from '$lib/server/db';
-import { userCompanies, companies } from '$lib/server/schema';
-import { eq } from 'drizzle-orm';
+import { userCompanies, companies, notifications } from '$lib/server/schema';
+import { eq, desc } from 'drizzle-orm';
 import { getSignedUrlForFile } from '$lib/server/storage';
 
 export const load: LayoutServerLoad = async ({ locals, url, params }) => {
@@ -12,6 +12,12 @@ export const load: LayoutServerLoad = async ({ locals, url, params }) => {
     if (!locals.user) {
         throw redirect(303, `/${params.workspace}/auth/login`);
     }
+
+    // Fetch user's notifications
+    const userNotifications = await db.select()
+        .from(notifications)
+        .where(eq(notifications.userId, parseInt(locals.user.id)))
+        .orderBy(desc(notifications.createdAt));
 
     // Fetch user's companies
     const userCompaniesList = await db.query.userCompanies.findMany({
@@ -52,6 +58,7 @@ export const load: LayoutServerLoad = async ({ locals, url, params }) => {
 
     return {
         user: locals.user,
-        companies: mappedCompanies
+        companies: mappedCompanies,
+        notifications: userNotifications
     };
 };

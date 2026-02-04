@@ -318,6 +318,16 @@
 </script>
 
 <div class="space-y-6 relative">
+    <!-- Cover Photo -->
+    <div class="h-48 w-full rounded-xl overflow-hidden relative shadow-sm group">
+        <img 
+            src={project.imageUrl || "https://images.unsplash.com/photo-1557683316-973673baf926?q=80&w=2029&auto=format&fit=crop"} 
+            alt="Project Cover" 
+            class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+        />
+        <div class="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent"></div>
+    </div>
+
     <!-- Header -->
     <div class="flex items-center gap-4">
         <a href="../projects" class="p-2 hover:bg-accent rounded-full transition-colors">

@@ -231,8 +231,23 @@ export const projectPayments = pgTable('project_payments', {
     pk: primaryKey({ columns: [t.projectId, t.paymentId] }),
 }));
 
+export const notifications = pgTable('notifications', {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
+    title: text('title').notNull(),
+    message: text('message'),
+    type: text('type').default('info'), // info, success, warning, error
+    link: text('link'),
+    read: boolean('read').default(false),
+    archived: boolean('archived').default(false),
+    createdAt: timestamp('created_at').defaultNow(),
+}, (t) => ({
+    userIdIdx: index('notifications_user_id_idx').on(t.userId),
+}));
+
 export const usersRelations = relations(users, ({ many }) => ({
     userCompanies: many(userCompanies),
+    notifications: many(notifications),
 }));
 
 export const companiesRelations = relations(companies, ({ many }) => ({
@@ -266,5 +281,12 @@ export const projectPaymentsRelations = relations(projectPayments, ({ one }) => 
     payment: one(payments, {
         fields: [projectPayments.paymentId],
         references: [payments.id],
+    }),
+}));
+
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+    user: one(users, {
+        fields: [notifications.userId],
+        references: [users.id],
     }),
 }));

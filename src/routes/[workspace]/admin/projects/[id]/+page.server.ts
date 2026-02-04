@@ -1,5 +1,5 @@
 import { db } from '$lib/server/db';
-import { projects, services, users, requirements, projectMilestones, cases, proposals, payments, requests, caseComments, requestComments, requirementComments, proposalComments, projectPayments as projectPaymentsTable } from '$lib/server/schema';
+import { projects, services, users, requirements, projectMilestones, cases, proposals, payments, requests, caseComments, requestComments, requirementComments, proposalComments, projectPayments as projectPaymentsTable, notifications } from '$lib/server/schema';
 import { uploadFile, getSignedUrlForFile, deleteFile } from '$lib/server/storage';
 import { eq, asc, desc, sql, getTableColumns, inArray } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
@@ -973,14 +973,27 @@ export const actions: Actions = {
                 createdAt = new Date(`${reqDate}T${timeStr}`);
             }
 
-            await db.insert(requests).values({
+            const [newRequest] = await db.insert(requests).values({
                 projectId,
                 title,
                 description,
                 status: 'pending',
                 files: uploadedFiles,
                 createdAt
-            });
+            }).returning({ id: requests.id });
+
+            // Notify Client
+            const project = await db.select({ clientId: projects.clientId }).from(projects).where(eq(projects.id, projectId)).limit(1);
+            if (project.length > 0 && project[0].clientId) {
+                await db.insert(notifications).values({
+                    userId: project[0].clientId,
+                    title: 'Nueva Solicitud',
+                    message: `Se ha creado una nueva solicitud: ${title}`,
+                    type: 'info',
+                    link: `/${params.workspace}/dashboard/projects/${projectId}?requestId=${newRequest.id}`
+                });
+            }
+
             return { success: true };
         } catch (err) {
             console.error('Error creating request:', err);
@@ -1109,7 +1122,7 @@ export const actions: Actions = {
         }
 
         try {
-            await db.insert(cases).values({
+            const [newCase] = await db.insert(cases).values({
                 projectId,
                 title,
                 description,
@@ -1117,7 +1130,20 @@ export const actions: Actions = {
                 priority,
                 status,
                 files: uploadedFiles
-            });
+            }).returning({ id: cases.id });
+
+            // Notify Client
+            const project = await db.select({ clientId: projects.clientId }).from(projects).where(eq(projects.id, projectId)).limit(1);
+            if (project.length > 0 && project[0].clientId) {
+                await db.insert(notifications).values({
+                    userId: project[0].clientId,
+                    title: 'Nuevo Ticket de Soporte',
+                    message: `Se ha creado un nuevo ticket: ${title}`,
+                    type: 'info',
+                    link: `/${params.workspace}/dashboard/support?caseId=${newCase.id}`
+                });
+            }
+
             return { success: true };
         } catch (err) {
             console.error('Error creating case:', err);
@@ -1195,7 +1221,7 @@ export const actions: Actions = {
         }
     },
 
-    addCaseComment: async ({ request }) => {
+    addCaseComment: async ({ request, params }) => {
         const formData = await request.formData();
         const caseId = Number(formData.get('caseId'));
         const content = formData.get('content') as string;
@@ -1229,6 +1255,24 @@ export const actions: Actions = {
                 content,
                 files: uploadedFiles
             });
+
+            // Notify Client
+            const caseData = await db.select({ projectId: cases.projectId }).from(cases).where(eq(cases.id, caseId)).limit(1);
+            if (caseData.length > 0 && caseData[0].projectId) {
+                const projectId = caseData[0].projectId;
+                const project = await db.select({ clientId: projects.clientId }).from(projects).where(eq(projects.id, projectId)).limit(1);
+                
+                if (project.length > 0 && project[0].clientId) {
+                    await db.insert(notifications).values({
+                        userId: project[0].clientId,
+                        title: 'Nuevo mensaje de soporte',
+                        message: `Nuevo comentario en el ticket #${caseId}: ${subject || 'Sin asunto'}`,
+                        type: 'info',
+                        link: `/${params.workspace}/dashboard/support?caseId=${caseId}`
+                    });
+                }
+            }
+
             return { success: true };
         } catch (err) {
             console.error('Error adding comment:', err);
@@ -1283,7 +1327,7 @@ export const actions: Actions = {
         }
     },
 
-    addRequestComment: async ({ request }) => {
+    addRequestComment: async ({ request, params }) => {
         const formData = await request.formData();
         const requestId = Number(formData.get('requestId'));
         const content = formData.get('content') as string;
@@ -1317,6 +1361,24 @@ export const actions: Actions = {
                 content,
                 files: uploadedFiles
             });
+
+            // Notify Client
+            const requestData = await db.select({ projectId: requests.projectId }).from(requests).where(eq(requests.id, requestId)).limit(1);
+            if (requestData.length > 0 && requestData[0].projectId) {
+                const projectId = requestData[0].projectId;
+                const project = await db.select({ clientId: projects.clientId }).from(projects).where(eq(projects.id, projectId)).limit(1);
+                
+                if (project.length > 0 && project[0].clientId) {
+                    await db.insert(notifications).values({
+                        userId: project[0].clientId,
+                        title: 'Nuevo Mensaje en Solicitud',
+                        message: `Nuevo comentario en la solicitud: ${subject || 'Sin asunto'}`,
+                        type: 'info',
+                        link: `/${params.workspace}/dashboard/projects/${projectId}?requestId=${requestId}`
+                    });
+                }
+            }
+
             return { success: true };
         } catch (err) {
             console.error('Error adding request comment:', err);

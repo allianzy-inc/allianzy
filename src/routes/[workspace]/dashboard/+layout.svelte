@@ -1,12 +1,13 @@
 <script lang="ts">
     import { page } from '$app/stores';
     import { onMount } from 'svelte';
-    import { User, LayoutDashboard, Briefcase, Ticket, Settings, LogOut, Shield, Bell, BellOff, Moon, Sun, Monitor, Languages, Check, ChevronRight, HelpCircle, Heart, CreditCard, ChevronsUpDown, Building } from 'lucide-svelte';
+    import { User, LayoutDashboard, Briefcase, Ticket, Settings, LogOut, Shield, Bell, BellOff, Moon, Sun, Monitor, Languages, Check, ChevronRight, HelpCircle, Heart, CreditCard, ChevronsUpDown, Building, AlertTriangle, Trash } from 'lucide-svelte';
     import { authClient } from '$lib/auth-client';
     import { goto } from '$app/navigation';
     import logoLight from '$lib/assets/brand/allianzy/logo-light.svg';
     import logoDark from '$lib/assets/brand/allianzy/logo-dark.svg';
     import { currentLang, translations } from '$lib/i18n';
+    import { enhance } from '$app/forms';
     import type { LayoutData } from './$types';
 
     export let data: LayoutData;
@@ -17,6 +18,12 @@
     
     let clientRole = '';
     let theme: 'light' | 'dark' | 'system' = 'system';
+
+    // Notifications Logic
+    $: notifications = data.notifications || [];
+    $: inboxNotifications = notifications.filter((n: any) => !n.archived);
+    $: archivedNotifications = notifications.filter((n: any) => n.archived);
+    $: unreadCount = inboxNotifications.filter((n: any) => !n.read).length;
 
     onMount(async () => {
         const { data: sessionData } = await authClient.getSession();
@@ -84,7 +91,8 @@
             console.error('Logout error:', error);
         }
         clearAllCookies();
-        goto(`/${workspace}`);
+        // Force full reload to ensure server state is cleared
+        window.location.href = `/${workspace}`;
     }
 
     let isProfileOpen = false;
@@ -95,6 +103,10 @@
     
     $: companies = data.companies || [];
     let selectedCompany: any = null;
+
+    let activeNotificationTab = 'inbox'; // 'inbox' | 'archive'
+    
+    $: isSpanish = $currentLang === 'es';
 
     $: if (companies.length > 0 && !selectedCompany) {
         // Try to match with user's companyId if available, otherwise first
@@ -257,17 +269,188 @@
                         class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-muted transition-colors relative focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
                     >
                         <Bell class="w-4 h-4 text-muted-foreground" />
+                        {#if unreadCount > 0}
+                            <span class="absolute top-0 right-0 block h-2.5 w-2.5 rounded-full ring-2 ring-background bg-red-500 transform translate-x-1/4 -translate-y-1/4"></span>
+                        {/if}
                     </button>
 
                     {#if isNotificationsOpen}
-                        <div class="absolute right-0 mt-2 w-80 rounded-lg border bg-popover shadow-lg z-50 py-2 animate-in fade-in zoom-in-95 duration-200">
-                            <div class="px-4 py-2 border-b">
-                                <h3 class="font-semibold text-sm">{t.dashboard.header.notifications.title}</h3>
+                        <div class="absolute right-0 mt-2 w-[400px] rounded-lg border bg-popover shadow-lg z-50 animate-in fade-in zoom-in-95 duration-200 overflow-hidden flex flex-col max-h-[600px]">
+                            <!-- Header with Tabs -->
+                            <div class="flex items-center border-b bg-muted/30">
+                                <button 
+                                    class="flex-1 px-4 py-3 text-sm font-medium border-b-2 transition-colors flex items-center justify-center gap-2 relative
+                                    {activeNotificationTab === 'inbox' ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/50'}"
+                                    on:click={() => activeNotificationTab = 'inbox'}
+                                >
+                                    Inbox
+                                    {#if inboxNotifications.length > 0}
+                                        <span class="bg-foreground text-background text-[10px] font-bold px-1.5 py-0.5 rounded-full">{inboxNotifications.length}</span>
+                                    {/if}
+                                </button>
+                                <button 
+                                    class="flex-1 px-4 py-3 text-sm font-medium border-b-2 transition-colors flex items-center justify-center gap-2
+                                    {activeNotificationTab === 'archive' ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/50'}"
+                                    on:click={() => activeNotificationTab = 'archive'}
+                                >
+                                    {isSpanish ? 'Archivadas' : 'Archive'}
+                                </button>
                             </div>
-                            <div class="p-8 flex flex-col items-center justify-center text-center text-muted-foreground">
-                                <BellOff class="w-8 h-8 mb-2 opacity-50" />
-                                <p class="text-sm">{t.dashboard.header.notifications.empty}</p>
+
+                            <!-- Content -->
+                            <div class="overflow-y-auto flex-1 bg-popover max-h-[400px]">
+                                {#if activeNotificationTab === 'inbox'}
+                                    {#if inboxNotifications.length === 0}
+                                        <div class="p-8 flex flex-col items-center justify-center text-center text-muted-foreground">
+                                            <BellOff class="w-8 h-8 mb-2 opacity-50" />
+                                            <p class="text-sm">{t.dashboard.header.notifications.empty}</p>
+                                        </div>
+                                    {:else}
+                                        <div class="divide-y divide-border/50">
+                                            {#each inboxNotifications as notification}
+                                                <div class="p-4 hover:bg-muted/50 transition-colors flex gap-3 relative group">
+                                                    <!-- Icon based on type -->
+                                                    <div class="shrink-0 mt-1">
+                                                        {#if notification.type === 'success'}
+                                                            <div class="w-8 h-8 rounded-full border border-green-500/20 text-green-500 flex items-center justify-center">
+                                                                <Check class="w-4 h-4" />
+                                                            </div>
+                                                        {:else if notification.type === 'warning'}
+                                                            <div class="w-8 h-8 rounded-full border border-orange-500/20 text-orange-500 flex items-center justify-center">
+                                                                <AlertTriangle class="w-4 h-4" />
+                                                            </div>
+                                                        {:else if notification.type === 'error'}
+                                                            <div class="w-8 h-8 rounded-full border border-red-500/20 text-red-500 flex items-center justify-center">
+                                                                <AlertTriangle class="w-4 h-4" />
+                                                            </div>
+                                                        {:else}
+                                                            <div class="w-8 h-8 rounded-full border border-blue-500/20 text-blue-500 flex items-center justify-center">
+                                                                <Monitor class="w-4 h-4" />
+                                                            </div>
+                                                        {/if}
+                                                    </div>
+                                                    
+                                                    <!-- Content -->
+                                                    <div class="flex-1 min-w-0">
+                                                        <a 
+                                                            href="{notification.link || '#'}" 
+                                                            class="block group-hover:text-primary transition-colors"
+                                                            on:click|preventDefault={async () => {
+                                                                if (!notification.read) {
+                                                                    const formData = new FormData();
+                                                                    formData.append('id', notification.id.toString());
+                                                                    try {
+                                                                        await fetch(`/${workspace}/dashboard?/markNotificationRead`, {
+                                                                            method: 'POST',
+                                                                            body: formData
+                                                                        });
+                                                                    } catch (e) {
+                                                                        console.error('Failed to mark as read', e);
+                                                                    }
+                                                                }
+                                                                isNotificationsOpen = false;
+                                                                if (notification.link) window.location.href = notification.link;
+                                                            }}
+                                                        >
+                                                            <p class="text-sm font-medium leading-snug text-foreground mb-0.5">
+                                                                {notification.title}
+                                                            </p>
+                                                            <p class="text-xs text-muted-foreground line-clamp-2">
+                                                                {notification.message}
+                                                            </p>
+                                                            <p class="text-[10px] text-muted-foreground mt-1">
+                                                                {new Date(notification.createdAt || new Date()).toLocaleDateString()}
+                                                            </p>
+                                                        </a>
+                                                    </div>
+
+                                                    <!-- Actions -->
+                                                    <div class="shrink-0 flex flex-col items-end gap-2">
+                                                        {#if !notification.read}
+                                                            <div class="w-2 h-2 rounded-full bg-blue-500"></div>
+                                                        {/if}
+                                                        
+                                                        <form 
+                                                            action="/{workspace}/dashboard?/archiveNotification" 
+                                                            method="POST" 
+                                                            use:enhance
+                                                            class="opacity-0 group-hover:opacity-100 transition-opacity"
+                                                        >
+                                                            <input type="hidden" name="id" value={notification.id} />
+                                                            <button 
+                                                                type="submit" 
+                                                                class="p-1 text-muted-foreground hover:text-foreground hover:bg-muted rounded"
+                                                                title={isSpanish ? 'Archivar' : 'Archive'}
+                                                            >
+                                                                <Check class="w-3 h-3" />
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            {/each}
+                                        </div>
+                                    {/if}
+                                {:else}
+                                    <!-- Archive Tab -->
+                                    {#if archivedNotifications.length === 0}
+                                        <div class="p-12 flex flex-col items-center justify-center text-center text-muted-foreground">
+                                            <div class="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-3">
+                                                <BellOff class="w-6 h-6 opacity-50" />
+                                            </div>
+                                            <p class="text-sm">{isSpanish ? 'No hay notificaciones archivadas' : 'No archived notifications'}</p>
+                                        </div>
+                                    {:else}
+                                        <div class="divide-y divide-border/50">
+                                            {#each archivedNotifications as notification}
+                                                <div class="p-4 hover:bg-muted/50 transition-colors flex gap-3 opacity-75 group relative">
+                                                    <div class="flex-1 min-w-0">
+                                                        <a 
+                                                            href="{notification.link || '#'}" 
+                                                            class="block hover:text-primary transition-colors"
+                                                            on:click={() => isNotificationsOpen = false}
+                                                        >
+                                                             <p class="text-sm font-medium leading-snug text-foreground mb-0.5">{notification.title}</p>
+                                                             <p class="text-xs text-muted-foreground">{notification.message}</p>
+                                                             <p class="text-[10px] text-muted-foreground mt-1">{new Date(notification.createdAt || new Date()).toLocaleDateString()}</p>
+                                                        </a>
+                                                     </div>
+                                                     <div class="shrink-0 flex flex-col items-end gap-2">
+                                                        <form 
+                                                            action="/{workspace}/dashboard?/deleteNotification" 
+                                                            method="POST" 
+                                                            use:enhance
+                                                            class="opacity-0 group-hover:opacity-100 transition-opacity"
+                                                        >
+                                                            <input type="hidden" name="id" value={notification.id} />
+                                                            <button 
+                                                                type="submit" 
+                                                                class="p-1 text-muted-foreground hover:text-red-500 hover:bg-muted rounded"
+                                                                title={isSpanish ? 'Eliminar' : 'Delete'}
+                                                            >
+                                                                <Trash class="w-3 h-3" />
+                                                            </button>
+                                                        </form>
+                                                     </div>
+                                                </div>
+                                            {/each}
+                                        </div>
+                                    {/if}
+                                {/if}
                             </div>
+                            
+                            <!-- Footer -->
+                            {#if activeNotificationTab === 'inbox' && inboxNotifications.length > 0}
+                                <div class="p-2 border-t bg-muted/30">
+                                    <form action="/{workspace}/dashboard?/archiveAllNotifications" method="POST" use:enhance class="w-full">
+                                        <button 
+                                            type="submit"
+                                            class="w-full py-2 text-sm font-medium text-foreground hover:bg-background rounded-md transition-colors border shadow-sm flex items-center justify-center gap-2"
+                                        >
+                                            {isSpanish ? 'Archivar todo' : 'Archive All'}
+                                        </button>
+                                    </form>
+                                </div>
+                            {/if}
                         </div>
                     {/if}
                  </div>

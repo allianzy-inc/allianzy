@@ -15,67 +15,110 @@
 	"/api/users/sync": [
 		"src/routes/api/users/sync/+server.ts"
 	],
-	"/[workspace]": [],
-	"/[workspace]/admin": [],
-	"/[workspace]/admin/cases": [],
-	"/[workspace]/admin/profile": [],
+	"/[workspace]": [
+		"src/routes/[workspace]/+layout.server.ts",
+		"src/routes/[workspace]/+layout.server.ts"
+	],
+	"/[workspace]/admin": [
+		"src/routes/[workspace]/+layout.server.ts",
+		"src/routes/[workspace]/+layout.server.ts"
+	],
+	"/[workspace]/admin/cases": [
+		"src/routes/[workspace]/+layout.server.ts"
+	],
+	"/[workspace]/admin/profile": [
+		"src/routes/[workspace]/+layout.server.ts"
+	],
 	"/[workspace]/admin/projects": [
-		"src/routes/[workspace]/admin/projects/+page.server.ts"
+		"src/routes/[workspace]/admin/projects/+page.server.ts",
+		"src/routes/[workspace]/+layout.server.ts"
 	],
 	"/[workspace]/admin/projects/[id]": [
-		"src/routes/[workspace]/admin/projects/[id]/+page.server.ts"
+		"src/routes/[workspace]/admin/projects/[id]/+page.server.ts",
+		"src/routes/[workspace]/+layout.server.ts"
 	],
 	"/[workspace]/admin/services": [
-		"src/routes/[workspace]/admin/services/+page.server.ts"
+		"src/routes/[workspace]/admin/services/+page.server.ts",
+		"src/routes/[workspace]/+layout.server.ts"
 	],
-	"/[workspace]/admin/settings": [],
-	"/[workspace]/admin/support": [],
+	"/[workspace]/admin/settings": [
+		"src/routes/[workspace]/+layout.server.ts"
+	],
+	"/[workspace]/admin/support": [
+		"src/routes/[workspace]/+layout.server.ts"
+	],
 	"/[workspace]/admin/users": [
-		"src/routes/[workspace]/admin/users/+page.server.ts"
+		"src/routes/[workspace]/admin/users/+page.server.ts",
+		"src/routes/[workspace]/+layout.server.ts"
 	],
 	"/[workspace]/admin/users/[id]": [
-		"src/routes/[workspace]/admin/users/[id]/+page.server.ts"
+		"src/routes/[workspace]/admin/users/[id]/+page.server.ts",
+		"src/routes/[workspace]/+layout.server.ts"
 	],
-	"/[workspace]/auth/login": [],
-	"/[workspace]/config": [],
+	"/[workspace]/auth/login": [
+		"src/routes/[workspace]/+layout.server.ts"
+	],
+	"/[workspace]/config": [
+		"src/routes/[workspace]/+layout.server.ts"
+	],
 	"/[workspace]/dashboard": [
 		"src/routes/[workspace]/dashboard/+page.server.ts",
 		"src/routes/[workspace]/dashboard/+layout.server.ts",
-		"src/routes/[workspace]/dashboard/+layout.server.ts"
+		"src/routes/[workspace]/+layout.server.ts",
+		"src/routes/[workspace]/dashboard/+layout.server.ts",
+		"src/routes/[workspace]/+layout.server.ts"
 	],
 	"/[workspace]/dashboard/billing": [
 		"src/routes/[workspace]/dashboard/billing/+page.server.ts",
-		"src/routes/[workspace]/dashboard/+layout.server.ts"
+		"src/routes/[workspace]/dashboard/+layout.server.ts",
+		"src/routes/[workspace]/+layout.server.ts"
 	],
 	"/[workspace]/dashboard/contact": [
-		"src/routes/[workspace]/dashboard/+layout.server.ts"
+		"src/routes/[workspace]/dashboard/+layout.server.ts",
+		"src/routes/[workspace]/+layout.server.ts"
 	],
 	"/[workspace]/dashboard/profile": [
 		"src/routes/[workspace]/dashboard/profile/+page.server.ts",
-		"src/routes/[workspace]/dashboard/+layout.server.ts"
+		"src/routes/[workspace]/dashboard/+layout.server.ts",
+		"src/routes/[workspace]/+layout.server.ts"
 	],
 	"/[workspace]/dashboard/projects": [
 		"src/routes/[workspace]/dashboard/projects/+page.server.ts",
-		"src/routes/[workspace]/dashboard/+layout.server.ts"
+		"src/routes/[workspace]/dashboard/+layout.server.ts",
+		"src/routes/[workspace]/+layout.server.ts"
 	],
 	"/[workspace]/dashboard/projects/[id]": [
 		"src/routes/[workspace]/dashboard/projects/[id]/+page.server.ts",
 		"src/routes/[workspace]/dashboard/projects/[id]/+layout.server.ts",
 		"src/routes/[workspace]/dashboard/+layout.server.ts",
+		"src/routes/[workspace]/+layout.server.ts",
 		"src/routes/[workspace]/dashboard/projects/[id]/+layout.server.ts",
-		"src/routes/[workspace]/dashboard/+layout.server.ts"
+		"src/routes/[workspace]/dashboard/+layout.server.ts",
+		"src/routes/[workspace]/+layout.server.ts"
 	],
 	"/[workspace]/dashboard/settings": [
 		"src/routes/[workspace]/dashboard/settings/+page.server.ts",
-		"src/routes/[workspace]/dashboard/+layout.server.ts"
+		"src/routes/[workspace]/dashboard/+layout.server.ts",
+		"src/routes/[workspace]/+layout.server.ts"
 	],
 	"/[workspace]/dashboard/support": [
 		"src/routes/[workspace]/dashboard/support/+page.server.ts",
-		"src/routes/[workspace]/dashboard/+layout.server.ts"
+		"src/routes/[workspace]/dashboard/+layout.server.ts",
+		"src/routes/[workspace]/+layout.server.ts"
 	],
-	"/[workspace]/intake": [],
-	"/[workspace]/portal": [],
-	"/[workspace]/provider": [],
-	"/[workspace]/schedule": [],
-	"/[workspace]/tickets": []
+	"/[workspace]/intake": [
+		"src/routes/[workspace]/+layout.server.ts"
+	],
+	"/[workspace]/portal": [
+		"src/routes/[workspace]/+layout.server.ts"
+	],
+	"/[workspace]/provider": [
+		"src/routes/[workspace]/+layout.server.ts"
+	],
+	"/[workspace]/schedule": [
+		"src/routes/[workspace]/+layout.server.ts"
+	],
+	"/[workspace]/tickets": [
+		"src/routes/[workspace]/+layout.server.ts"
+	]
 }

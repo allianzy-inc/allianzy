@@ -76,7 +76,8 @@
             console.error('Logout error:', error);
         }
         clearAllCookies();
-        goto(`/${workspace}`);
+        // Force full reload to ensure server state is cleared
+        window.location.href = `/${workspace}`;
     }
 
     let isProfileOpen = false;

@@ -38,7 +38,7 @@ export const nodes = [
 	() => import('./nodes/32')
 ];
 
-export const server_loads = [4,5];
+export const server_loads = [2,4,5];
 
 export const dictionary = {
 		"/": [6],

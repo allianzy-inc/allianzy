@@ -13,15 +13,72 @@ export const translations = {
             contact: 'Contact',
             login: 'Login',
             register: 'Start Now',
+            start_eval: 'Start Evaluation',
             dashboard: 'Dashboard'
         },
         hero: {
-            title: 'Empowering Your Business',
-            subtitle: 'Premium Technical & Creative Solutions',
-            cta: 'Get Started'
+            title: 'Where Strategy becomes System.',
+            subtitle: 'We design systems, processes, and platforms for organizations that need to scale with control.',
+            supporting: 'Engineering, automation, and technical consulting to transform strategic decisions into real operational structures.',
+            cta: 'Start Evaluation',
+            cta_secondary: 'See How We Work'
+        },
+        problem: {
+            title: 'When strategy lacks a system, operations fragment.',
+            items: [
+                'Processes that depend on people and constant explanations',
+                'Informal requests, out-of-scope changes, and lack of traceability',
+                'Teams fighting fires instead of executing with focus',
+                'Strategic decisions that don\'t trickle down to operations'
+            ],
+            closure_1: 'The problem isn\'t growth.',
+            closure_2: 'The problem is growing without a structure to sustain it.'
+        },
+        capabilities: {
+            title: 'Applied Engineering Capabilities',
+            items: {
+                custom: {
+                    title: 'Custom Designed Systems',
+                    desc: 'Technical and process architecture aligned with the business, not generic solutions.'
+                },
+                automation: {
+                    title: 'Automation & Integrations',
+                    desc: 'We connect tools, data, and flows to eliminate manual tasks and operational friction.'
+                },
+                platform: {
+                    title: 'Platform & Operational Control',
+                    desc: 'A single system for requests, tickets, deliverables, payments, and complete traceability.'
+                },
+                consulting: {
+                    title: 'Real Technical Consulting',
+                    desc: 'Diagnosis, criteria, and decisions. We don\'t sell hours: we design structural solutions.'
+                }
+            }
+        },
+        why_allianzy: {
+            title: 'Not an agency. Applied engineering for business.',
+            traditional: {
+                title: 'Traditional Approaches',
+                items: ['Isolated deliverables', 'Dependence on key people', 'Informal support', 'Vague scopes']
+            },
+            allianzy: {
+                title: 'Allianzy',
+                items: ['Systems with clear rules', 'Processes designed to scale', 'Real separation between support and extra work', 'Control, traceability, and strategic focus']
+            },
+            quote: 'Allianzy doesn\'t sell tasks. We design and operate systems.'
         },
         services: {
             title: 'Our Services',
+            principle: 'Less is more. Clear blocks of high strategic value.',
+            items: [
+                { title: 'Technical & Process Consulting', desc: 'Deep diagnosis, architecture definition, and implementation roadmap.' },
+                { title: 'System & Platform Design', desc: 'Internal platforms, dashboards, client and vendor portals.' },
+                { title: 'Automation & Integrations', desc: 'APIs, data flows, system synchronization, and elimination of repetitive tasks.' },
+                { title: 'Infrastructure & Maintenance', desc: 'Structural support, continuous evolution, monitoring, and system improvement.' },
+                { title: 'Operational Scaling', desc: 'Service separation, vendor control, and friction-less growth.' }
+            ],
+            exclusion: 'We do not do: web design, social media, marketing. That is not Allianzy.',
+             // Keeping legacy keys for compatibility if needed elsewhere
             beltix: {
                 title: 'Beltix Agency',
                 tag: 'Creative',
@@ -37,31 +94,62 @@ export const translations = {
                 features: ['Technical Strategy', 'Consulting', 'Staff Augmentation']
             }
         },
-        allianzy: {
-            nav: {
-                services: 'Services',
-                projects: 'Projects',
-                about: 'About',
-                contact: 'Contact',
-                login: 'Login',
-                register: 'Start Now',
-                dashboard: 'Dashboard'
-            },
-            hero: {
-                title: 'Innovating the Future',
-                subtitle: 'We build robust, scalable, and high-performance software solutions for enterprise needs.',
-                cta: 'Start a Project'
-            },
-            footer: {
-                rights: 'All rights reserved.',
-                legal: 'Legal',
-                privacy: 'Privacy Policy',
-                terms: 'Terms of Service'
-            }
+        process: {
+            title: 'A clear process from the first contact.',
+            steps: [
+                'Quick pre-evaluation (< 2 mins)',
+                'Guided problem evaluation',
+                'Technical qualification call',
+                'Structured proposal',
+                'Implementation & Operation'
+            ],
+            disclaimer: 'Not all projects qualify. And that\'s part of the method.'
         },
+        reviews: {
+            title: 'Social Proof',
+            quote: 'Allianzy transformed our strategy into a real operating system. Today the team knows what to do, when, and why.',
+            author: 'Satisfied Client'
+        },
+        faq: {
+            title: 'FAQ',
+            items: [
+                { q: 'Does Allianzy do websites or marketing?', a: 'No. For operational services there is a separate unit. Allianzy focuses on systems and technical consulting.' },
+                { q: 'Do you work with small companies?', a: 'Only when the problem requires a real structural approach.' },
+                { q: 'Do you sell hours?', a: 'No. We sell projects, systems, and solutions with defined scope.' },
+                { q: 'How are changes or support requested?', a: 'Everything is managed from the platform, via tickets and formal requests.' },
+                { q: 'Can I start with something small?', a: 'Yes, as long as it makes strategic sense.' }
+            ]
+        },
+        cta_final: {
+            title: 'From strategy to operation.',
+            subtitle: 'If your organization is already thinking about strategy, it\'s time to turn it into a system.',
+            button: 'Start Evaluation'
+        },
+        // Generic Footer
         footer: {
-            rights: 'All rights reserved.'
+            rights: 'All rights reserved.',
+            company: {
+                title: 'Company',
+                about: 'About',
+                careers: 'Careers',
+                blog: 'Blog'
+            },
+            product: {
+                title: 'Product',
+                features: 'Features',
+                security: 'Security'
+            },
+            resources: {
+                title: 'Resources',
+                docs: 'Docs',
+                help: 'Help Center',
+                community: 'Community'
+            },
+            desc: 'Engineering applied to business.',
+            privacy: 'Privacy Policy',
+            terms: 'Terms of Service'
         },
+        // Beltrix & Dashboard kept as is
         beltrix: {
             nav: {
                 login: 'Client Login',
@@ -235,6 +323,12 @@ export const translations = {
                     title: 'Settings',
                     subtitle: 'Manage your account and preferences.'
                 },
+                // This part was malformed in previous read (nested title/subtitle directly under settings object or something). 
+                // Based on previous read, it seemed 'title': 'My Account' was at the same level as 'settings'. 
+                // I'll try to reconstruct carefully based on the pattern.
+                // Looking at lines 339-340 in previous read, it seems like there was a missing key or it was part of 'profile' page but indentation was off.
+                // Assuming there is a 'profile' section.
+                profile: {
                     title: 'My Account',
                     subtitle: 'Manage your personal information.',
                     personal_info: {
@@ -290,22 +384,80 @@ export const translations = {
                     saved: 'Saved'
                 }
             }
-        },
+        }
+    },
     es: {
         nav: {
             home: 'Inicio',
             services: 'Servicios',
             about: 'Nosotros',
             contact: 'Contacto',
-            login: 'Acceso'
+            login: 'Acceso',
+            start_eval: 'Iniciar evaluación',
+            dashboard: 'Dashboard'
         },
         hero: {
-            title: 'Potenciando tu Negocio',
-            subtitle: 'Soluciones Técnicas y Creativas Premium',
-            cta: 'Comenzar'
+            title: 'Donde la estrategia se convierte en sistema.',
+            subtitle: 'Diseñamos sistemas, procesos y plataformas para organizaciones que necesitan escalar con control.',
+            supporting: 'Ingeniería, automatización y consultoría técnica para transformar decisiones estratégicas en estructuras operativas reales.',
+            cta: 'Iniciar evaluación',
+            cta_secondary: 'Ver cómo trabajamos'
+        },
+        problem: {
+            title: 'Cuando la estrategia no tiene sistema, la operación se fragmenta.',
+            items: [
+                'Procesos que dependen de personas y explicaciones constantes',
+                'Pedidos informales, cambios fuera de alcance y falta de trazabilidad',
+                'Equipos apagando incendios en lugar de ejecutar con foco',
+                'Decisiones estratégicas que no bajan a la operación'
+            ],
+            closure_1: 'El problema no es crecer.',
+            closure_2: 'El problema es crecer sin una estructura que lo sostenga.'
+        },
+        capabilities: {
+            title: 'Capacidades clave',
+            items: {
+                custom: {
+                    title: 'Sistemas diseñados a medida',
+                    desc: 'Arquitectura técnica y de procesos alineada al negocio, no soluciones genéricas.'
+                },
+                automation: {
+                    title: 'Automatización e integraciones',
+                    desc: 'Conectamos herramientas, datos y flujos para eliminar tareas manuales y fricción operativa.'
+                },
+                platform: {
+                    title: 'Plataforma y control operativo',
+                    desc: 'Un único sistema para pedidos, tickets, entregables, pagos y trazabilidad completa.'
+                },
+                consulting: {
+                    title: 'Consultoría técnica real',
+                    desc: 'Diagnóstico, criterio y decisiones. No vendemos horas: diseñamos soluciones estructurales.'
+                }
+            }
+        },
+        why_allianzy: {
+            title: 'No somos una agencia. Somos ingeniería aplicada al negocio.',
+            traditional: {
+                title: 'Enfoques tradicionales',
+                items: ['Entregables aislados', 'Dependencia de personas clave', 'Soporte informal', 'Alcances difusos']
+            },
+            allianzy: {
+                title: 'Allianzy',
+                items: ['Sistemas con reglas claras', 'Procesos diseñados para escalar', 'Separación real entre soporte y trabajo adicional', 'Control, trazabilidad y foco estratégico']
+            },
+            quote: 'Allianzy no vende tareas. Diseña y opera sistemas.'
         },
         services: {
             title: 'Nuestros Servicios',
+            principle: 'Menos es más. Bloques claros, de alto valor estratégico.',
+            items: [
+                { title: 'Consultoría técnica y de procesos', desc: 'Diagnóstico profundo, definición de arquitectura y roadmap de implementación.' },
+                { title: 'Diseño de sistemas y plataformas', desc: 'Plataformas internas, dashboards, portales de clientes y proveedores.' },
+                { title: 'Automatización e integraciones', desc: 'APIs, flujos de datos, sincronización de sistemas y eliminación de tareas repetitivas.' },
+                { title: 'Infraestructura y mantenimiento', desc: 'Soporte estructural, evolución continua, monitoreo y mejora del sistema.' },
+                { title: 'Escalamiento operativo', desc: 'Separación de servicios, control de proveedores y crecimiento sin fricción.' }
+            ],
+            exclusion: 'No incluir: diseño web, redes sociales, marketing. Eso no es Allianzy.',
             beltix: {
                 title: 'Beltix Agency',
                 tag: 'Creativo',
@@ -321,30 +473,59 @@ export const translations = {
                 features: ['Estrategia Técnica', 'Consultoría', 'Staff Augmentation']
             }
         },
-        allianzy: {
-            nav: {
-                services: 'Servicios',
-                projects: 'Proyectos',
-                about: 'Nosotros',
-                contact: 'Contacto',
-                login: 'Iniciar sesión',
-                register: 'Comienza ahora',
-                dashboard: 'Dashboard'
-            },
-            hero: {
-                title: 'Innovando el Futuro',
-                subtitle: 'Construimos soluciones de software robustas, escalables y de alto rendimiento para necesidades empresariales.',
-                cta: 'Iniciar Proyecto'
-            },
-            footer: {
-                rights: 'Todos los derechos reservados.',
-                legal: 'Legal',
-                privacy: 'Política de Privacidad',
-                terms: 'Términos de Servicio'
-            }
+        process: {
+            title: 'Un proceso claro desde el primer contacto.',
+            steps: [
+                'Pre-evaluación rápida (menos de 2 minutos)',
+                'Evaluación guiada del problema',
+                'Llamada técnica de calificación',
+                'Propuesta estructurada',
+                'Implementación y operación'
+            ],
+            disclaimer: 'No todos los proyectos califican. Y eso es parte del método.'
+        },
+        reviews: {
+            title: 'Social Proof',
+            quote: 'Allianzy transformó nuestra estrategia en un sistema operativo real. Hoy el equipo sabe qué hacer, cuándo y por qué.',
+            author: 'Cliente Satisfecho'
+        },
+        faq: {
+            title: 'FAQ',
+            items: [
+                { q: '¿Allianzy hace sitios web o marketing?', a: 'No. Para servicios operativos existe una unidad separada. Allianzy se enfoca en sistemas y consultoría técnica.' },
+                { q: '¿Trabajan con empresas pequeñas?', a: 'Solo cuando el problema requiere un enfoque estructural real.' },
+                { q: '¿Venden horas?', a: 'No. Vendemos proyectos, sistemas y soluciones con alcance definido.' },
+                { q: '¿Cómo se solicitan cambios o soporte?', a: 'Todo se gestiona desde la plataforma, mediante tickets y pedidos formales.' },
+                { q: '¿Puedo empezar con algo chico?', a: 'Sí, siempre que tenga sentido estratégico.' }
+            ]
+        },
+        cta_final: {
+            title: 'De la estrategia a la operación.',
+            subtitle: 'Si tu organización ya piensa en estrategia, es momento de convertirla en sistema.',
+            button: 'Iniciar evaluación'
         },
         footer: {
-            rights: 'Todos los derechos reservados.'
+            rights: 'Todos los derechos reservados.',
+            company: {
+                title: 'Compañía',
+                about: 'Nosotros',
+                careers: 'Carreras',
+                blog: 'Blog'
+            },
+            product: {
+                title: 'Producto',
+                features: 'Características',
+                security: 'Seguridad'
+            },
+            resources: {
+                title: 'Recursos',
+                docs: 'Documentación',
+                help: 'Centro de Ayuda',
+                community: 'Comunidad'
+            },
+            desc: 'Ingeniería aplicada al negocio.',
+            privacy: 'Política de Privacidad',
+            terms: 'Términos de Servicio'
         },
         beltrix: {
             nav: {
@@ -519,6 +700,7 @@ export const translations = {
                     title: 'Configuraciones',
                     subtitle: 'Gestiona tu cuenta y preferencias.'
                 },
+                profile: {
                     title: 'Mi Cuenta',
                     subtitle: 'Gestiona tu información personal.',
                     personal_info: {
@@ -572,6 +754,7 @@ export const translations = {
                         }
                     },
                     saved: 'Guardado'
+                }
             }
         }
     }

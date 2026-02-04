@@ -60,6 +60,9 @@
 	],
 	"/[workspace]/dashboard/projects/[id]": [
 		"src/routes/[workspace]/dashboard/projects/[id]/+page.server.ts",
+		"src/routes/[workspace]/dashboard/projects/[id]/+layout.server.ts",
+		"src/routes/[workspace]/dashboard/+layout.server.ts",
+		"src/routes/[workspace]/dashboard/projects/[id]/+layout.server.ts",
 		"src/routes/[workspace]/dashboard/+layout.server.ts"
 	],
 	"/[workspace]/dashboard/settings": [

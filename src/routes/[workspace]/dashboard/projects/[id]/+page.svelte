@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ArrowLeft, CheckCircle2, Circle, Clock, MessageSquare, FileText, User, Calendar, Briefcase, AlertCircle, DollarSign, CreditCard, ExternalLink, Download, Plus, X, Eye, Inbox, Send, Paperclip } from 'lucide-svelte';
+    import { ArrowLeft, CheckCircle2, Circle, Clock, MessageSquare, FileText, User, Calendar, Briefcase, AlertCircle, DollarSign, CreditCard, ExternalLink, Download, Plus, X, Eye, Inbox, Send, Paperclip, ArrowDown } from 'lucide-svelte';
     import type { PageData } from './$types';
     import { enhance } from '$app/forms';
     import DocumentPreviewModal from '$lib/components/DocumentPreviewModal.svelte';
@@ -62,14 +62,52 @@
         }
     }
 
+    let showScrollButton = false;
+    let chatContainer: HTMLElement;
+
+    const scrollChatToBottom = () => {
+        if (chatContainer) {
+            chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
+        }
+    };
+
     // Scroll to bottom action for chat
-    function scrollToBottom(node: HTMLElement, dependencies: any) {
-        const scroll = () => node.scrollTo({ top: node.scrollHeight, behavior: 'smooth' });
-        scroll();
+    function scrollToBottom(node: HTMLElement, { dependency }: { dependency: any }) {
+        let isAutoScrolling = false;
+        
+        const checkScroll = () => {
+            if (isAutoScrolling) return;
+            const { scrollTop, scrollHeight, clientHeight } = node;
+            const distance = scrollHeight - scrollTop - clientHeight;
+            // Show button if user is more than 100px from bottom
+            showScrollButton = distance > 100;
+        };
+
+        const scroll = (behavior: ScrollBehavior = 'smooth') => {
+            // Only scroll if we are near the bottom (button hidden) or it's the first load
+            // But for 'update', we rely on the previous state of showScrollButton
+            // If button is visible (user scrolled up), do NOT scroll.
+            // If button is hidden (user at bottom), DO scroll.
+            
+            if (!showScrollButton) {
+                isAutoScrolling = true;
+                node.scrollTo({ top: node.scrollHeight, behavior });
+                setTimeout(() => { isAutoScrolling = false; }, 500);
+            }
+        };
+        
+        // Initial scroll
+        showScrollButton = false; // Assume start at bottom
+        node.scrollTo({ top: node.scrollHeight, behavior: 'auto' });
+        
+        node.addEventListener('scroll', checkScroll);
 
         return {
-            update() {
-                scroll();
+            update({ dependency: newDep }: { dependency: any }) {
+                scroll('smooth');
+            },
+            destroy() {
+                node.removeEventListener('scroll', checkScroll);
             }
         };
     }
@@ -851,10 +889,12 @@
             </div>
 
             <!-- Chat Area -->
-            <div 
-                class="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50" 
-                use:scrollToBottom={selectedCaseComments}
-            >
+            <div class="flex-1 relative min-h-0">
+                <div 
+                    class="absolute inset-0 overflow-y-auto p-4 space-y-4 bg-slate-50" 
+                    use:scrollToBottom={{ dependency: selectedCaseComments }}
+                    bind:this={chatContainer}
+                >
                 {#if !selectedCaseComments || selectedCaseComments.length === 0}
                     <div class="text-center py-10 text-muted-foreground text-sm">
                         <MessageSquare class="w-10 h-10 mx-auto mb-2 opacity-20" />
@@ -866,7 +906,7 @@
                         <div class="border rounded-lg bg-white shadow-sm overflow-hidden {isMe ? 'border-primary/20' : ''}">
                             <!-- Email Header -->
                             <div class="{isMe ? 'bg-primary/5' : 'bg-muted/10'} px-4 py-3 border-b">
-                                <div class="flex justify-between items-center mb-2">
+                                <div class="flex justify-between items-center">
                                     <div class="flex items-center gap-2">
                                         <div class="w-8 h-8 rounded-full {isMe ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'} flex items-center justify-center font-bold text-xs">
                                             {(comment.authorName || 'U').charAt(0).toUpperCase()}
@@ -878,16 +918,10 @@
                                                     <span class="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full border border-primary/20">Yo</span>
                                                 {/if}
                                             </span>
-                                            <span class="text-[10px] text-muted-foreground">Para: {isMe ? 'Soporte' : 'Mí'}</span>
                                         </div>
                                     </div>
                                     <span class="text-xs text-muted-foreground">{formatDate(comment.createdAt)}</span>
                                 </div>
-                                {#if comment.subject}
-                                    <div class="text-xs font-medium text-foreground/90 pl-10">
-                                        Asunto: {comment.subject}
-                                    </div>
-                                {/if}
                             </div>
                             
                             <!-- Email Body -->
@@ -912,6 +946,16 @@
                         </div>
                     {/each}
                 {/if}
+            </div>
+            {#if showScrollButton}
+                <button 
+                    on:click={scrollChatToBottom}
+                    class="absolute bottom-4 right-4 p-2 bg-background/80 backdrop-blur-sm border rounded-full shadow-lg hover:bg-background transition-all z-10 text-muted-foreground"
+                    title="Ir al final"
+                >
+                    <ArrowDown class="w-5 h-5" />
+                </button>
+            {/if}
             </div>
 
             <!-- Reply Box -->
@@ -1058,10 +1102,12 @@
             </div>
 
             <!-- Chat Area -->
-            <div 
-                class="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50" 
-                use:scrollToBottom={selectedRequestComments}
-            >
+            <div class="flex-1 relative min-h-0">
+                <div 
+                    class="absolute inset-0 overflow-y-auto p-4 space-y-4 bg-slate-50" 
+                    use:scrollToBottom={{ dependency: selectedRequestComments }}
+                    bind:this={chatContainer}
+                >
                 {#if !selectedRequestComments || selectedRequestComments.length === 0}
                     <div class="text-center py-10 text-muted-foreground text-sm">
                         <MessageSquare class="w-10 h-10 mx-auto mb-2 opacity-20" />
@@ -1072,7 +1118,7 @@
                         {@const isMe = comment.userId === (user ? parseInt(user.id) : -1)}
                         <div class="border rounded-lg bg-white shadow-sm overflow-hidden {isMe ? 'border-primary/20' : ''}">
                             <div class="{isMe ? 'bg-primary/5' : 'bg-muted/10'} px-4 py-3 border-b">
-                                <div class="flex justify-between items-center mb-2">
+                                <div class="flex justify-between items-center">
                                     <div class="flex items-center gap-2">
                                         <div class="w-8 h-8 rounded-full {isMe ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'} flex items-center justify-center font-bold text-xs">
                                             {(comment.authorName || 'U').charAt(0).toUpperCase()}
@@ -1084,16 +1130,10 @@
                                                     <span class="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full border border-primary/20">Yo</span>
                                                 {/if}
                                             </span>
-                                            <span class="text-[10px] text-muted-foreground">Para: {isMe ? 'Soporte' : 'Mí'}</span>
                                         </div>
                                     </div>
                                     <span class="text-xs text-muted-foreground">{formatDate(comment.createdAt)}</span>
                                 </div>
-                                {#if comment.subject}
-                                    <div class="text-xs font-medium text-foreground/90 pl-10">
-                                        Asunto: {comment.subject}
-                                    </div>
-                                {/if}
                             </div>
                             
                             <div class="p-4 text-sm text-foreground/80 whitespace-pre-wrap leading-relaxed font-sans">
@@ -1122,8 +1162,19 @@
                     {/each}
                 {/if}
             </div>
+            {#if showScrollButton}
+                <button 
+                    on:click={scrollChatToBottom}
+                    class="absolute bottom-4 right-4 p-2 bg-background/80 backdrop-blur-sm border rounded-full shadow-lg hover:bg-background transition-all z-10 text-muted-foreground"
+                    title="Ir al final"
+                >
+                    <ArrowDown class="w-5 h-5" />
+                </button>
+            {/if}
+            </div>
 
             <!-- Reply Box -->
+            {#if selectedRequest.status !== 'completed' && selectedRequest.status !== 'pending'}
             <div class="p-4 bg-background border-t">
                 <form 
                     action="?/addRequestComment" 
@@ -1211,6 +1262,7 @@
                     </div>
                 </form>
             </div>
+            {/if}
         </div>
     </div>
 {/if}
@@ -1267,10 +1319,12 @@
             </div>
 
             <!-- Chat Area -->
-            <div 
-                class="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50" 
-                use:scrollToBottom={selectedRequirementComments}
-            >
+            <div class="flex-1 relative min-h-0">
+                <div 
+                    class="absolute inset-0 overflow-y-auto p-4 space-y-4 bg-slate-50" 
+                    use:scrollToBottom={{ dependency: selectedRequirementComments }}
+                    bind:this={chatContainer}
+                >
                 {#if !selectedRequirementComments || selectedRequirementComments.length === 0}
                     <div class="text-center py-10 text-muted-foreground text-sm">
                         <MessageSquare class="w-10 h-10 mx-auto mb-2 opacity-20" />
@@ -1281,7 +1335,7 @@
                         {@const isMe = comment.userId === (user ? parseInt(user.id) : -1)}
                         <div class="border rounded-lg bg-white shadow-sm overflow-hidden {isMe ? 'border-primary/20' : ''}">
                             <div class="{isMe ? 'bg-primary/5' : 'bg-muted/10'} px-4 py-3 border-b">
-                                <div class="flex justify-between items-center mb-2">
+                                <div class="flex justify-between items-center">
                                     <div class="flex items-center gap-2">
                                         <div class="w-8 h-8 rounded-full {isMe ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'} flex items-center justify-center font-bold text-xs">
                                             {(comment.authorName || 'U').charAt(0).toUpperCase()}
@@ -1293,16 +1347,10 @@
                                                     <span class="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full border border-primary/20">Yo</span>
                                                 {/if}
                                             </span>
-                                            <span class="text-[10px] text-muted-foreground">Para: {isMe ? 'Soporte' : 'Mí'}</span>
                                         </div>
                                     </div>
                                     <span class="text-xs text-muted-foreground">{formatDate(comment.createdAt)}</span>
                                 </div>
-                                {#if comment.subject}
-                                    <div class="text-xs font-medium text-foreground/90 pl-10">
-                                        Asunto: {comment.subject}
-                                    </div>
-                                {/if}
                             </div>
                             
                             <div class="p-4 text-sm text-foreground/80 whitespace-pre-wrap leading-relaxed font-sans">
@@ -1330,6 +1378,16 @@
                         </div>
                     {/each}
                 {/if}
+            </div>
+            {#if showScrollButton}
+                <button 
+                    on:click={scrollChatToBottom}
+                    class="absolute bottom-4 right-4 p-2 bg-background/80 backdrop-blur-sm border rounded-full shadow-lg hover:bg-background transition-all z-10 text-muted-foreground"
+                    title="Ir al final"
+                >
+                    <ArrowDown class="w-5 h-5" />
+                </button>
+            {/if}
             </div>
 
             <!-- Reply Box -->
@@ -1478,10 +1536,12 @@
             </div>
 
             <!-- Chat Area -->
-            <div 
-                class="flex-1 overflow-y-auto p-4 space-y-6 bg-slate-50" 
-                use:scrollToBottom={selectedProposalComments}
-            >
+            <div class="flex-1 relative min-h-0">
+                <div 
+                    class="absolute inset-0 overflow-y-auto p-4 space-y-6 bg-slate-50" 
+                    use:scrollToBottom={{ dependency: selectedProposalComments }}
+                    bind:this={chatContainer}
+                >
                 {#if !selectedProposalComments || selectedProposalComments.length === 0}
                     <div class="text-center py-10 text-muted-foreground text-sm">
                         <MessageSquare class="w-10 h-10 mx-auto mb-2 opacity-20" />
@@ -1492,7 +1552,7 @@
                         {@const isMe = comment.userId === (user ? parseInt(user.id) : -1)}
                         <div class="border rounded-lg bg-white shadow-sm overflow-hidden {isMe ? 'border-primary/20' : ''}">
                             <div class="{isMe ? 'bg-primary/5' : 'bg-muted/10'} px-4 py-3 border-b">
-                                <div class="flex justify-between items-center mb-2">
+                                <div class="flex justify-between items-center">
                                     <div class="flex items-center gap-2">
                                         <div class="w-8 h-8 rounded-full {isMe ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'} flex items-center justify-center font-bold text-xs">
                                             {(comment.authorName || 'U').charAt(0).toUpperCase()}
@@ -1504,16 +1564,10 @@
                                                     <span class="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full border border-primary/20">Yo</span>
                                                 {/if}
                                             </span>
-                                            <span class="text-[10px] text-muted-foreground">Para: {isMe ? 'Soporte' : 'Mí'}</span>
                                         </div>
                                     </div>
                                     <span class="text-xs text-muted-foreground">{formatDate(comment.createdAt)}</span>
                                 </div>
-                                {#if comment.subject}
-                                    <div class="text-xs font-medium text-foreground/90 pl-10">
-                                        Asunto: {comment.subject}
-                                    </div>
-                                {/if}
                             </div>
                             
                             <div class="p-4 text-sm text-foreground/80 whitespace-pre-wrap leading-relaxed font-sans">
@@ -1541,6 +1595,16 @@
                         </div>
                     {/each}
                 {/if}
+            </div>
+            {#if showScrollButton}
+                <button 
+                    on:click={scrollChatToBottom}
+                    class="absolute bottom-4 right-4 p-2 bg-background/80 backdrop-blur-sm border rounded-full shadow-lg hover:bg-background transition-all z-10 text-muted-foreground"
+                    title="Ir al final"
+                >
+                    <ArrowDown class="w-5 h-5" />
+                </button>
+            {/if}
             </div>
 
             <!-- Reply Box -->

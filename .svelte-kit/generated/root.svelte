@@ -5,7 +5,7 @@
 	import { browser } from '$app/environment';
 
 	// stores
-	let { stores, page, constructors, components = [], form, data_0 = null, data_1 = null, data_2 = null, data_3 = null } = $props();
+	let { stores, page, constructors, components = [], form, data_0 = null, data_1 = null, data_2 = null, data_3 = null, data_4 = null } = $props();
 
 	if (!browser) {
 		// svelte-ignore state_referenced_locally
@@ -19,7 +19,7 @@
 		stores.page.set(page);
 	}
 	$effect(() => {
-		stores;page;constructors;components;form;data_0;data_1;data_2;data_3;
+		stores;page;constructors;components;form;data_0;data_1;data_2;data_3;data_4;
 		stores.page.notify();
 	});
 
@@ -41,7 +41,7 @@
 		return unsubscribe;
 	});
 
-	const Pyramid_3=$derived(constructors[3])
+	const Pyramid_4=$derived(constructors[4])
 </script>
 
 {#if constructors[1]}
@@ -56,8 +56,20 @@
 																	{@const Pyramid_2 = constructors[2]}
 																							<!-- svelte-ignore binding_property_non_reactive -->
 																							<Pyramid_2 bind:this={components[2]} data={data_2} {form} params={page.params}>
-																								<!-- svelte-ignore binding_property_non_reactive -->
-																										<Pyramid_3 bind:this={components[3]} data={data_3} {form} params={page.params} />
+																								{#if constructors[4]}
+																									{@const Pyramid_3 = constructors[3]}
+																															<!-- svelte-ignore binding_property_non_reactive -->
+																															<Pyramid_3 bind:this={components[3]} data={data_3} {form} params={page.params}>
+																																<!-- svelte-ignore binding_property_non_reactive -->
+																																		<Pyramid_4 bind:this={components[4]} data={data_4} {form} params={page.params} />
+																															</Pyramid_3>
+																								
+																								{:else}
+																									{@const Pyramid_3 = constructors[3]}
+																									<!-- svelte-ignore binding_property_non_reactive -->
+																									<Pyramid_3 bind:this={components[3]} data={data_3} {form} params={page.params} />
+																								
+																								{/if}
 																							</Pyramid_2>
 																
 																{:else}

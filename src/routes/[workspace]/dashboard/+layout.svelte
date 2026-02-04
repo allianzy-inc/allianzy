@@ -149,7 +149,11 @@
     }
 </script>
 
-<div class="flex h-screen bg-background">
+<svelte:head>
+    <title>Allianzy Inc</title>
+</svelte:head>
+
+<div class="flex h-screen overflow-hidden bg-background">
     <!-- Sidebar -->
     <aside class="w-64 bg-background border-r flex flex-col">
         <div class="p-6 border-b h-16 flex items-center">

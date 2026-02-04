@@ -56,6 +56,10 @@
     });
 </script>
 
+<svelte:head>
+    <title>Allianzy Inc</title>
+</svelte:head>
+
 <div class="min-h-screen bg-background text-foreground flex flex-col font-sans transition-colors duration-300">
     <!-- Navbar -->
     <header class="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">

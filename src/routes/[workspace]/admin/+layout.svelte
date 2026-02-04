@@ -82,6 +82,10 @@
     let isProfileOpen = false;
 </script>
 
+<svelte:head>
+    <title>Allianzy Inc</title>
+</svelte:head>
+
 <div class="flex h-screen bg-gray-50/50">
     <!-- Sidebar -->
     <aside class="w-64 bg-background border-r flex flex-col">

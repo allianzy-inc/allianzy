@@ -22,7 +22,6 @@ async function proxy(request: Request, path: string) {
     const headers = new Headers(request.headers);
     
     // Remove headers that might cause issues
-    headers.delete('host');
     headers.delete('connection');
     // headers.delete('origin'); // Keep origin if possible, or set to AUTH_URL origin?
     // Better Auth might require Origin to match the allowed origins.
@@ -45,8 +44,13 @@ async function proxy(request: Request, path: string) {
         headers.set('referer', referer.replace('https://www.', 'https://'));
     }
 
+    headers.set('host', requestUrl.host);
     headers.set('x-forwarded-host', requestUrl.host);
     headers.set('x-forwarded-proto', requestUrl.protocol.replace(':', ''));
+    if (requestUrl.port) {
+        headers.set('x-forwarded-port', requestUrl.port);
+    }
+    headers.set('forwarded', `host=${requestUrl.host};proto=${requestUrl.protocol.replace(':', '')}`);
 
     try {
         const response = await fetch(targetUrl, {

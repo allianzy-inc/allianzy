@@ -60,20 +60,18 @@
         } catch (e: any) {
             console.error('Login error:', e);
             
-            // Handle different error structures
             if (e?.body?.message) {
-                // Better Auth specific error structure
                 error = e.body.message;
             } else if (e?.message) {
-                // Standard Error object
                 error = e.message;
+            } else if (e?.code) {
+                error = e.code;
             } else if (typeof e === 'string') {
                 error = e;
             } else {
                 error = 'Authentication failed. Please check your credentials or try again later.';
             }
             
-            // Add status code if available for debugging
             if (e?.status) {
                 error += ` (Status: ${e.status})`;
             }

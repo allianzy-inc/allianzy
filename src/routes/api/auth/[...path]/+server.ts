@@ -32,6 +32,22 @@ async function proxy(request: Request, path: string) {
 
     const body = request.method !== 'GET' && request.method !== 'HEAD' ? await request.blob() : undefined;
 
+    const requestUrl = new URL(request.url);
+    const origin = headers.get('origin');
+    if (origin && origin.startsWith('https://www.')) {
+        headers.set('origin', origin.replace('https://www.', 'https://'));
+    } else if (!origin) {
+        headers.set('origin', requestUrl.origin);
+    }
+
+    const referer = headers.get('referer');
+    if (referer && referer.startsWith('https://www.')) {
+        headers.set('referer', referer.replace('https://www.', 'https://'));
+    }
+
+    headers.set('x-forwarded-host', requestUrl.host);
+    headers.set('x-forwarded-proto', requestUrl.protocol.replace(':', ''));
+
     try {
         const response = await fetch(targetUrl, {
             method: request.method,

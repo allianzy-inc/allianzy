@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ArrowLeft, CheckCircle2, Circle, Clock, MessageSquare, FileText, User, Calendar, Briefcase, AlertCircle, DollarSign, CreditCard, ExternalLink, Download, Plus, X, Eye, Inbox, Send, Paperclip, ArrowDown } from 'lucide-svelte';
+    import { ArrowLeft, CheckCircle2, Circle, Clock, MessageSquare, FileText, User, Calendar, Briefcase, AlertCircle, DollarSign, CreditCard, ExternalLink, Download, Plus, X, Eye, Inbox, Send, Paperclip, ArrowDown, Loader2 } from 'lucide-svelte';
     import type { PageData } from './$types';
     import { enhance } from '$app/forms';
     import DocumentPreviewModal from '$lib/components/DocumentPreviewModal.svelte';
@@ -212,6 +212,12 @@
     let commentFiles: File[] = [];
     let commentFileInput: HTMLInputElement;
     let commentContent = '';
+    // Loading states for comment submission
+    let isCaseSubmitting = false;
+    let isRequestSubmitting = false;
+    let isRequirementSubmitting = false;
+    let isProposalSubmitting = false;
+
     const DEFAULT_SIGNATURE_TEXT = '--\n' + (user ? `${user.firstName} ${user.lastName}\n${user.email}` : 'Cliente');
     let signatureContent = DEFAULT_SIGNATURE_TEXT;
 
@@ -959,6 +965,7 @@
                     method="POST" 
                     enctype="multipart/form-data"
                     use:enhance={({ formData }) => {
+                        isCaseSubmitting = true;
                         // Append files from local state to formData
                         formData.delete('files'); // Clear existing empty/partial input
                         commentFiles.forEach((file) => {
@@ -966,6 +973,7 @@
                         });
 
                         return async ({ result, update }) => {
+                            isCaseSubmitting = false;
                             if (result.type === 'success') {
                                 commentContent = '';
                                 commentFiles = [];
@@ -1031,10 +1039,14 @@
 
                             <button 
                                 type="submit" 
-                                disabled={!commentContent.trim()}
+                                disabled={!commentContent.trim() || isCaseSubmitting}
                                 class="px-3 py-1.5 text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90 rounded-md transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shrink-0 ml-2"
                             >
-                                <Send class="w-3 h-3" /> Enviar
+                                {#if isCaseSubmitting}
+                                    <Loader2 class="w-3 h-3 animate-spin" /> Enviando...
+                                {:else}
+                                    <Send class="w-3 h-3" /> Enviar
+                                {/if}
                             </button>
                         </div>
                     </div>
@@ -1175,6 +1187,7 @@
                     method="POST" 
                     enctype="multipart/form-data"
                     use:enhance={({ formData }) => {
+                        isRequestSubmitting = true;
                         // Append files from local state to formData
                         formData.delete('files'); // Clear existing empty/partial input
                         commentFiles.forEach((file) => {
@@ -1182,6 +1195,7 @@
                         });
 
                         return async ({ result, update }) => {
+                            isRequestSubmitting = false;
                             if (result.type === 'success') {
                                 commentContent = '';
                                 commentFiles = [];
@@ -1247,10 +1261,14 @@
 
                             <button 
                                 type="submit" 
-                                disabled={!commentContent.trim()}
+                                disabled={!commentContent.trim() || isRequestSubmitting}
                                 class="px-3 py-1.5 text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90 rounded-md transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shrink-0 ml-2"
                             >
-                                <Send class="w-3 h-3" /> Enviar
+                                {#if isRequestSubmitting}
+                                    <Loader2 class="w-3 h-3 animate-spin" /> Enviando...
+                                {:else}
+                                    <Send class="w-3 h-3" /> Enviar
+                                {/if}
                             </button>
                         </div>
                     </div>
@@ -1392,22 +1410,24 @@
                         method="POST" 
                         enctype="multipart/form-data"
                         use:enhance={({ formData }) => {
-                            // Append files from local state to formData
-                            formData.delete('files'); // Clear existing empty/partial input
-                            commentFiles.forEach((file) => {
-                                formData.append('files', file);
-                            });
+                        isProposalSubmitting = true;
+                        // Append files from local state to formData
+                        formData.delete('files'); // Clear existing empty/partial input
+                        commentFiles.forEach((file) => {
+                            formData.append('files', file);
+                        });
 
-                            return async ({ result, update }) => {
-                                if (result.type === 'success') {
-                                    commentContent = '';
-                                    commentFiles = [];
-                                    await invalidateAll();
-                                } else {
-                                    await update();
-                                }
-                            };
-                        }}
+                        return async ({ result, update }) => {
+                            isProposalSubmitting = false;
+                            if (result.type === 'success') {
+                                commentContent = '';
+                                commentFiles = [];
+                                await invalidateAll();
+                            } else {
+                                await update();
+                            }
+                        };
+                    }}
                         class="space-y-4"
                     >
                         <input type="hidden" name="requirementId" value={selectedRequirement.id} />
@@ -1464,10 +1484,14 @@
 
                                 <button 
                                     type="submit" 
-                                    disabled={!commentContent.trim()}
+                                    disabled={!commentContent.trim() || isRequirementSubmitting}
                                     class="px-3 py-1.5 text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90 rounded-md transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shrink-0 ml-2"
                                 >
-                                    <Send class="w-3 h-3" /> Enviar
+                                    {#if isRequirementSubmitting}
+                                        <Loader2 class="w-3 h-3 animate-spin" /> Enviando...
+                                    {:else}
+                                        <Send class="w-3 h-3" /> Enviar
+                                    {/if}
                                 </button>
                             </div>
                         </div>
@@ -1608,6 +1632,7 @@
                     method="POST" 
                     enctype="multipart/form-data"
                     use:enhance={({ formData }) => {
+                        isRequirementSubmitting = true;
                         // Append files from local state to formData
                         formData.delete('files'); // Clear existing empty/partial input
                         commentFiles.forEach((file) => {
@@ -1615,6 +1640,7 @@
                         });
 
                         return async ({ result, update }) => {
+                            isRequirementSubmitting = false;
                             if (result.type === 'success') {
                                 commentContent = '';
                                 commentFiles = [];
@@ -1681,10 +1707,14 @@
                     <div class="flex justify-end">
                         <button 
                             type="submit" 
-                            disabled={!commentContent.trim()}
+                            disabled={!commentContent.trim() || isProposalSubmitting}
                             class="px-4 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 rounded-md transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            <Send class="w-4 h-4" /> Enviar Respuesta
+                            {#if isProposalSubmitting}
+                                <Loader2 class="w-4 h-4 animate-spin" /> Enviando...
+                            {:else}
+                                <Send class="w-4 h-4" /> Enviar Respuesta
+                            {/if}
                         </button>
                     </div>
                 </form>

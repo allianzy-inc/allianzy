@@ -17,6 +17,10 @@ export const translations = {
             dashboard: 'Dashboard'
         },
         hero: {
+            badge: {
+                new: 'NEW',
+                text: 'The evolution of strategic consulting'
+            },
             title: 'Where Strategy becomes System.',
             subtitle: 'We design systems, processes, and platforms for organizations that need to scale with control.',
             supporting: 'Engineering, automation, and technical consulting to transform strategic decisions into real operational structures.',
@@ -35,6 +39,7 @@ export const translations = {
             closure_2: 'The problem is growing without a structure to sustain it.'
         },
         capabilities: {
+            badge: 'Capabilities',
             title: 'Applied Engineering Capabilities',
             items: {
                 custom: {
@@ -75,7 +80,8 @@ export const translations = {
                 { title: 'System & Platform Design', desc: 'Internal platforms, dashboards, client and vendor portals.' },
                 { title: 'Automation & Integrations', desc: 'APIs, data flows, system synchronization, and elimination of repetitive tasks.' },
                 { title: 'Infrastructure & Maintenance', desc: 'Structural support, continuous evolution, monitoring, and system improvement.' },
-                { title: 'Operational Scaling', desc: 'Service separation, vendor control, and friction-less growth.' }
+                { title: 'Operational Scaling', desc: 'Service separation, vendor control, and friction-less growth.' },
+                { title: 'Strategic Diagnosis & Assessment', desc: 'Technical and operational assessment to understand the current system and clearly decide the next step.' }
             ],
             exclusion: 'We do not do: web design, social media, marketing. That is not Allianzy.',
              // Keeping legacy keys for compatibility if needed elsewhere
@@ -97,18 +103,56 @@ export const translations = {
         process: {
             title: 'A clear process from the first contact.',
             steps: [
-                'Quick pre-evaluation (< 2 mins)',
-                'Guided problem evaluation',
-                'Technical qualification call',
-                'Structured proposal',
-                'Implementation & Operation'
+                {
+                    title: 'Quick pre-evaluation (< 2 mins)',
+                    desc: 'A brief form to understand your basic needs and verify if we can help with your current challenge.',
+                    image: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&q=80&w=1000'
+                },
+                {
+                    title: 'Guided problem evaluation',
+                    desc: 'We dive deep into specific challenges to identify the root cause, not just visible symptoms.',
+                    image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=1000'
+                },
+                {
+                    title: 'Technical qualification call',
+                    desc: 'Direct conversation with our senior engineers to validate technical feasibility and strategic alignment.',
+                    image: 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&fit=crop&q=80&w=1000'
+                },
+                {
+                    title: 'Structured proposal',
+                    desc: 'Detailed work plan with scope, timeline, clear deliverables, and fixed budget. No surprises.',
+                    image: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&q=80&w=1000'
+                },
+                {
+                    title: 'Implementation & Operation',
+                    desc: 'System execution and launch with continuous support to ensure adoption and success.',
+                    image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=1000'
+                }
             ],
             disclaimer: 'Not all projects qualify. And that\'s part of the method.'
         },
         reviews: {
             title: 'Social Proof',
-            quote: 'Allianzy transformed our strategy into a real operating system. Today the team knows what to do, when, and why.',
-            author: 'Satisfied Client'
+            items: [
+                {
+                    quote: "The experience was very good, the work was excellent and customer service was timely and fast. All requests were attended to, and appropriate advice was provided to achieve a good result.",
+                    author: "Manager",
+                    company: "Hotel Safari Club",
+                    logo: "/clients/safari.webp"
+                },
+                {
+                    quote: "My experience with Allianzy was magnificent! They were always attentive and willing to handle any situation, and I am especially satisfied with the development request. I will continue to stay in touch with them for future projects because they are the kind of company one enjoys working with.",
+                    author: "General Director",
+                    company: "GG Insurances",
+                    logo: "/clients/gg.webp"
+                },
+                {
+                    quote: "Customer service was excellent. They were always in contact and took into consideration all the changes I wanted to make.",
+                    author: "Department Head",
+                    company: "Roan",
+                    logo: "/clients/roan.webp"
+                }
+            ]
         },
         faq: {
             title: 'FAQ',
@@ -397,8 +441,12 @@ export const translations = {
             dashboard: 'Dashboard'
         },
         hero: {
+            badge: {
+                new: 'NUEVO',
+                text: 'La evolución de la consultoría estratégica'
+            },
             title: 'Donde la estrategia se convierte en sistema.',
-            subtitle: 'Diseñamos sistemas, procesos y plataformas para organizaciones que necesitan escalar con control.',
+            subtitle: 'Convertimos decisiones estratégicas en sistemas operativos diseñados para escalar con control.',
             supporting: 'Ingeniería, automatización y consultoría técnica para transformar decisiones estratégicas en estructuras operativas reales.',
             cta: 'Iniciar evaluación',
             cta_secondary: 'Ver cómo trabajamos'
@@ -408,13 +456,13 @@ export const translations = {
             items: [
                 'Procesos que dependen de personas y explicaciones constantes',
                 'Pedidos informales, cambios fuera de alcance y falta de trazabilidad',
-                'Equipos apagando incendios en lugar de ejecutar con foco',
-                'Decisiones estratégicas que no bajan a la operación'
+                'Decisiones estratégicas que no se traducen en ejecución operativa'
             ],
             closure_1: 'El problema no es crecer.',
             closure_2: 'El problema es crecer sin una estructura que lo sostenga.'
         },
         capabilities: {
+            badge: 'Capacidades',
             title: 'Capacidades clave',
             items: {
                 custom: {
@@ -455,7 +503,8 @@ export const translations = {
                 { title: 'Diseño de sistemas y plataformas', desc: 'Plataformas internas, dashboards, portales de clientes y proveedores.' },
                 { title: 'Automatización e integraciones', desc: 'APIs, flujos de datos, sincronización de sistemas y eliminación de tareas repetitivas.' },
                 { title: 'Infraestructura y mantenimiento', desc: 'Soporte estructural, evolución continua, monitoreo y mejora del sistema.' },
-                { title: 'Escalamiento operativo', desc: 'Separación de servicios, control de proveedores y crecimiento sin fricción.' }
+                { title: 'Escalamiento operativo', desc: 'Separación de servicios, control de proveedores y crecimiento sin fricción.' },
+                { title: 'Diagnóstico y evaluación estratégica', desc: 'Evaluación técnica y operativa para comprender el sistema actual y decidir con claridad el siguiente paso.' }
             ],
             exclusion: 'No incluir: diseño web, redes sociales, marketing. Eso no es Allianzy.',
             beltix: {
@@ -476,27 +525,84 @@ export const translations = {
         process: {
             title: 'Un proceso claro desde el primer contacto.',
             steps: [
-                'Pre-evaluación rápida (menos de 2 minutos)',
-                'Evaluación guiada del problema',
-                'Llamada técnica de calificación',
-                'Propuesta estructurada',
-                'Implementación y operación'
+                {
+                    title: 'Pre-evaluación rápida (menos de 2 minutos)',
+                    desc: 'Un formulario breve para entender tus necesidades básicas y verificar si podemos ayudarte con tu desafío actual.',
+                    image: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&q=80&w=1000'
+                },
+                {
+                    title: 'Evaluación guiada del problema',
+                    desc: 'Profundizamos en los desafíos específicos para identificar la raíz del problema, no solo los síntomas visibles.',
+                    image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=1000'
+                },
+                {
+                    title: 'Llamada técnica de calificación',
+                    desc: 'Conversación directa con nuestros ingenieros senior para validar la viabilidad técnica y alineación estratégica.',
+                    image: 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&fit=crop&q=80&w=1000'
+                },
+                {
+                    title: 'Propuesta estructurada',
+                    desc: 'Plan de trabajo detallado con alcance, tiempos, entregables claros y presupuesto fijo. Sin sorpresas.',
+                    image: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&q=80&w=1000'
+                },
+                {
+                    title: 'Implementación y operación',
+                    desc: 'Ejecución del sistema y puesta en marcha con soporte continuo para asegurar la adopción y el éxito.',
+                    image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=1000'
+                }
             ],
             disclaimer: 'No todos los proyectos califican. Y eso es parte del método.'
         },
         reviews: {
             title: 'Social Proof',
-            quote: 'Allianzy transformó nuestra estrategia en un sistema operativo real. Hoy el equipo sabe qué hacer, cuándo y por qué.',
-            author: 'Cliente Satisfecho'
+            items: [
+                {
+                    quote: "La experiencia fue muy buena, el trabajo fue excelente y la atención al cliente, oportuna y rápida. Se atendieron todas las solicitudes y se brindó el asesoramiento correspondiente para obtener un buen resultado en el trabajo.",
+                    author: "Gerente",
+                    company: "Hotel Safari Club",
+                    logo: "/clients/safari.webp"
+                },
+                {
+                    quote: "¡Mi experiencia con Allianzy fue magnífica! Siempre estuvieron atentos y dispuestos a manejar cualquier situación, y estoy especialmente satisfecho con la solicitud de desarrollo. Seguiré en contacto con ellos para futuros proyectos porque son el tipo de empresa con la que uno disfruta trabajar.",
+                    author: "Director General",
+                    company: "GG Insurances",
+                    logo: "/clients/gg.webp"
+                },
+                {
+                    quote: "La atención al cliente fue excelente. Siempre estuvieron en contacto y tomaron en consideración todos los cambios que deseaba realizar.",
+                    author: "Jefa de Departamento",
+                    company: "Roan",
+                    logo: "/clients/roan.webp"
+                }
+            ]
         },
         faq: {
             title: 'FAQ',
             items: [
-                { q: '¿Allianzy hace sitios web o marketing?', a: 'No. Para servicios operativos existe una unidad separada. Allianzy se enfoca en sistemas y consultoría técnica.' },
-                { q: '¿Trabajan con empresas pequeñas?', a: 'Solo cuando el problema requiere un enfoque estructural real.' },
-                { q: '¿Venden horas?', a: 'No. Vendemos proyectos, sistemas y soluciones con alcance definido.' },
-                { q: '¿Cómo se solicitan cambios o soporte?', a: 'Todo se gestiona desde la plataforma, mediante tickets y pedidos formales.' },
-                { q: '¿Puedo empezar con algo chico?', a: 'Sí, siempre que tenga sentido estratégico.' }
+                {
+                    q: '¿Qué tipo de empresas trabajan con Allianzy?',
+                    a: 'Trabajamos con organizaciones que ya operan con cierta complejidad y necesitan transformar su estrategia en sistemas reales. No hacemos trabajos aislados ni soluciones improvisadas.'
+                },
+                {
+                    q: '¿Allianzy hace marketing, diseño o sitios web?',
+                    a: 'No. Allianzy se enfoca en ingeniería, sistemas, automatización y consultoría técnica. Los servicios operativos como marketing o diseño se gestionan desde una unidad separada, con su propio proceso.'
+                },
+                {
+                    q: '¿Venden horas o paquetes cerrados?',
+                    a: 'No vendemos horas. Trabajamos con proyectos y sistemas definidos, con alcance claro, objetivos concretos y trazabilidad operativa.'
+                },
+                {
+                    q: '¿Cómo es el proceso antes de una reunión?',
+                    a: 'Antes de cualquier llamada realizamos una evaluación estructurada del problema. La reunión es técnica, no comercial, y sirve para determinar si el proyecto califica para Allianzy.'
+                },
+                {
+                    q: '¿Puedo empezar con algo pequeño?',
+                    a: 'Sí, siempre que tenga sentido estratégico. El tamaño no es lo más importante; lo es que el problema requiera un enfoque estructural.'
+                },
+                {
+                    q: '¿Cómo se gestionan cambios, soporte o nuevos pedidos?',
+                    a: 'Todo se gestiona desde la plataforma, mediante tickets y solicitudes formales, asegurando control, trazabilidad y una separación clara entre soporte y trabajo adicional.'
+                }
             ]
         },
         cta_final: {

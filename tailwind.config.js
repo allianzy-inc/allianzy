@@ -55,6 +55,7 @@ export default {
         sans: ["Inter", "sans-serif"],
         serif: ["Merriweather", "serif"],
         bricolage: ["'Bricolage Grotesque'", "sans-serif"],
+        merriweather: ["'Merriweather Sans'", "sans-serif"],
       },
     },
   },

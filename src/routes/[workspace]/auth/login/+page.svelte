@@ -86,7 +86,7 @@
     }
 </script>
 
-<div class="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-gray-50 dark:bg-zinc-950 font-sans">
+<div class="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-gray-50 dark:bg-zinc-950 {workspace === 'allianzy' ? 'font-bricolage' : (workspace === 'beltrix' ? 'font-merriweather' : 'font-sans')}">
     <!-- Abstract Background -->
     <div class="absolute inset-0 w-full h-full overflow-hidden pointer-events-none">
          <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-blue-500/20 blur-[120px] animate-pulse"></div>
@@ -105,8 +105,10 @@
                      <img src={logoDark} alt="Allianzy" class="h-10 hidden dark:block" />
                  </a>
              {:else}
-                 <h1 class="text-3xl font-bold tracking-tight text-foreground mb-4">Beltrix Agency</h1>
-             {/if}
+                <a href="/{workspace}" class="block mb-4 transition-opacity hover:opacity-80">
+                    <h1 class="text-3xl font-bold tracking-tight text-foreground">Beltrix Agency</h1>
+                </a>
+            {/if}
              
              <h2 class="text-2xl font-bold text-foreground tracking-tight">
                 {isRegister ? 'Create Account' : 'Welcome Back'}

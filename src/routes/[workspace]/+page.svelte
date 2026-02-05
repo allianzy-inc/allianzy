@@ -6,15 +6,20 @@
         Megaphone, Palette, Image as ImageIcon, Brain,
         Globe, Menu, X as XIcon, Moon, Sun, Database, FileText, Activity, Star, Layout, 
         ChevronDown, ChevronUp, Linkedin,
-        Zap, GitBranch, Search, Shield, Users, AlertTriangle, Briefcase, Layers, Languages
+        Zap, GitBranch, Search, Shield, Users, AlertTriangle, Briefcase, Layers, Languages, ArrowUpRight, TrendingUp, ClipboardCheck, Cpu, Lightbulb
     } from 'lucide-svelte';
     import { currentLang, translations } from '$lib/i18n';
+
+    const serviceIcons = [Briefcase, Layers, Zap, Shield, TrendingUp, ClipboardCheck];
+
     import ThemeToggle from '$lib/components/ThemeToggle.svelte';
     import LanguageToggle from '$lib/components/LanguageToggle.svelte';
     import ProcessCarousel from '$lib/components/ProcessCarousel.svelte';
-    import { slide } from 'svelte/transition';
+    import { fade, slide } from 'svelte/transition';
     import logoLight from '$lib/assets/brand/allianzy/logo-light.svg';
     import logoDark from '$lib/assets/brand/allianzy/logo-dark.svg';
+    import beltrixLogoLight from '$lib/assets/brand/beltrix/beltrix-logo-light.svg';
+    import beltrixLogoDark from '$lib/assets/brand/beltrix/beltrix-logo-dark.svg';
 
     // Data/Props
     export let data;
@@ -34,9 +39,40 @@
     let isLangMenuOpen = false;
     let openFaqIndex: number | null = null;
 
+    // Allianzy Process Carousel State
+    let activeProcessStep = 0;
+    let processInterval: any;
+
+    function startProcessInterval() {
+        stopProcessInterval();
+        processInterval = setInterval(() => {
+            if (t.process?.steps) {
+                activeProcessStep = (activeProcessStep + 1) % t.process.steps.length;
+            }
+        }, 5000); // 5 seconds per step
+    }
+
+    function stopProcessInterval() {
+        if (processInterval) clearInterval(processInterval);
+        processInterval = null;
+    }
+
+    function setActiveStep(index: number) {
+        activeProcessStep = index;
+    }
+
+    function handleProcessMouseEnter() {
+        stopProcessInterval();
+    }
+
+    function handleProcessMouseLeave() {
+        startProcessInterval();
+    }
+
     // Mouse Follower State
     let mouseX = 0;
     let mouseY = 0;
+    let scrollY = 0;
 
     function handleMouseMove(event: MouseEvent) {
         mouseX = event.clientX;
@@ -102,6 +138,29 @@
         openFaqIndex = openFaqIndex === index ? null : index;
     }
 
+    // Allianzy Reviews Carousel State
+    let activeReviewIndex = 0;
+    let reviewsInterval: any;
+
+    function startReviewsInterval() {
+        stopReviewsInterval();
+        reviewsInterval = setInterval(() => {
+            if (t.reviews?.items) {
+                activeReviewIndex = (activeReviewIndex + 1) % t.reviews.items.length;
+            }
+        }, 6000); // 6 seconds per review
+    }
+
+    function stopReviewsInterval() {
+        if (reviewsInterval) clearInterval(reviewsInterval);
+        reviewsInterval = null;
+    }
+
+    function setActiveReview(index: number) {
+        activeReviewIndex = index;
+        startReviewsInterval();
+    }
+
     // Lifecycle
     onMount(() => {
         // Theme Logic
@@ -115,7 +174,15 @@
         };
         mediaQuery.addEventListener('change', handleChange);
 
-        return () => mediaQuery.removeEventListener('change', handleChange);
+        // Start Carousels
+        startProcessInterval();
+        startReviewsInterval();
+
+        return () => {
+            mediaQuery.removeEventListener('change', handleChange);
+            stopProcessInterval();
+            stopReviewsInterval();
+        };
     });
 </script>
 
@@ -123,12 +190,21 @@
     <title>{workspace === 'beltrix' ? 'Beltrix' : 'Allianzy Inc'}</title>
 </svelte:head>
 
-<svelte:window on:mousemove={handleMouseMove} />
+<svelte:window on:mousemove={handleMouseMove} bind:scrollY={scrollY} />
 
 {#if workspace === 'allianzy'}
     <!-- NEW ALLIANZY LANDING PAGE DESIGN -->
-    <div class="min-h-screen bg-background text-foreground flex flex-col font-sans transition-colors duration-300 overflow-x-hidden selection:bg-primary/20 selection:text-primary relative">
+    <div class="min-h-screen bg-background text-foreground flex flex-col font-bricolage transition-colors duration-300 overflow-x-hidden selection:bg-primary/20 selection:text-primary relative">
         
+        <!-- Global Unified Background -->
+        <div class="fixed inset-0 w-full h-full pointer-events-none -z-10 overflow-hidden">
+             <div class="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-blue-500/20 blur-[100px] animate-pulse"></div>
+             <div class="absolute top-[10%] right-[-10%] w-[50vw] h-[50vw] rounded-full bg-purple-500/20 blur-[100px] animate-pulse" style="animation-delay: 2s;"></div>
+             <div class="absolute bottom-[-10%] left-[20%] w-[50vw] h-[50vw] rounded-full bg-pink-500/20 blur-[100px] animate-pulse" style="animation-delay: 4s;"></div>
+             <div class="absolute top-[40%] left-[-20%] w-[40vw] h-[40vw] rounded-full bg-indigo-500/10 blur-[120px] animate-pulse" style="animation-duration: 8s;"></div>
+             <div class="absolute bottom-[20%] right-[-20%] w-[40vw] h-[40vw] rounded-full bg-cyan-500/10 blur-[120px] animate-pulse" style="animation-delay: 3s; animation-duration: 9s;"></div>
+        </div>
+
         <!-- Mouse Follower Effect -->
         <div 
             class="pointer-events-none fixed inset-0 z-0 transition-opacity duration-300"
@@ -138,7 +214,9 @@
         ></div>
 
         <!-- Navbar -->
-        <header class="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
+        <header 
+            class="fixed top-0 z-50 w-full transition-all duration-300 {scrollY > 20 ? 'border-b bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60 shadow-sm' : 'bg-transparent border-transparent'}"
+        >
             <div class="container mx-auto flex h-16 items-center justify-between px-4 md:px-8">
                 <div class="flex items-center gap-2">
                     <!-- Logo/Brand -->
@@ -273,186 +351,284 @@
             {/if}
         </header>
 
-        <!-- Hero Section -->
-        <section id="home" class="relative flex-1 flex flex-col items-center justify-center py-32 lg:py-48 text-center px-4 overflow-hidden isolate">
-            <!-- Background Elements -->
-            <div class="absolute inset-0 w-full h-full overflow-hidden pointer-events-none">
-                 <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-blue-500/30 blur-[100px] animate-pulse"></div>
-                 <div class="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-purple-500/30 blur-[100px] animate-pulse" style="animation-delay: 1.5s;"></div>
-                 <div class="absolute top-[40%] left-[60%] w-[30%] h-[30%] rounded-full bg-pink-500/30 blur-[100px] animate-pulse" style="animation-delay: 3s;"></div>
-            </div>
+            <!-- Hero Section -->
+             <section id="home" class="relative z-10 flex-1 flex flex-col items-center justify-center py-32 lg:py-48 text-center px-4 overflow-visible">
+                <!-- Hero Specific Intense Lights -->
+                <div class="absolute inset-0 w-full h-full pointer-events-none -z-10">
+                    <div class="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-blue-500/30 blur-[120px] animate-pulse"></div>
+                    <div class="absolute top-[10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-purple-500/30 blur-[120px] animate-pulse" style="animation-delay: 1.5s;"></div>
+                    <div class="absolute bottom-[-10%] left-[20%] w-[40%] h-[40%] rounded-full bg-pink-500/30 blur-[120px] animate-pulse" style="animation-delay: 3s;"></div>
+                </div>
 
-            <div class="relative z-10 inline-flex items-center rounded-full border border-white/10 px-3 py-1 text-sm font-medium backdrop-blur-md bg-white/5 dark:bg-white/5 mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700 shadow-sm">
-                <span class="flex h-2 w-2 rounded-full bg-primary mr-2 animate-pulse"></span>
-                Allianzy Inc.
-            </div>
-
-            <h1 class="relative z-10 text-5xl sm:text-7xl font-bold tracking-tight lg:text-8xl max-w-5xl mb-8 animate-in fade-in slide-in-from-bottom-8 duration-1000 fill-mode-both delay-100 whitespace-pre-line leading-tight">
-                {t.hero.title}
-            </h1>
-            
-            <p class="relative z-10 text-xl sm:text-2xl text-muted-foreground max-w-2xl mb-12 leading-relaxed animate-in fade-in slide-in-from-bottom-8 duration-1000 fill-mode-both delay-200 whitespace-pre-line">
-                {t.hero.subtitle}
-            </p>
-
-            <p class="relative z-10 text-md sm:text-lg text-muted-foreground max-w-xl mb-12 leading-relaxed animate-in fade-in slide-in-from-bottom-8 duration-1000 fill-mode-both delay-300">
-                {t.hero.supporting}
-            </p>
-            
-            <div class="relative z-10 flex flex-col sm:flex-row gap-4 w-full sm:w-auto animate-in fade-in slide-in-from-bottom-8 duration-1000 fill-mode-both delay-400 items-center justify-center">
-                <a href="/allianzy/intake" class="px-8 py-4 rounded-full bg-foreground text-background font-semibold text-lg hover:shadow-xl hover:-translate-y-1 transition-all flex items-center justify-center gap-2 min-w-[160px]">
-                    {t.hero.cta}
-                </a>
+                <div class="relative z-10 inline-flex overflow-hidden rounded-full p-[1px] mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700 group cursor-pointer hover:shadow-lg hover:shadow-primary/20 transition-all">
+                    <span class="absolute inset-[-1000%] animate-[spin_3s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#3b82f6_0%,#a855f7_50%,#3b82f6_100%)]"></span>
+                    <div class="inline-flex h-full w-full items-center justify-center rounded-full bg-white dark:bg-black px-4 py-1.5 text-sm font-medium text-foreground backdrop-blur-3xl">
+                        <span class="mr-2 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary tracking-wide">
+                            {t.hero.badge?.new}
+                        </span>
+                        <span class="mr-1">{t.hero.badge?.text}</span>
+                        <ArrowRight class="ml-1 h-3.5 w-3.5 text-muted-foreground group-hover:translate-x-0.5 transition-transform" />
+                    </div>
+                </div>
+    
+                <h1 class="relative z-10 text-5xl sm:text-7xl font-bold tracking-tight lg:text-8xl max-w-5xl mb-8 animate-in fade-in slide-in-from-bottom-8 duration-1000 fill-mode-both delay-100 whitespace-pre-line leading-tight">
+                    {t.hero.title}
+                </h1>
                 
-                <a href="#how-we-work" class="px-8 py-4 rounded-full border border-white/10 bg-white/5 dark:bg-white/5 backdrop-blur-md font-medium text-lg hover:bg-white/10 dark:hover:bg-white/10 transition-all flex items-center justify-center gap-2 min-w-[160px] shadow-lg">
-                    {t.hero.cta_secondary}
-                </a>
-            </div>
-        </section>
-
-        <!-- Problem Section -->
-        <section class="py-24 px-4 relative isolate overflow-hidden">
-            <!-- Subtle Background -->
-            <div class="absolute inset-0 w-full h-full overflow-hidden pointer-events-none -z-10">
-                <div class="absolute top-[20%] right-[10%] w-[30%] h-[30%] rounded-full bg-red-500/5 blur-[80px] animate-pulse" style="animation-duration: 6s;"></div>
-                <div class="absolute bottom-[20%] left-[10%] w-[30%] h-[30%] rounded-full bg-orange-500/5 blur-[80px] animate-pulse" style="animation-delay: 2s; animation-duration: 7s;"></div>
-            </div>
-
-            <div class="container mx-auto max-w-4xl text-center relative z-10">
-                <h2 class="text-3xl md:text-5xl font-bold mb-12">{t.problem.title}</h2>
+                <p class="relative z-10 text-xl sm:text-2xl text-muted-foreground max-w-2xl mb-12 leading-relaxed animate-in fade-in slide-in-from-bottom-8 duration-1000 fill-mode-both delay-200 whitespace-pre-line">
+                    {t.hero.subtitle}
+                </p>
+    
+                <!-- Supporting text removed -->
                 
-                <div class="grid md:grid-cols-2 gap-6 text-left mb-16">
-                    {#each t.problem.items as item}
-                        <div class="flex items-start gap-4 p-6 rounded-2xl border border-white/10 bg-white/5 dark:bg-white/5 backdrop-blur-md shadow-lg hover:shadow-xl hover:bg-white/10 dark:hover:bg-white/10 hover:border-white/20 transition-all duration-300">
-                            <div class="p-2 rounded-lg bg-red-500/10 text-red-500 mt-1">
-                                <AlertTriangle class="w-5 h-5" />
+                <div class="relative z-10 flex flex-col sm:flex-row gap-4 w-full sm:w-auto animate-in fade-in slide-in-from-bottom-8 duration-1000 fill-mode-both delay-400 items-center justify-center">
+                    <a href="/allianzy/intake" class="px-8 py-4 rounded-full bg-foreground text-background font-semibold text-lg hover:shadow-xl hover:-translate-y-1 transition-all flex items-center justify-center gap-2 min-w-[160px]">
+                        {t.hero.cta}
+                    </a>
+                    
+                    <a href="#how-we-work" class="px-8 py-4 rounded-full border border-white/10 bg-white/5 dark:bg-white/5 backdrop-blur-md font-medium text-lg hover:bg-white/10 dark:hover:bg-white/10 transition-all flex items-center justify-center gap-2 min-w-[160px] shadow-lg">
+                        {t.hero.cta_secondary}
+                    </a>
+                </div>
+            </section>
+    
+            <!-- Problem Section -->
+            <section class="py-24 px-4 relative z-10">
+                <div class="container mx-auto max-w-6xl text-center relative z-10">
+                    <h2 class="text-3xl md:text-5xl font-bold mb-12">{t.problem.title}</h2>
+                    
+                    <div class="grid md:grid-cols-3 gap-12 text-left mb-16">
+                        {#each t.problem.items as item, i}
+                            <div class="flex flex-col items-start gap-4 group">
+                                <div class="w-12 h-12 rounded-lg bg-red-500/10 flex items-center justify-center text-red-500 mb-2">
+                                    <svelte:component this={[Users, FileText, GitBranch][i]} class="w-6 h-6" />
+                                </div>
+                                <p class="text-lg leading-relaxed text-gray-600 dark:text-white/70">{item}</p>
                             </div>
-                            <p class="text-lg leading-relaxed text-foreground/90">{item}</p>
-                        </div>
-                    {/each}
+                        {/each}
+                    </div>
+                    
+                    <div class="space-y-2 text-xl md:text-2xl font-medium text-muted-foreground">
+                        <p>{t.problem.closure_1}</p>
+                        <p class="text-foreground font-bold">{t.problem.closure_2}</p>
+                    </div>
                 </div>
-                
-                <div class="space-y-2 text-xl md:text-2xl font-medium text-muted-foreground">
-                    <p>{t.problem.closure_1}</p>
-                    <p class="text-foreground font-bold">{t.problem.closure_2}</p>
-                </div>
-            </div>
-        </section>
+            </section>
 
         <!-- Capabilities Section -->
-        <section class="py-24 px-4 relative isolate overflow-hidden">
-             <!-- Subtle Background -->
-             <div class="absolute inset-0 w-full h-full overflow-hidden pointer-events-none -z-10">
-                <div class="absolute top-[10%] left-[20%] w-[25%] h-[25%] rounded-full bg-blue-500/5 blur-[60px] animate-pulse" style="animation-duration: 8s;"></div>
-                <div class="absolute bottom-[10%] right-[20%] w-[25%] h-[25%] rounded-full bg-green-500/5 blur-[60px] animate-pulse" style="animation-delay: 3s; animation-duration: 8s;"></div>
-            </div>
-
+        <section class="py-24 px-4 relative">
             <div class="container mx-auto max-w-6xl relative z-10">
-                <div class="text-center mb-16">
-                    <div class="inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium bg-muted/50 mb-4">
-                        Capabilities
-                    </div>
-                    <h2 class="text-3xl md:text-5xl font-bold">{t.capabilities.title}</h2>
-                </div>
-
-                <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <!-- Custom Designed Systems -->
-                    <div class="p-8 rounded-3xl border border-white/10 bg-white/5 dark:bg-white/5 backdrop-blur-md shadow-lg hover:shadow-xl hover:bg-white/10 dark:hover:bg-white/10 hover:border-white/20 hover:-translate-y-1 transition-all duration-300 group">
-                        <div class="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center mb-6 text-blue-500 group-hover:scale-110 transition-transform">
-                            <GitBranch class="w-6 h-6" />
+                <!-- Bento Box Container -->
+                <div class="rounded-[2.5rem] border border-gray-200 dark:border-white/10 bg-white/70 dark:bg-[#05050A]/60 backdrop-blur-3xl overflow-hidden relative grid lg:grid-cols-5 shadow-2xl transition-colors duration-500">
+                    
+                    <!-- Left: Hero/Gradient Section -->
+                    <div class="lg:col-span-2 relative p-8 md:p-12 flex flex-col justify-center overflow-hidden">
+                        <!-- Dynamic Gradient Background -->
+                        <div class="absolute inset-0 bg-gradient-to-r from-blue-600/90 via-purple-600/80 to-transparent z-0"></div>
+                        <div class="absolute -top-[20%] -left-[20%] w-[80%] h-[80%] bg-pink-500/50 blur-[100px] animate-pulse rounded-full z-0"></div>
+                        <div class="absolute inset-0 bg-gradient-to-r from-transparent to-white/70 dark:to-[#05050A]/60 z-0 opacity-100 transition-colors duration-500"></div>
+                        
+                        <!-- Content -->
+                        <div class="relative z-10 max-w-[85%]">
+                            <div class="inline-flex items-center rounded-lg bg-white/20 backdrop-blur-md border border-white/30 px-3 py-1 text-xs font-bold uppercase tracking-wider mb-8 text-white shadow-lg">
+                                {t.capabilities.badge}
+                            </div>
+                            
+                            <h2 class="text-4xl md:text-5xl font-bold mb-6 leading-tight text-white">
+                                {t.capabilities.title}
+                            </h2>
+                            
+                            <p class="text-lg text-white/90 mb-10 max-w-md leading-relaxed font-medium">
+                                {t.hero.subtitle}
+                            </p>
+                            
+                            <a href="/allianzy/intake" class="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-white text-black font-bold text-sm hover:bg-white/90 hover:scale-105 transition-all shadow-xl">
+                                {t.hero.cta}
+                            </a>
                         </div>
-                        <h3 class="font-bold text-xl mb-3 text-foreground group-hover:text-primary transition-colors">{t.capabilities.items.custom.title}</h3>
-                        <p class="text-muted-foreground leading-relaxed group-hover:text-foreground/80 transition-colors">{t.capabilities.items.custom.desc}</p>
-                    </div>
-
-                    <!-- Automation -->
-                    <div class="p-8 rounded-3xl border border-white/10 bg-white/5 dark:bg-white/5 backdrop-blur-md shadow-lg hover:shadow-xl hover:bg-white/10 dark:hover:bg-white/10 hover:border-white/20 hover:-translate-y-1 transition-all duration-300 group">
-                        <div class="w-12 h-12 rounded-2xl bg-yellow-500/10 flex items-center justify-center mb-6 text-yellow-500 group-hover:scale-110 transition-transform">
-                            <Zap class="w-6 h-6" />
-                        </div>
-                        <h3 class="font-bold text-xl mb-3 text-foreground group-hover:text-primary transition-colors">{t.capabilities.items.automation.title}</h3>
-                        <p class="text-muted-foreground leading-relaxed group-hover:text-foreground/80 transition-colors">{t.capabilities.items.automation.desc}</p>
-                    </div>
-
-                    <!-- Platform -->
-                    <div class="p-8 rounded-3xl border border-white/10 bg-white/5 dark:bg-white/5 backdrop-blur-md shadow-lg hover:shadow-xl hover:bg-white/10 dark:hover:bg-white/10 hover:border-white/20 hover:-translate-y-1 transition-all duration-300 group">
-                        <div class="w-12 h-12 rounded-2xl bg-purple-500/10 flex items-center justify-center mb-6 text-purple-500 group-hover:scale-110 transition-transform">
-                            <Layers class="w-6 h-6" />
-                        </div>
-                        <h3 class="font-bold text-xl mb-3 text-foreground group-hover:text-primary transition-colors">{t.capabilities.items.platform.title}</h3>
-                        <p class="text-muted-foreground leading-relaxed group-hover:text-foreground/80 transition-colors">{t.capabilities.items.platform.desc}</p>
                     </div>
 
-                    <!-- Consulting -->
-                    <div class="p-8 rounded-3xl border border-white/10 bg-white/5 dark:bg-white/5 backdrop-blur-md shadow-lg hover:shadow-xl hover:bg-white/10 dark:hover:bg-white/10 hover:border-white/20 hover:-translate-y-1 transition-all duration-300 group">
-                        <div class="w-12 h-12 rounded-2xl bg-green-500/10 flex items-center justify-center mb-6 text-green-500 group-hover:scale-110 transition-transform">
-                            <Search class="w-6 h-6" />
+                    <!-- Right: Grid Items -->
+                    <div class="lg:col-span-3 bg-transparent p-8 md:p-12 grid sm:grid-cols-2 gap-x-8 gap-y-12 relative z-10">
+                         <!-- Custom Designed Systems -->
+                        <div class="group">
+                            <div class="w-12 h-12 rounded-2xl bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 flex items-center justify-center mb-5 text-gray-500 dark:text-white/80 group-hover:scale-110 group-hover:bg-purple-500/10 dark:group-hover:bg-purple-500/20 group-hover:border-purple-500/30 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-all duration-300">
+                                <GitBranch class="w-6 h-6" />
+                            </div>
+                            <h3 class="text-gray-900 dark:text-white font-bold text-lg mb-3 transition-colors">{t.capabilities.items.custom.title}</h3>
+                            <p class="text-gray-600 dark:text-white/60 text-sm leading-relaxed group-hover:text-gray-900 dark:group-hover:text-white/80 transition-colors">{t.capabilities.items.custom.desc}</p>
                         </div>
-                        <h3 class="font-bold text-xl mb-3 text-foreground group-hover:text-primary transition-colors">{t.capabilities.items.consulting.title}</h3>
-                        <p class="text-muted-foreground leading-relaxed group-hover:text-foreground/80 transition-colors">{t.capabilities.items.consulting.desc}</p>
+
+                        <!-- Automation -->
+                        <div class="group">
+                            <div class="w-12 h-12 rounded-2xl bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 flex items-center justify-center mb-5 text-gray-500 dark:text-white/80 group-hover:scale-110 group-hover:bg-purple-500/10 dark:group-hover:bg-purple-500/20 group-hover:border-purple-500/30 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-all duration-300">
+                                <Zap class="w-6 h-6" />
+                            </div>
+                            <h3 class="text-gray-900 dark:text-white font-bold text-lg mb-3 transition-colors">{t.capabilities.items.automation.title}</h3>
+                            <p class="text-gray-600 dark:text-white/60 text-sm leading-relaxed group-hover:text-gray-900 dark:group-hover:text-white/80 transition-colors">{t.capabilities.items.automation.desc}</p>
+                        </div>
+
+                        <!-- Platform -->
+                        <div class="group">
+                            <div class="w-12 h-12 rounded-2xl bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 flex items-center justify-center mb-5 text-gray-500 dark:text-white/80 group-hover:scale-110 group-hover:bg-purple-500/10 dark:group-hover:bg-purple-500/20 group-hover:border-purple-500/30 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-all duration-300">
+                                <Layers class="w-6 h-6" />
+                            </div>
+                            <h3 class="text-gray-900 dark:text-white font-bold text-lg mb-3 transition-colors">{t.capabilities.items.platform.title}</h3>
+                            <p class="text-gray-600 dark:text-white/60 text-sm leading-relaxed group-hover:text-gray-900 dark:group-hover:text-white/80 transition-colors">{t.capabilities.items.platform.desc}</p>
+                        </div>
+
+                        <!-- Consulting -->
+                        <div class="group">
+                            <div class="w-12 h-12 rounded-2xl bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 flex items-center justify-center mb-5 text-gray-500 dark:text-white/80 group-hover:scale-110 group-hover:bg-purple-500/10 dark:group-hover:bg-purple-500/20 group-hover:border-purple-500/30 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-all duration-300">
+                                <Search class="w-6 h-6" />
+                            </div>
+                            <h3 class="text-gray-900 dark:text-white font-bold text-lg mb-3 transition-colors">{t.capabilities.items.consulting.title}</h3>
+                            <p class="text-gray-600 dark:text-white/60 text-sm leading-relaxed group-hover:text-gray-900 dark:group-hover:text-white/80 transition-colors">{t.capabilities.items.consulting.desc}</p>
+                        </div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- Why Allianzy -->
-        <section class="py-24 px-4 relative isolate overflow-hidden">
-             <!-- Subtle Background -->
-             <div class="absolute inset-0 w-full h-full overflow-hidden pointer-events-none -z-10">
-                <div class="absolute top-[30%] left-[5%] w-[35%] h-[35%] rounded-full bg-purple-500/5 blur-[90px] animate-pulse" style="animation-duration: 9s;"></div>
-            </div>
-
-            <div class="container mx-auto max-w-5xl relative z-10">
-                <div class="text-center mb-16">
-                    <h2 class="text-3xl md:text-5xl font-bold mb-6">{t.why_allianzy.title}</h2>
+        <!-- Comparison Table (Simple Table Only) -->
+        <section class="py-24 px-4 relative">
+             <div class="container mx-auto max-w-5xl relative z-10">
+                <!-- Title -->
+                <div class="mb-16 text-center">
+                    <h2 class="text-3xl md:text-4xl font-bold tracking-tight text-gray-900 dark:text-white mb-4">
+                        {t.why_allianzy.title}
+                    </h2>
                 </div>
 
-                <div class="grid md:grid-cols-2 gap-8 mb-16">
-                    <!-- Traditional -->
-                    <div class="p-8 rounded-3xl border border-white/10 bg-white/5 dark:bg-white/5 backdrop-blur-md shadow-lg opacity-70 hover:opacity-100 hover:bg-white/10 dark:hover:bg-white/10 transition-all duration-300">
-                        <h3 class="text-xl font-bold mb-6 flex items-center gap-3 text-muted-foreground">
-                            <Users class="w-5 h-5" />
-                            {t.why_allianzy.traditional.title}
-                        </h3>
-                        <ul class="space-y-4">
-                            {#each t.why_allianzy.traditional.items as item}
-                                <li class="flex items-center gap-3 text-muted-foreground">
-                                    <XIcon class="w-5 h-5 text-red-400" />
-                                    {item}
-                                </li>
-                            {/each}
-                        </ul>
+                <!-- Header -->
+                <div class="grid grid-cols-2 pb-6 border-b border-gray-200 dark:border-white/10 mb-2">
+                    <div class="text-lg font-semibold flex items-center gap-3 text-muted-foreground">
+                        <Users class="w-5 h-5" />
+                        <span>{t.why_allianzy.traditional.title}</span>
                     </div>
-
-                    <!-- Allianzy -->
-                    <div class="p-8 rounded-3xl border border-white/10 bg-white/5 dark:bg-white/5 backdrop-blur-md shadow-lg hover:shadow-xl hover:bg-white/10 dark:hover:bg-white/10 transition-all duration-300 relative overflow-hidden group">
-                        <div class="absolute inset-0 bg-primary/5 group-hover:bg-primary/10 transition-colors"></div>
-                        <h3 class="text-xl font-bold mb-6 flex items-center gap-3 text-primary relative z-10">
-                            <Shield class="w-5 h-5" />
-                            {t.why_allianzy.allianzy.title}
-                        </h3>
-                        <ul class="space-y-4 relative z-10">
-                            {#each t.why_allianzy.allianzy.items as item}
-                                <li class="flex items-center gap-3 font-medium text-foreground">
-                                    <CheckCircle2 class="w-5 h-5 text-primary" />
-                                    {item}
-                                </li>
-                            {/each}
-                        </ul>
+                    <div class="text-lg font-semibold flex items-center gap-3 text-gray-900 dark:text-white pl-6">
+                        <Shield class="w-5 h-5" />
+                        <span>{t.why_allianzy.allianzy.title}</span>
                     </div>
                 </div>
-            </div>
+                
+                <!-- Rows -->
+                <div class="space-y-0">
+                     {#each t.why_allianzy.traditional.items as item, i}
+                        <div class="grid grid-cols-2 border-b border-gray-200 dark:border-white/10 last:border-0 group transition-colors py-6">
+                            <div class="pr-6 flex items-start gap-3 text-muted-foreground/60 group-hover:text-muted-foreground transition-colors">
+                                <XIcon class="w-5 h-5 text-red-500/50 group-hover:text-red-500 shrink-0 mt-1 transition-colors" />
+                                <span>{item}</span>
+                            </div>
+                            <div class="pl-6 flex items-start gap-3 font-medium text-gray-700 dark:text-white/80 group-hover:text-gray-900 dark:group-hover:text-white transition-colors relative">
+                                <!-- Active Indicator (Vertical Line) -->
+                                <div class="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-0 bg-primary group-hover:h-full transition-all duration-300"></div>
+                                
+                                <CheckCircle2 class="w-5 h-5 text-primary shrink-0 mt-1" />
+                                <span>{t.why_allianzy.allianzy.items[i]}</span>
+                            </div>
+                        </div>
+                     {/each}
+                </div>
+             </div>
+        </section>
+
+
+
+
+        <!-- Process Flow Animation (Horizontal - 6 Steps) -->
+        <section class="py-24 px-4 relative">
+             <div class="container mx-auto max-w-6xl relative z-10 flex justify-center">
+                <!-- Animated Process Flow -->
+                <div class="relative flex items-center gap-0 w-full">
+                    <!-- Styles for the animation -->
+                    <style>
+                        @keyframes flow-line-horizontal {
+                            0%, 100% { background-position: -100% 0%; opacity: 0.3; }
+                            50% { background-position: 100% 0%; opacity: 1; }
+                        }
+                        @keyframes pulse-block {
+                            0%, 100% { box-shadow: 0 0 0 0 rgba(168, 85, 247, 0); }
+                            50% { box-shadow: 0 0 50px 10px rgba(168, 85, 247, 0.4); border-color: rgba(168, 85, 247, 0.9); }
+                        }
+                        
+                        /* Updated duration to 4.8s for 6 steps (0.8s intervals) - Faster and softer spread */
+                        .block-pulse-1 { animation: pulse-block 4.8s infinite ease-in-out 0s; }
+                        .block-pulse-2 { animation: pulse-block 4.8s infinite ease-in-out 0.8s; }
+                        .block-pulse-3 { animation: pulse-block 4.8s infinite ease-in-out 1.6s; }
+                        .block-pulse-4 { animation: pulse-block 4.8s infinite ease-in-out 2.4s; }
+                        .block-pulse-5 { animation: pulse-block 4.8s infinite ease-in-out 3.2s; }
+                        .block-pulse-6 { animation: pulse-block 4.8s infinite ease-in-out 4.0s; }
+                        
+                        /* Staggered delays for lines */
+                        .line-flow-1 { animation: flow-line-horizontal 4.8s infinite linear 0.4s; }
+                        .line-flow-2 { animation: flow-line-horizontal 4.8s infinite linear 1.2s; }
+                        .line-flow-3 { animation: flow-line-horizontal 4.8s infinite linear 2.0s; }
+                        .line-flow-4 { animation: flow-line-horizontal 4.8s infinite linear 2.8s; }
+                        .line-flow-5 { animation: flow-line-horizontal 4.8s infinite linear 3.6s; }
+                    </style>
+
+                    <!-- Step 1: Input -->
+                    <div class="relative z-10 w-20 h-20 rounded-2xl bg-white dark:bg-card border border-gray-200 dark:border-white/20 flex items-center justify-center transition-all duration-300 block-pulse-1 shadow-sm">
+                        <Database class="w-8 h-8 text-gray-500 dark:text-white/70" />
+                    </div>
+                    
+                    <!-- Connector 1 -->
+                    <div class="h-0.5 flex-1 bg-gray-200 dark:bg-white/10 relative overflow-hidden min-w-[40px]">
+                        <div class="absolute inset-0 w-full h-full line-flow-1 bg-[length:200%_100%] bg-gradient-to-r from-transparent via-primary to-transparent"></div>
+                    </div>
+
+                    <!-- Step 2: Analysis -->
+                    <div class="relative z-10 w-20 h-20 rounded-2xl bg-white dark:bg-card border border-gray-200 dark:border-white/20 flex items-center justify-center transition-all duration-300 block-pulse-2 shadow-sm">
+                        <Search class="w-8 h-8 text-gray-500 dark:text-white/70" />
+                    </div>
+
+                    <!-- Connector 2 -->
+                    <div class="h-0.5 flex-1 bg-gray-200 dark:bg-white/10 relative overflow-hidden min-w-[40px]">
+                        <div class="absolute inset-0 w-full h-full line-flow-2 bg-[length:200%_100%] bg-gradient-to-r from-transparent via-primary to-transparent"></div>
+                    </div>
+
+                    <!-- Step 3: Processing -->
+                    <div class="relative z-10 w-20 h-20 rounded-2xl bg-white dark:bg-card border border-gray-200 dark:border-white/20 flex items-center justify-center transition-all duration-300 block-pulse-3 shadow-sm">
+                        <Cpu class="w-8 h-8 text-gray-500 dark:text-white/70" />
+                    </div>
+
+                    <!-- Connector 3 -->
+                    <div class="h-0.5 flex-1 bg-gray-200 dark:bg-white/10 relative overflow-hidden min-w-[40px]">
+                        <div class="absolute inset-0 w-full h-full line-flow-3 bg-[length:200%_100%] bg-gradient-to-r from-transparent via-primary to-transparent"></div>
+                    </div>
+
+                    <!-- Step 4: Integration -->
+                    <div class="relative z-10 w-20 h-20 rounded-2xl bg-white dark:bg-card border border-gray-200 dark:border-white/20 flex items-center justify-center transition-all duration-300 block-pulse-4 shadow-sm">
+                        <GitBranch class="w-8 h-8 text-gray-500 dark:text-white/70" />
+                    </div>
+
+                    <!-- Connector 4 -->
+                    <div class="h-0.5 flex-1 bg-gray-200 dark:bg-white/10 relative overflow-hidden min-w-[40px]">
+                        <div class="absolute inset-0 w-full h-full line-flow-4 bg-[length:200%_100%] bg-gradient-to-r from-transparent via-primary to-transparent"></div>
+                    </div>
+
+                    <!-- Step 5: Output -->
+                    <div class="relative z-10 w-20 h-20 rounded-2xl bg-white dark:bg-card border border-gray-200 dark:border-white/20 flex items-center justify-center transition-all duration-300 block-pulse-5 shadow-sm">
+                        <Lightbulb class="w-8 h-8 text-gray-500 dark:text-white/70" />
+                    </div>
+
+                    <!-- Connector 5 -->
+                    <div class="h-0.5 flex-1 bg-gray-200 dark:bg-white/10 relative overflow-hidden min-w-[40px]">
+                        <div class="absolute inset-0 w-full h-full line-flow-5 bg-[length:200%_100%] bg-gradient-to-r from-transparent via-primary to-transparent"></div>
+                    </div>
+
+                    <!-- Step 6: Growth -->
+                    <div class="relative z-10 w-20 h-20 rounded-2xl bg-white dark:bg-card border border-gray-200 dark:border-white/20 flex items-center justify-center transition-all duration-300 block-pulse-6 shadow-sm">
+                        <TrendingUp class="w-8 h-8 text-gray-500 dark:text-white/70" />
+                    </div>
+                </div>
+             </div>
         </section>
 
         <!-- Services Section -->
-        <section id="services" class="py-24 px-4 relative isolate overflow-hidden">
-             <!-- Subtle Background -->
-             <div class="absolute inset-0 w-full h-full overflow-hidden pointer-events-none -z-10">
-                <div class="absolute top-[10%] right-[20%] w-[30%] h-[30%] rounded-full bg-indigo-500/5 blur-[70px] animate-pulse" style="animation-duration: 7s;"></div>
-                <div class="absolute bottom-[10%] left-[20%] w-[30%] h-[30%] rounded-full bg-cyan-500/5 blur-[70px] animate-pulse" style="animation-delay: 2s; animation-duration: 7s;"></div>
-            </div>
-
-            <div class="container mx-auto max-w-5xl relative z-10">
+        <section id="services" class="py-24 px-4 relative">
+            <div class="container mx-auto max-w-6xl relative z-10">
                 <div class="text-center mb-16">
                     <h2 class="text-3xl md:text-5xl font-bold mb-4">{t.services.title}</h2>
                     <p class="text-xl text-muted-foreground">{t.services.principle}</p>
@@ -460,12 +636,27 @@
 
                 <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
                     {#each t.services.items as item, i}
-                        <div class="group p-6 rounded-2xl border border-white/10 bg-white/5 dark:bg-white/5 backdrop-blur-md shadow-lg hover:shadow-xl hover:bg-white/10 dark:hover:bg-white/10 hover:border-white/20 hover:-translate-y-1 transition-all duration-300">
-                            <div class="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center mb-4 font-bold text-foreground/80 group-hover:text-foreground transition-colors">
-                                {i + 1}
+                        <div class="group relative p-8 rounded-3xl border border-gray-200 dark:border-white/10 bg-white/60 dark:bg-black/20 backdrop-blur-2xl hover:bg-white/80 dark:hover:bg-purple-500/5 hover:border-purple-300 dark:hover:border-purple-500/30 transition-all duration-500 overflow-hidden shadow-[0_0_30px_-10px_rgba(168,85,247,0.1)] dark:shadow-[0_0_30px_-10px_rgba(168,85,247,0.05)] hover:shadow-[0_0_50px_-10px_rgba(168,85,247,0.2)] dark:hover:shadow-[0_0_50px_-10px_rgba(168,85,247,0.15)]">
+                            <!-- Glow Effect -->
+                            <div class="absolute top-0 right-0 w-40 h-40 bg-purple-500/10 dark:bg-purple-600/10 blur-[80px] rounded-full group-hover:bg-purple-500/20 dark:group-hover:bg-purple-600/20 transition-all duration-500"></div>
+                            
+                            <!-- Icon -->
+                            <div class="relative z-10 mb-12 flex items-start justify-between">
+                                <div class="w-14 h-14 rounded-2xl bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 flex items-center justify-center text-gray-500 dark:text-white/80 group-hover:scale-110 group-hover:bg-purple-200 dark:group-hover:bg-purple-500/10 group-hover:border-purple-300 dark:group-hover:border-purple-500/30 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-all duration-500 shadow-[0_0_15px_-5px_rgba(168,85,247,0.1)]">
+                                    <svelte:component this={serviceIcons[i] || Briefcase} class="w-7 h-7" />
+                                </div>
+                                <div class="opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0">
+                                    <ArrowUpRight class="w-6 h-6 text-purple-500 dark:text-purple-400/80" />
+                                </div>
                             </div>
-                            <h3 class="font-bold text-lg mb-2 text-foreground group-hover:text-primary transition-colors">{item.title}</h3>
-                            <p class="text-sm text-muted-foreground leading-relaxed group-hover:text-foreground/80 transition-colors">{item.desc}</p>
+
+                            <!-- Content -->
+                            <div class="relative z-10">
+                                <h3 class="text-2xl font-bold mb-4 text-gray-900 dark:text-white transition-colors duration-300">{item.title}</h3>
+                                <p class="text-base text-muted-foreground leading-relaxed group-hover:text-gray-600 dark:group-hover:text-purple-100/70 transition-colors duration-300">
+                                    {item.desc}
+                                </p>
+                            </div>
                         </div>
                     {/each}
                 </div>
@@ -473,68 +664,134 @@
         </section>
 
         <!-- How We Work -->
-        <section id="how-we-work" class="py-24 px-4 relative isolate overflow-hidden">
-             <!-- Subtle Background -->
-             <div class="absolute inset-0 w-full h-full overflow-hidden pointer-events-none -z-10">
-                <div class="absolute top-[40%] right-[0%] w-[40%] h-[40%] rounded-full bg-primary/5 blur-[100px] animate-pulse" style="animation-duration: 10s;"></div>
-            </div>
-
-            <div class="container mx-auto max-w-2xl relative z-10">
+        <section id="how-we-work" class="py-24 px-4 relative">
+            <div class="container mx-auto max-w-6xl relative z-10">
                 <div class="text-center mb-16">
                     <h2 class="text-3xl md:text-5xl font-bold mb-6">{t.process.title}</h2>
                 </div>
 
-                <div class="relative pl-8">
-                    <!-- Continuous Vertical Line -->
-                    <div class="absolute left-8 top-0 bottom-0 w-0.5 bg-white/10"></div>
-
-                    <div class="space-y-2">
-                        {#each t.process.steps as step, i}
-                            <div class="relative pl-12 py-2 group cursor-default">
-                                <!-- Dot on the timeline -->
-                                <div class="absolute left-0 -translate-x-[7px] top-8 z-10">
-                                    <div class="w-4 h-4 rounded-full bg-background border-2 border-white/20 transition-all duration-300 group-hover:scale-125 group-hover:border-primary group-hover:bg-background group-hover:shadow-[0_0_0_4px_rgba(124,58,237,0.2)] dark:group-hover:shadow-[0_0_0_4px_rgba(124,58,237,0.4)]"></div>
-                                </div>
-                                
-                                <!-- Card Content -->
-                                <div class="p-6 rounded-2xl transition-all duration-300 border border-white/10 bg-white/5 dark:bg-white/5 backdrop-blur-md shadow-lg group-hover:shadow-xl group-hover:bg-white/10 dark:group-hover:bg-white/10 group-hover:border-white/20 group-hover:-translate-y-1">
-                                    <span class="text-sm font-bold uppercase tracking-wider text-muted-foreground group-hover:text-primary transition-colors mb-1 block">
-                                        {workspace === 'beltrix' ? 'Step' : 'Paso'} {i + 1}
+                <div class="grid lg:grid-cols-2 gap-12 lg:gap-24 items-start relative">
+                    <!-- Left: Steps List -->
+                    <div class="space-y-6 relative" role="region" aria-label="Process steps" on:mouseenter={handleProcessMouseEnter} on:mouseleave={handleProcessMouseLeave}>
+                        <!-- Vertical Line (Desktop only) -->
+                        <div class="hidden lg:block absolute top-8 bottom-8 right-[-48px] w-px bg-border/50"></div>
+                        
+                         {#each t.process.steps as step, i}
+                            <div class="relative">
+                                <button 
+                                    class="w-full text-left p-6 rounded-2xl transition-all duration-300 border flex flex-col gap-2 group outline-none focus-visible:ring-2 focus-visible:ring-primary relative z-10
+                                    {activeProcessStep === i 
+                                        ? 'bg-card border-primary/50 shadow-lg scale-[1.02]' 
+                                        : 'bg-card/30 border-transparent hover:bg-card/50 opacity-60 hover:opacity-100'}"
+                                    on:click={() => setActiveStep(i)}
+                                    on:mouseenter={() => setActiveStep(i)}
+                                >
+                                    <span class="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80">
+                                        {$currentLang === 'en' ? 'Step' : 'Paso'} {i + 1}
                                     </span>
-                                    <h3 class="text-xl font-medium text-foreground leading-relaxed group-hover:text-foreground/90 transition-colors">
-                                        {step}
+                                    <h3 class="text-xl font-bold text-foreground {activeProcessStep === i ? 'text-primary' : ''}">
+                                        {step.title}
                                     </h3>
+                                </button>
+
+                                <!-- Dot Indicator (Desktop only) -->
+                                <div class="hidden lg:flex absolute top-1/2 -translate-y-1/2 right-[-54px] z-20 items-center justify-center w-3 h-3 rounded-full transition-all duration-300
+                                    {activeProcessStep === i 
+                                        ? 'bg-background border-2 border-primary scale-150 shadow-[0_0_15px_rgba(124,58,237,0.5)]' 
+                                        : 'bg-background border border-muted-foreground/30'}">
+                                    {#if activeProcessStep === i}
+                                        <div class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></div>
+                                    {/if}
                                 </div>
                             </div>
-                        {/each}
+                         {/each}
+                    </div>
+
+                    <!-- Right: Detail Card -->
+                    <div class="lg:sticky lg:top-32 mt-8 lg:mt-0">
+                        <div class="relative h-[520px] lg:h-[580px] rounded-3xl overflow-hidden border border-white/10 bg-card/30 backdrop-blur-xl shadow-2xl flex flex-col transition-all duration-500 group">
+                            <!-- Gradient Glow -->
+                             <div class="absolute -top-24 -right-24 w-64 h-64 bg-purple-500/20 blur-[80px] rounded-full transition-all duration-500 opacity-50 group-hover:opacity-100 pointer-events-none"></div>
+                             <div class="absolute -bottom-24 -left-24 w-64 h-64 bg-blue-500/20 blur-[80px] rounded-full transition-all duration-500 opacity-50 group-hover:opacity-100 pointer-events-none"></div>
+                             
+                             <div class="relative z-10 p-8 md:p-12 pb-0 flex-1">
+                                <div class="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary/10 text-primary font-bold text-xl mb-6 shadow-inner">
+                                    {activeProcessStep + 1}
+                                </div>
+                                
+                                {#key activeProcessStep}
+                                    <div in:slide={{ duration: 300, axis: 'y' }}>
+                                        <h3 class="text-2xl md:text-3xl font-bold mb-4 text-foreground leading-tight">
+                                            {t.process.steps[activeProcessStep].title}
+                                        </h3>
+                                        <p class="text-lg text-muted-foreground leading-relaxed mb-8">
+                                            {t.process.steps[activeProcessStep].desc}
+                                        </p>
+                                    </div>
+                                {/key}
+                             </div>
+
+                             <!-- Step Image -->
+                             <div class="relative w-full h-64 mt-auto overflow-hidden" style="mask-image: linear-gradient(to bottom, transparent, black 40%); -webkit-mask-image: linear-gradient(to bottom, transparent, black 40%);">
+                                {#key activeProcessStep}
+                                    <div class="absolute inset-0" in:fade={{ duration: 600 }}>
+                                        <img 
+                                            src={t.process.steps[activeProcessStep].image} 
+                                            alt={t.process.steps[activeProcessStep].title}
+                                            class="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
+                                        />
+                                    </div>
+                                {/key}
+                             </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </section>
 
         <!-- Reviews -->
-        <section class="py-24 px-4 relative isolate overflow-hidden">
-             <!-- Subtle Background -->
-             <div class="absolute inset-0 w-full h-full overflow-hidden pointer-events-none -z-10">
-                <div class="absolute bottom-[20%] left-[20%] w-[30%] h-[30%] rounded-full bg-pink-500/5 blur-[80px] animate-pulse" style="animation-duration: 8s;"></div>
-            </div>
-
+        <section class="py-24 px-4 relative">
             <div class="container mx-auto max-w-4xl relative z-10">
                 <div class="text-center mb-16">
-                    <h2 class="text-3xl font-bold mb-12">{t.reviews.title}</h2>
                     
-                    <div class="bg-white/5 dark:bg-white/5 backdrop-blur-md p-8 md:p-12 rounded-3xl border border-white/10 shadow-lg hover:shadow-xl transition-all duration-300 relative">
-                        <div class="absolute top-8 left-8 text-6xl text-primary/20 font-serif leading-none">"</div>
-                        <blockquote class="text-2xl md:text-3xl font-medium leading-relaxed relative z-10 mb-8 text-foreground/90">
-                            {t.reviews.quote}
-                        </blockquote>
-                        <div class="flex items-center justify-center gap-3">
-                            <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary">
-                                {t.reviews.author.charAt(0)}
-                            </div>
-                            <div class="font-bold">{t.reviews.author}</div>
+                    {#if t.reviews.items && t.reviews.items.length > 0}
+                        <div class="relative min-h-[500px] flex flex-col items-center justify-center">
+                            {#key activeReviewIndex}
+                                <div in:fade={{ duration: 500 }} class="absolute inset-0 flex flex-col items-center justify-center">
+                                    <div class="text-center">
+                                        <blockquote class="text-2xl md:text-3xl font-medium leading-relaxed mb-10 text-foreground/90 max-w-3xl mx-auto">
+                                            "{t.reviews.items[activeReviewIndex].quote}"
+                                        </blockquote>
+                                        
+                                        <div class="flex flex-col items-center gap-4">
+                                            <div class="h-16 w-32 flex items-center justify-center">
+                                                <img 
+                                                    src={t.reviews.items[activeReviewIndex].logo} 
+                                                    alt={t.reviews.items[activeReviewIndex].company} 
+                                                    class="max-w-full max-h-full object-contain"
+                                                />
+                                            </div>
+                                            <div class="text-center">
+                                                <div class="font-bold text-lg">{t.reviews.items[activeReviewIndex].author}</div>
+                                                <div class="text-sm text-muted-foreground font-medium uppercase tracking-wider">{t.reviews.items[activeReviewIndex].company}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {/key}
                         </div>
-                    </div>
+
+                        <!-- Dots Navigation -->
+                        <div class="flex justify-center gap-3 mt-4">
+                            {#each t.reviews.items as _, i}
+                                <button 
+                                    class="w-2.5 h-2.5 rounded-full transition-all duration-300 {activeReviewIndex === i ? 'bg-primary w-8' : 'bg-muted-foreground/30 hover:bg-muted-foreground/50'}"
+                                    aria-label="Go to review {i + 1}"
+                                    on:click={() => setActiveReview(i)}
+                                ></button>
+                            {/each}
+                        </div>
+                    {/if}
                 </div>
             </div>
         </section>
@@ -566,7 +823,7 @@
                                 {/if}
                             </button>
                             {#if openFaqIndex === i}
-                                <div transition:slide class="p-5 pt-0 text-muted-foreground leading-relaxed border-t border-white/10 bg-black/5 dark:bg-white/5">
+                                <div transition:slide class="p-5 text-muted-foreground leading-relaxed border-t border-white/10 bg-black/5 dark:bg-white/5">
                                     {item.a}
                                 </div>
                             {/if}
@@ -583,25 +840,25 @@
                 <div class="absolute top-[50%] left-[50%] -translate-x-1/2 -translate-y-1/2 w-[60%] h-[60%] rounded-full bg-primary/10 blur-[100px] animate-pulse"></div>
             </div>
 
-            <div class="container mx-auto max-w-5xl relative z-10">
-                <div class="relative rounded-3xl overflow-hidden border border-white/10 bg-black/80 backdrop-blur-xl shadow-2xl group">
+            <div class="container mx-auto max-w-6xl relative z-10">
+                <div class="relative rounded-3xl overflow-hidden border border-white/10 bg-transparent shadow-2xl shadow-blue-500/20 group">
                     
                     <!-- Grid Pattern Overlay -->
-                    <div class="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_60%_at_50%_50%,#000_70%,transparent_100%)] pointer-events-none"></div>
+                    <div class="absolute inset-0 bg-[linear-gradient(rgba(124,58,237,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(124,58,237,0.1)_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_60%_at_50%_50%,#000_70%,transparent_100%)] pointer-events-none"></div>
 
                     <!-- Decorative Curved Glows (Corners) -->
-                    <div class="absolute -bottom-24 -left-24 w-64 h-64 bg-primary/40 blur-[80px] rounded-full group-hover:bg-primary/50 transition-all duration-500"></div>
-                    <div class="absolute -bottom-24 -right-24 w-64 h-64 bg-primary/40 blur-[80px] rounded-full group-hover:bg-primary/50 transition-all duration-500"></div>
+                    <div class="absolute -bottom-24 -left-24 w-64 h-64 bg-blue-500/40 blur-[80px] rounded-full group-hover:bg-blue-500/50 transition-all duration-500"></div>
+                    <div class="absolute -bottom-24 -right-24 w-64 h-64 bg-purple-500/40 blur-[80px] rounded-full group-hover:bg-purple-500/50 transition-all duration-500"></div>
                     
                     <!-- Center Bottom Glow -->
-                    <div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-full h-1/3 bg-gradient-to-t from-primary/20 to-transparent blur-3xl opacity-50"></div>
+                    <div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-full h-1/3 bg-gradient-to-t from-pink-500/20 to-transparent blur-3xl opacity-50"></div>
 
                     <!-- Content -->
                     <div class="relative z-10 px-8 py-20 md:py-32 text-center">
-                        <h2 class="text-4xl md:text-6xl font-bold mb-6 tracking-tight text-white drop-shadow-sm">
+                        <h2 class="text-4xl md:text-6xl font-bold mb-6 tracking-tight text-foreground drop-shadow-sm">
                             {t.cta_final.title}
                         </h2>
-                        <p class="text-xl md:text-2xl text-white/70 max-w-2xl mx-auto mb-10 leading-relaxed">
+                        <p class="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed">
                             {t.cta_final.subtitle}
                         </p>
                         
@@ -673,16 +930,19 @@
 
 {:else if workspace === 'beltrix'}
     <!-- BELTRIX LANDING PAGE (Creative / Agency / Dark Mode) -->
-    <div class="min-h-screen bg-white dark:bg-black text-black dark:text-white font-sans selection:bg-purple-500 selection:text-white transition-colors duration-300">
+    <div class="min-h-screen bg-white dark:bg-black text-black dark:text-white font-merriweather selection:bg-purple-500 selection:text-white transition-colors duration-300">
         <!-- Navigation -->
-        <nav class="fixed w-full z-50 top-0 px-6 py-6 mix-blend-difference text-white">
+        <nav class="fixed w-full z-50 top-0 px-6 py-6 text-black dark:text-white transition-colors duration-300">
             <div class="max-w-7xl mx-auto flex justify-between items-center">
-                <span class="text-2xl font-black tracking-tighter uppercase">Beltrix</span>
+                <a href="/beltrix" class="block">
+                    <img src={beltrixLogoLight} alt="Beltrix" class="h-8 w-auto dark:hidden" />
+                    <img src={beltrixLogoDark} alt="Beltrix" class="h-8 w-auto hidden dark:block" />
+                </a>
                 <div class="flex gap-6 items-center">
                     <LanguageToggle />
                     <ThemeToggle />
                     <a href="/beltrix/auth/login" class="text-sm font-bold uppercase tracking-widest hover:text-purple-400 transition-colors">{t.beltrix.nav.login}</a>
-                    <a href="/beltrix/dashboard" class="bg-white text-black px-6 py-2 rounded-full text-sm font-bold uppercase tracking-wider hover:bg-purple-400 transition-colors">
+                    <a href="/beltrix/dashboard" class="bg-black text-white dark:bg-white dark:text-black px-6 py-2 rounded-full text-sm font-bold uppercase tracking-wider hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-colors">
                         {t.beltrix.nav.start}
                     </a>
                 </div>

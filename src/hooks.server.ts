@@ -102,5 +102,13 @@ export const handle: Handle = async ({ event, resolve }) => {
     */
 
     const response = await resolve(event);
+
+    // Prevent caching of the HTML document to avoid version mismatch issues
+    if (event.url.pathname.startsWith('/') && !event.url.pathname.includes('.')) {
+        response.headers.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+        response.headers.set('Pragma', 'no-cache');
+        response.headers.set('Expires', '0');
+    }
+
     return response;
 };

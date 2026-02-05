@@ -5,7 +5,7 @@
         ArrowRight, CheckCircle2, Share2, Laptop, 
         Megaphone, Palette, Image as ImageIcon, Brain,
         Globe, Menu, X as XIcon, Moon, Sun, Database, FileText, Activity, Star, Layout, 
-        ChevronDown, ChevronUp, Linkedin,
+        ChevronDown, ChevronUp, Linkedin, Instagram, Facebook, Mail,
         Zap, GitBranch, Search, Shield, Users, AlertTriangle, Briefcase, Layers, Languages, ArrowUpRight, TrendingUp, ClipboardCheck, Cpu, Lightbulb
     } from 'lucide-svelte';
     import { currentLang, translations } from '$lib/i18n';
@@ -217,7 +217,7 @@
         <header 
             class="fixed top-0 z-50 w-full transition-all duration-300 {scrollY > 20 ? 'border-b bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60 shadow-sm' : 'bg-transparent border-transparent'}"
         >
-            <div class="container mx-auto flex h-16 items-center justify-between px-4 md:px-8">
+            <div class="container mx-auto flex h-16 items-center justify-between px-4 md:px-8 relative">
                 <div class="flex items-center gap-2">
                     <!-- Logo/Brand -->
                     <a href="#home" class="block">
@@ -227,13 +227,13 @@
                 </div>
 
                 <!-- Desktop Nav -->
-                <nav class="hidden md:flex items-center gap-8 text-sm font-medium">
+                <nav class="hidden md:flex items-center gap-8 text-sm font-medium absolute left-1/2 -translate-x-1/2">
                     <a href="#home" class="transition-colors hover:text-primary relative group">
                         {t.nav.home}
                     </a>
+                    <a href="#capabilities" class="transition-colors hover:text-primary">{t.nav.capabilities}</a>
                     <a href="#services" class="transition-colors hover:text-primary">{t.nav.services}</a>
-                    <a href="#about" class="transition-colors hover:text-primary">{t.nav.about}</a>
-                    <a href="#contact" class="transition-colors hover:text-primary">{t.nav.contact}</a>
+                    <a href="#faq" class="transition-colors hover:text-primary">{t.nav.faq}</a>
                 </nav>
 
                 <div class="hidden md:flex items-center gap-4">
@@ -319,9 +319,9 @@
                 <div transition:slide class="md:hidden border-t bg-background">
                     <div class="container flex flex-col gap-4 p-4">
                         <a href="#home" class="text-lg font-medium py-2" on:click={toggleMenu}>{t.nav.home}</a>
+                        <a href="#capabilities" class="text-lg font-medium py-2" on:click={toggleMenu}>{t.nav.capabilities}</a>
                         <a href="#services" class="text-lg font-medium py-2" on:click={toggleMenu}>{t.nav.services}</a>
-                        <a href="#about" class="text-lg font-medium py-2" on:click={toggleMenu}>{t.nav.about}</a>
-                        <a href="#contact" class="text-lg font-medium py-2" on:click={toggleMenu}>{t.nav.contact}</a>
+                        <a href="#faq" class="text-lg font-medium py-2" on:click={toggleMenu}>{t.nav.faq}</a>
                         
                         <div class="flex items-center justify-between pt-6 border-t mt-2">
                             <div class="flex items-center gap-2 bg-muted rounded-full p-1">
@@ -393,7 +393,7 @@
             </section>
     
             <!-- Problem Section -->
-            <section class="py-24 px-4 relative z-10">
+            <section class="py-12 md:py-24 px-4 relative z-10">
                 <div class="container mx-auto max-w-6xl text-center relative z-10">
                     <h2 class="text-3xl md:text-5xl font-bold mb-12">{t.problem.title}</h2>
                     
@@ -416,7 +416,7 @@
             </section>
 
         <!-- Capabilities Section -->
-        <section class="py-24 px-4 relative">
+        <section id="capabilities" class="py-12 md:py-24 px-4 relative">
             <div class="container mx-auto max-w-6xl relative z-10">
                 <!-- Bento Box Container -->
                 <div class="rounded-[2.5rem] border border-gray-200 dark:border-white/10 bg-white/70 dark:bg-[#05050A]/60 backdrop-blur-3xl overflow-hidden relative grid lg:grid-cols-5 shadow-2xl transition-colors duration-500">
@@ -491,7 +491,7 @@
         </section>
 
         <!-- Comparison Table (Simple Table Only) -->
-        <section class="py-24 px-4 relative">
+        <section class="py-12 md:py-24 px-4 relative">
              <div class="container mx-auto max-w-5xl relative z-10">
                 <!-- Title -->
                 <div class="mb-16 text-center">
@@ -536,11 +536,11 @@
 
 
 
-        <!-- Process Flow Animation (Horizontal - 6 Steps) -->
-        <section class="py-24 px-4 relative">
+        <!-- Process Flow Animation (Responsive: Horizontal small on Mobile / Horizontal large on Desktop) -->
+        <section class="py-12 md:py-24 px-4 relative">
              <div class="container mx-auto max-w-6xl relative z-10 flex justify-center">
                 <!-- Animated Process Flow -->
-                <div class="relative flex items-center gap-0 w-full">
+                <div class="relative flex items-center gap-0 w-full justify-center md:justify-between">
                     <!-- Styles for the animation -->
                     <style>
                         @keyframes flow-line-horizontal {
@@ -552,7 +552,7 @@
                             50% { box-shadow: 0 0 50px 10px rgba(168, 85, 247, 0.4); border-color: rgba(168, 85, 247, 0.9); }
                         }
                         
-                        /* Updated duration to 4.8s for 6 steps (0.8s intervals) - Faster and softer spread */
+                        /* Updated duration to 4.8s for 6 steps (0.8s intervals) */
                         .block-pulse-1 { animation: pulse-block 4.8s infinite ease-in-out 0s; }
                         .block-pulse-2 { animation: pulse-block 4.8s infinite ease-in-out 0.8s; }
                         .block-pulse-3 { animation: pulse-block 4.8s infinite ease-in-out 1.6s; }
@@ -560,7 +560,7 @@
                         .block-pulse-5 { animation: pulse-block 4.8s infinite ease-in-out 3.2s; }
                         .block-pulse-6 { animation: pulse-block 4.8s infinite ease-in-out 4.0s; }
                         
-                        /* Staggered delays for lines */
+                        /* Responsive animations for lines */
                         .line-flow-1 { animation: flow-line-horizontal 4.8s infinite linear 0.4s; }
                         .line-flow-2 { animation: flow-line-horizontal 4.8s infinite linear 1.2s; }
                         .line-flow-3 { animation: flow-line-horizontal 4.8s infinite linear 2.0s; }
@@ -569,65 +569,65 @@
                     </style>
 
                     <!-- Step 1: Input -->
-                    <div class="relative z-10 w-20 h-20 rounded-2xl bg-white dark:bg-card border border-gray-200 dark:border-white/20 flex items-center justify-center transition-all duration-300 block-pulse-1 shadow-sm">
-                        <Database class="w-8 h-8 text-gray-500 dark:text-white/70" />
+                    <div class="relative z-10 w-8 h-8 md:w-20 md:h-20 rounded-lg md:rounded-2xl bg-white dark:bg-card border border-gray-200 dark:border-white/20 flex items-center justify-center transition-all duration-300 block-pulse-1 shadow-sm shrink-0">
+                        <Database class="w-4 h-4 md:w-8 md:h-8 text-gray-500 dark:text-white/70" />
                     </div>
                     
                     <!-- Connector 1 -->
-                    <div class="h-0.5 flex-1 bg-gray-200 dark:bg-white/10 relative overflow-hidden min-w-[40px]">
+                    <div class="h-0.5 flex-1 bg-gray-200 dark:bg-white/10 relative overflow-hidden min-w-[8px] md:min-w-[40px]">
                         <div class="absolute inset-0 w-full h-full line-flow-1 bg-[length:200%_100%] bg-gradient-to-r from-transparent via-primary to-transparent"></div>
                     </div>
 
                     <!-- Step 2: Analysis -->
-                    <div class="relative z-10 w-20 h-20 rounded-2xl bg-white dark:bg-card border border-gray-200 dark:border-white/20 flex items-center justify-center transition-all duration-300 block-pulse-2 shadow-sm">
-                        <Search class="w-8 h-8 text-gray-500 dark:text-white/70" />
+                    <div class="relative z-10 w-8 h-8 md:w-20 md:h-20 rounded-lg md:rounded-2xl bg-white dark:bg-card border border-gray-200 dark:border-white/20 flex items-center justify-center transition-all duration-300 block-pulse-2 shadow-sm shrink-0">
+                        <Search class="w-4 h-4 md:w-8 md:h-8 text-gray-500 dark:text-white/70" />
                     </div>
 
                     <!-- Connector 2 -->
-                    <div class="h-0.5 flex-1 bg-gray-200 dark:bg-white/10 relative overflow-hidden min-w-[40px]">
+                    <div class="h-0.5 flex-1 bg-gray-200 dark:bg-white/10 relative overflow-hidden min-w-[8px] md:min-w-[40px]">
                         <div class="absolute inset-0 w-full h-full line-flow-2 bg-[length:200%_100%] bg-gradient-to-r from-transparent via-primary to-transparent"></div>
                     </div>
 
                     <!-- Step 3: Processing -->
-                    <div class="relative z-10 w-20 h-20 rounded-2xl bg-white dark:bg-card border border-gray-200 dark:border-white/20 flex items-center justify-center transition-all duration-300 block-pulse-3 shadow-sm">
-                        <Cpu class="w-8 h-8 text-gray-500 dark:text-white/70" />
+                    <div class="relative z-10 w-8 h-8 md:w-20 md:h-20 rounded-lg md:rounded-2xl bg-white dark:bg-card border border-gray-200 dark:border-white/20 flex items-center justify-center transition-all duration-300 block-pulse-3 shadow-sm shrink-0">
+                        <Cpu class="w-4 h-4 md:w-8 md:h-8 text-gray-500 dark:text-white/70" />
                     </div>
 
                     <!-- Connector 3 -->
-                    <div class="h-0.5 flex-1 bg-gray-200 dark:bg-white/10 relative overflow-hidden min-w-[40px]">
+                    <div class="h-0.5 flex-1 bg-gray-200 dark:bg-white/10 relative overflow-hidden min-w-[8px] md:min-w-[40px]">
                         <div class="absolute inset-0 w-full h-full line-flow-3 bg-[length:200%_100%] bg-gradient-to-r from-transparent via-primary to-transparent"></div>
                     </div>
 
                     <!-- Step 4: Integration -->
-                    <div class="relative z-10 w-20 h-20 rounded-2xl bg-white dark:bg-card border border-gray-200 dark:border-white/20 flex items-center justify-center transition-all duration-300 block-pulse-4 shadow-sm">
-                        <GitBranch class="w-8 h-8 text-gray-500 dark:text-white/70" />
+                    <div class="relative z-10 w-8 h-8 md:w-20 md:h-20 rounded-lg md:rounded-2xl bg-white dark:bg-card border border-gray-200 dark:border-white/20 flex items-center justify-center transition-all duration-300 block-pulse-4 shadow-sm shrink-0">
+                        <GitBranch class="w-4 h-4 md:w-8 md:h-8 text-gray-500 dark:text-white/70" />
                     </div>
 
                     <!-- Connector 4 -->
-                    <div class="h-0.5 flex-1 bg-gray-200 dark:bg-white/10 relative overflow-hidden min-w-[40px]">
+                    <div class="h-0.5 flex-1 bg-gray-200 dark:bg-white/10 relative overflow-hidden min-w-[8px] md:min-w-[40px]">
                         <div class="absolute inset-0 w-full h-full line-flow-4 bg-[length:200%_100%] bg-gradient-to-r from-transparent via-primary to-transparent"></div>
                     </div>
 
                     <!-- Step 5: Output -->
-                    <div class="relative z-10 w-20 h-20 rounded-2xl bg-white dark:bg-card border border-gray-200 dark:border-white/20 flex items-center justify-center transition-all duration-300 block-pulse-5 shadow-sm">
-                        <Lightbulb class="w-8 h-8 text-gray-500 dark:text-white/70" />
+                    <div class="relative z-10 w-8 h-8 md:w-20 md:h-20 rounded-lg md:rounded-2xl bg-white dark:bg-card border border-gray-200 dark:border-white/20 flex items-center justify-center transition-all duration-300 block-pulse-5 shadow-sm shrink-0">
+                        <Lightbulb class="w-4 h-4 md:w-8 md:h-8 text-gray-500 dark:text-white/70" />
                     </div>
 
                     <!-- Connector 5 -->
-                    <div class="h-0.5 flex-1 bg-gray-200 dark:bg-white/10 relative overflow-hidden min-w-[40px]">
+                    <div class="h-0.5 flex-1 bg-gray-200 dark:bg-white/10 relative overflow-hidden min-w-[8px] md:min-w-[40px]">
                         <div class="absolute inset-0 w-full h-full line-flow-5 bg-[length:200%_100%] bg-gradient-to-r from-transparent via-primary to-transparent"></div>
                     </div>
 
                     <!-- Step 6: Growth -->
-                    <div class="relative z-10 w-20 h-20 rounded-2xl bg-white dark:bg-card border border-gray-200 dark:border-white/20 flex items-center justify-center transition-all duration-300 block-pulse-6 shadow-sm">
-                        <TrendingUp class="w-8 h-8 text-gray-500 dark:text-white/70" />
+                    <div class="relative z-10 w-8 h-8 md:w-20 md:h-20 rounded-lg md:rounded-2xl bg-white dark:bg-card border border-gray-200 dark:border-white/20 flex items-center justify-center transition-all duration-300 block-pulse-6 shadow-sm shrink-0">
+                        <TrendingUp class="w-4 h-4 md:w-8 md:h-8 text-gray-500 dark:text-white/70" />
                     </div>
                 </div>
              </div>
         </section>
 
         <!-- Services Section -->
-        <section id="services" class="py-24 px-4 relative">
+        <section id="services" class="py-12 md:py-24 px-4 relative">
             <div class="container mx-auto max-w-6xl relative z-10">
                 <div class="text-center mb-16">
                     <h2 class="text-3xl md:text-5xl font-bold mb-4">{t.services.title}</h2>
@@ -664,7 +664,7 @@
         </section>
 
         <!-- How We Work -->
-        <section id="how-we-work" class="py-24 px-4 relative">
+        <section id="how-we-work" class="py-12 md:py-24 px-4 relative">
             <div class="container mx-auto max-w-6xl relative z-10">
                 <div class="text-center mb-16">
                     <h2 class="text-3xl md:text-5xl font-bold mb-6">{t.process.title}</h2>
@@ -750,16 +750,16 @@
         </section>
 
         <!-- Reviews -->
-        <section class="py-24 px-4 relative">
+        <section class="py-12 md:py-24 px-4 relative">
             <div class="container mx-auto max-w-4xl relative z-10">
                 <div class="text-center mb-16">
                     
                     {#if t.reviews.items && t.reviews.items.length > 0}
-                        <div class="relative min-h-[500px] flex flex-col items-center justify-center">
+                        <div class="relative min-h-[600px] md:min-h-[500px] flex flex-col items-center justify-center">
                             {#key activeReviewIndex}
                                 <div in:fade={{ duration: 500 }} class="absolute inset-0 flex flex-col items-center justify-center">
-                                    <div class="text-center">
-                                        <blockquote class="text-2xl md:text-3xl font-medium leading-relaxed mb-10 text-foreground/90 max-w-3xl mx-auto">
+                                    <div class="text-center px-4">
+                                        <blockquote class="text-xl md:text-3xl font-medium leading-relaxed mb-10 text-foreground/90 max-w-3xl mx-auto">
                                             "{t.reviews.items[activeReviewIndex].quote}"
                                         </blockquote>
                                         
@@ -797,7 +797,7 @@
         </section>
 
         <!-- FAQ -->
-        <section class="py-24 px-4 relative isolate overflow-hidden">
+        <section id="faq" class="py-12 md:py-24 px-4 relative isolate overflow-hidden">
              <!-- Subtle Background -->
              <div class="absolute inset-0 w-full h-full overflow-hidden pointer-events-none -z-10">
                 <div class="absolute top-[20%] right-[30%] w-[40%] h-[40%] rounded-full bg-blue-500/5 blur-[90px] animate-pulse" style="animation-duration: 9s;"></div>
@@ -834,7 +834,7 @@
         </section>
 
         <!-- Bottom CTA -->
-        <section class="py-24 px-4 relative isolate overflow-hidden">
+        <section class="py-12 md:py-24 px-4 relative isolate overflow-hidden">
              <!-- Background elements matching other sections -->
              <div class="absolute inset-0 w-full h-full overflow-hidden pointer-events-none -z-10">
                 <div class="absolute top-[50%] left-[50%] -translate-x-1/2 -translate-y-1/2 w-[60%] h-[60%] rounded-full bg-primary/10 blur-[100px] animate-pulse"></div>
@@ -886,34 +886,23 @@
                             {t.footer.desc}
                         </p>
                         <div class="flex gap-4">
-                            <a href="/" class="text-muted-foreground hover:text-foreground transition-colors"><Linkedin class="w-4 h-4" /></a>
+                            <a href="https://www.linkedin.com/company/allianzyinc/" target="_blank" rel="noopener noreferrer" class="text-muted-foreground hover:text-foreground transition-colors"><Linkedin class="w-4 h-4" /></a>
+                            <a href="https://www.instagram.com/allianzy.inc/" target="_blank" rel="noopener noreferrer" class="text-muted-foreground hover:text-foreground transition-colors"><Instagram class="w-4 h-4" /></a>
+                            <a href="https://www.facebook.com/allianzy.inc" target="_blank" rel="noopener noreferrer" class="text-muted-foreground hover:text-foreground transition-colors"><Facebook class="w-4 h-4" /></a>
+                            <a href="mailto:support@allianzy.us" class="text-muted-foreground hover:text-foreground transition-colors"><Mail class="w-4 h-4" /></a>
                         </div>
                     </div>
                     
-                    <div>
-                        <h3 class="font-semibold mb-4">{t.footer.company.title}</h3>
-                        <ul class="space-y-2 text-muted-foreground">
-                            <li><a href="/" class="hover:text-foreground transition-colors">{t.footer.company.about}</a></li>
-                            <li><a href="/" class="hover:text-foreground transition-colors">{t.footer.company.careers}</a></li>
-                            <li><a href="/" class="hover:text-foreground transition-colors">{t.footer.company.blog}</a></li>
-                        </ul>
-                    </div>
-                    
-                    <div>
-                        <h3 class="font-semibold mb-4">{t.footer.product.title}</h3>
-                        <ul class="space-y-2 text-muted-foreground">
-                            <li><a href="/" class="hover:text-foreground transition-colors">{t.footer.product.features}</a></li>
-                            <li><a href="/" class="hover:text-foreground transition-colors">{t.footer.product.security}</a></li>
-                        </ul>
-                    </div>
-                    
-                    <div>
-                        <h3 class="font-semibold mb-4">{t.footer.resources.title}</h3>
-                        <ul class="space-y-2 text-muted-foreground">
-                            <li><a href="/" class="hover:text-foreground transition-colors">{t.footer.resources.docs}</a></li>
-                            <li><a href="/" class="hover:text-foreground transition-colors">{t.footer.resources.help}</a></li>
-                            <li><a href="/" class="hover:text-foreground transition-colors">{t.footer.resources.community}</a></li>
-                        </ul>
+                    <div class="col-span-1 md:col-span-3 flex justify-end">
+                        <div>
+                            <h3 class="font-semibold mb-4">{t.footer.menu.title}</h3>
+                            <ul class="space-y-2 text-muted-foreground">
+                                <li><a href="#home" class="hover:text-foreground transition-colors">{t.footer.menu.home}</a></li>
+                                <li><a href="#capabilities" class="hover:text-foreground transition-colors">{t.footer.menu.capabilities}</a></li>
+                                <li><a href="#services" class="hover:text-foreground transition-colors">{t.footer.menu.services}</a></li>
+                                <li><a href="#faq" class="hover:text-foreground transition-colors">{t.footer.menu.faq}</a></li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
                 

@@ -8,9 +8,9 @@ export const translations = {
     en: {
         nav: {
             home: 'Home',
+            capabilities: 'Capabilities',
             services: 'Services',
-            about: 'About',
-            contact: 'Contact',
+            faq: 'FAQ',
             login: 'Login',
             register: 'Start Now',
             start_eval: 'Start Evaluation',
@@ -172,22 +172,12 @@ export const translations = {
         // Generic Footer
         footer: {
             rights: 'All rights reserved.',
-            company: {
-                title: 'Company',
-                about: 'About',
-                careers: 'Careers',
-                blog: 'Blog'
-            },
-            product: {
-                title: 'Product',
-                features: 'Features',
-                security: 'Security'
-            },
-            resources: {
-                title: 'Resources',
-                docs: 'Docs',
-                help: 'Help Center',
-                community: 'Community'
+            menu: {
+                title: 'Menu',
+                home: 'Home',
+                capabilities: 'Capabilities',
+                services: 'Services',
+                faq: 'FAQ'
             },
             desc: 'Engineering applied to business.',
             privacy: 'Privacy Policy',
@@ -433,9 +423,9 @@ export const translations = {
     es: {
         nav: {
             home: 'Inicio',
+            capabilities: 'Capacidades',
             services: 'Servicios',
-            about: 'Nosotros',
-            contact: 'Contacto',
+            faq: 'FAQ',
             login: 'Acceso',
             start_eval: 'Iniciar evaluación',
             dashboard: 'Dashboard'
@@ -612,22 +602,12 @@ export const translations = {
         },
         footer: {
             rights: 'Todos los derechos reservados.',
-            company: {
-                title: 'Compañía',
-                about: 'Nosotros',
-                careers: 'Carreras',
-                blog: 'Blog'
-            },
-            product: {
-                title: 'Producto',
-                features: 'Características',
-                security: 'Seguridad'
-            },
-            resources: {
-                title: 'Recursos',
-                docs: 'Documentación',
-                help: 'Centro de Ayuda',
-                community: 'Comunidad'
+            menu: {
+                title: 'Menú',
+                home: 'Inicio',
+                capabilities: 'Capacidades',
+                services: 'Servicios',
+                faq: 'FAQ'
             },
             desc: 'Ingeniería aplicada al negocio.',
             privacy: 'Política de Privacidad',

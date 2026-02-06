@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ArrowLeft, CheckCircle2, Circle, Clock, MessageSquare, FileText, User, Calendar, Briefcase, AlertCircle, DollarSign, CreditCard, ExternalLink, Download, Pencil, Trash2, Plus, X, Eye, Inbox, Send, Paperclip, Loader2 } from 'lucide-svelte';
+    import { ArrowLeft, CheckCircle2, Circle, Clock, MessageSquare, FileText, User, Calendar, Briefcase, AlertCircle, DollarSign, CreditCard, ExternalLink, Download, Pencil, Trash2, Plus, X, Eye, Inbox, Send, Paperclip, Loader2, Info } from 'lucide-svelte';
     import type { PageData } from './$types';
     import { enhance } from '$app/forms';
     import DocumentPreviewModal from '$lib/components/DocumentPreviewModal.svelte';
@@ -381,7 +381,7 @@
     // Edit Project Modal Logic
     let isEditProjectModalOpen = false;
     let selectedClientId: number | null = null;
-    let projectLinks: { title: string; url: string }[] = [];
+    let projectLinks: { title: string; url: string; note?: string }[] = [];
     let removeProjectImage = false;
     let previewImageUrl: string | null = null;
 
@@ -394,7 +394,7 @@
     }
 
     function addProjectLink() {
-        projectLinks = [...projectLinks, { title: '', url: '' }];
+        projectLinks = [...projectLinks, { title: '', url: '', note: '' }];
     }
 
     function removeProjectLink(index: number) {
@@ -1040,9 +1040,19 @@
                             {#each project.links as link}
                                 <div>
                                     <p class="text-muted-foreground text-xs">{link.title}</p>
-                                    <a href={link.url} target="_blank" rel="noopener noreferrer" class="font-medium text-primary hover:underline break-all flex items-center gap-1">
-                                        {link.url} <ExternalLink class="w-3 h-3 flex-shrink-0" />
-                                    </a>
+                                    <div class="flex items-center gap-1">
+                                        <a href={link.url} target="_blank" rel="noopener noreferrer" class="font-medium text-primary hover:underline break-all flex items-center gap-1">
+                                            {link.url} <ExternalLink class="w-3 h-3 flex-shrink-0" />
+                                        </a>
+                                        {#if link.note}
+                                            <div class="relative group">
+                                                <Info class="w-3.5 h-3.5 text-blue-600 cursor-help" />
+                                                <div class="absolute bottom-full mb-2 hidden group-hover:block bg-popover text-popover-foreground text-xs rounded-md border shadow-md p-2 w-max max-w-[200px] z-50 right-0">
+                                                    {link.note}
+                                                </div>
+                                            </div>
+                                        {/if}
+                                    </div>
                                 </div>
                             {/each}
                         </div>
@@ -2263,12 +2273,12 @@
 <!-- Edit Project Modal -->
 {#if isEditProjectModalOpen}
     <div class="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50">
-        <div class="bg-card border rounded-lg shadow-lg p-6 w-full max-w-md relative">
-            <button on:click={closeEditProjectModal} class="absolute top-4 right-4 text-muted-foreground hover:text-foreground">
+        <div class="bg-card border rounded-lg shadow-lg p-6 w-full max-w-md relative max-h-[90vh] flex flex-col">
+            <button on:click={closeEditProjectModal} class="absolute top-4 right-4 text-muted-foreground hover:text-foreground z-10">
                 <X class="w-4 h-4" />
             </button>
             
-            <h2 class="text-lg font-bold mb-4">Editar Proyecto</h2>
+            <h2 class="text-lg font-bold mb-4 flex-shrink-0">Editar Proyecto</h2>
             
             <form 
                 action="?/updateProject" 
@@ -2282,7 +2292,7 @@
                         await update();
                     };
                 }}
-                class="space-y-4"
+                class="space-y-4 overflow-y-auto pr-2"
             >
                 <div class="space-y-2">
                     <label for="edit-name" class="text-sm font-medium">Nombre del Proyecto</label>
@@ -2440,25 +2450,33 @@
                     
                     <div class="space-y-2">
                         {#each projectLinks as link, index}
-                            <div class="flex gap-2 items-start">
-                                <div class="grid grid-cols-2 gap-2 flex-1">
+                            <div class="flex gap-2 items-start p-3 border rounded-md bg-muted/10">
+                                <div class="flex-1 space-y-2">
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <input 
+                                            type="text" 
+                                            placeholder="Título (ej. GitHub)"
+                                            class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                            bind:value={link.title}
+                                        />
+                                        <input 
+                                            type="text" 
+                                            placeholder="URL (https://...)"
+                                            class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                            bind:value={link.url}
+                                        />
+                                    </div>
                                     <input 
                                         type="text" 
-                                        placeholder="Título (ej. GitHub)"
-                                        class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                        bind:value={link.title}
-                                    />
-                                    <input 
-                                        type="text" 
-                                        placeholder="URL (https://...)"
-                                        class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                        bind:value={link.url}
+                                        placeholder="Nota (opcional, aparece en tooltip)"
+                                        class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                        bind:value={link.note}
                                     />
                                 </div>
                                 <button 
                                     type="button" 
                                     on:click={() => removeProjectLink(index)}
-                                    class="p-2 text-muted-foreground hover:text-red-600 transition-colors mt-0.5"
+                                    class="p-2 text-muted-foreground hover:text-red-600 transition-colors"
                                     title="Eliminar enlace"
                                 >
                                     <Trash2 class="w-4 h-4" />

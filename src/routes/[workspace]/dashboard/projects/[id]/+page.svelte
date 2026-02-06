@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ArrowLeft, CheckCircle2, Circle, Clock, MessageSquare, FileText, User, Calendar, Briefcase, AlertCircle, DollarSign, CreditCard, ExternalLink, Download, Plus, X, Eye, Inbox, Send, Paperclip, ArrowDown, Loader2 } from 'lucide-svelte';
+    import { ArrowLeft, CheckCircle2, Circle, Clock, MessageSquare, FileText, User, Calendar, Briefcase, AlertCircle, DollarSign, CreditCard, ExternalLink, Download, Plus, X, Eye, Inbox, Send, Paperclip, ArrowDown, Loader2, Info } from 'lucide-svelte';
     import type { PageData } from './$types';
     import { enhance } from '$app/forms';
     import DocumentPreviewModal from '$lib/components/DocumentPreviewModal.svelte';
@@ -728,9 +728,20 @@
                             {#each project.links as link}
                                 <div>
                                     <p class="text-muted-foreground text-xs">{link.title}</p>
-                                    <a href={link.url} target="_blank" rel="noopener noreferrer" class="font-medium text-primary hover:underline break-all flex items-center gap-1">
-                                        {link.url} <ExternalLink class="w-3 h-3 flex-shrink-0" />
-                                    </a>
+                                    <div class="flex items-center gap-1 max-w-full">
+                                        <a href={link.url} target="_blank" rel="noopener noreferrer" class="text-xs font-medium text-primary hover:underline flex items-center gap-1 truncate">
+                                            <span class="truncate">{link.url}</span>
+                                            <ExternalLink class="w-3 h-3 flex-shrink-0" />
+                                        </a>
+                                        {#if link.note}
+                                            <div class="relative group flex-shrink-0">
+                                                <Info class="w-3.5 h-3.5 text-blue-600 cursor-help" />
+                                                <div class="absolute bottom-full mb-2 hidden group-hover:block bg-popover text-popover-foreground text-xs rounded-md border shadow-md p-2 w-max max-w-[200px] z-50 right-0">
+                                                    {link.note}
+                                                </div>
+                                            </div>
+                                        {/if}
+                                    </div>
                                 </div>
                             {/each}
                         </div>

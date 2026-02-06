@@ -62,7 +62,7 @@ export function getSignedUrlForFile(url: string | null, workspace: string = 'all
 
   // Check if it's already a proxy URL and extract the original B2 URL
   // This handles cases where the DB might have saved a proxy URL instead of the B2 URL
-  if (url.includes('/api/files') && url.includes('url=')) {
+  if ((url.includes('/api/files') || url.includes('/api/public/files')) && url.includes('url=')) {
     try {
       const match = url.match(/url=([^&]+)/);
       if (match) {
@@ -77,7 +77,7 @@ export function getSignedUrlForFile(url: string | null, workspace: string = 'all
 
   // Check if the URL is already a local proxy URL (legacy or current)
   // If so, extract the original B2 URL and re-sign it
-  if (url.includes('/api/files') || url.includes('/dashboard/api/files')) {
+  if (url.includes('/api/files') || url.includes('/dashboard/api/files') || url.includes('/api/public/files')) {
     try {
       // Handle both absolute and relative URLs
       const urlObj = new URL(url, 'http://dummy.com'); 

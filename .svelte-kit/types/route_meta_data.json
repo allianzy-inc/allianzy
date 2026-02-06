@@ -9,6 +9,9 @@
 	"/api/public/files": [
 		"src/routes/api/public/files/+server.ts"
 	],
+	"/api/test-b2": [
+		"src/routes/api/test-b2/+server.ts"
+	],
 	"/api/users/get-role": [
 		"src/routes/api/users/get-role/+server.ts"
 	],

@@ -1,11 +1,12 @@
 <script lang="ts">
-    import { ArrowLeft, CheckCircle2, Circle, Clock, MessageSquare, FileText, User, Calendar, Briefcase, AlertCircle, DollarSign, CreditCard, ExternalLink, Download, Plus, X, Eye, Inbox, Send, Paperclip, ArrowDown, Loader2, Info, Building } from 'lucide-svelte';
+    import { ArrowLeft, CheckCircle2, Circle, Clock, MessageSquare, FileText, User, Calendar, Briefcase, AlertCircle, DollarSign, CreditCard, ExternalLink, Download, Plus, X, Eye, Inbox, Send, Paperclip, ArrowDown, Loader2, Info, Building, ChevronDown, ChevronUp } from 'lucide-svelte';
     import type { PageData } from './$types';
     import { enhance } from '$app/forms';
     import DocumentPreviewModal from '$lib/components/DocumentPreviewModal.svelte';
     import { goto, invalidateAll } from '$app/navigation';
     import { page } from '$app/stores';
     import { onMount, tick, onDestroy } from 'svelte';
+    import { portal } from '$lib/actions/portal';
 
     export let data: PageData;
 
@@ -241,6 +242,12 @@
     // Requirement Details Logic
     let isRequirementDetailsOpen = false;
     let selectedRequirement: any = null;
+
+    // Request Details Logic (Additional state)
+    let isRequestDescriptionExpanded = false;
+    let isCaseDescriptionExpanded = false;
+    let isRequirementDescriptionExpanded = false;
+    let isProposalDescriptionExpanded = false;
 
     function openRequirementDetails(req: any) {
         selectedRequirement = req;
@@ -872,123 +879,151 @@
     </div>
 {/if}
 
-<!-- Case Details (Chat) Modal -->
+<!-- Case Details (Chat) Drawer -->
 {#if isCaseDetailsOpen && selectedCase}
-    <div class="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50">
-        <div class="bg-card border rounded-lg shadow-lg w-full max-w-2xl h-[80vh] flex flex-col relative overflow-hidden">
+    <div use:portal class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[999] flex items-center justify-end" on:click={closeCaseDetails} role="button" tabindex="0" on:keydown={(e) => e.key === 'Escape' && closeCaseDetails()}>
+        <div class="bg-card h-full w-full max-w-2xl border-l shadow-2xl flex flex-col animate-in slide-in-from-right duration-300" on:click|stopPropagation role="presentation">
             <!-- Header -->
-            <div class="p-4 border-b flex items-start justify-between bg-muted/20">
-                <div>
-                    <div class="flex items-center gap-2 mb-1">
-                        <h2 class="text-lg font-bold">{selectedCase.title}</h2>
-                        <span class="px-2 py-0.5 rounded text-[10px] capitalize border
-                            {selectedCase.status === 'open' ? 'bg-green-100 text-green-700 border-green-200' : 
-                             selectedCase.status === 'closed' ? 'bg-gray-100 text-gray-700 border-gray-200' : 
-                             'bg-yellow-100 text-yellow-700 border-yellow-200'}">
-                            {selectedCase.status}
-                        </span>
-                    </div>
-                    <p class="text-sm text-muted-foreground line-clamp-2">{selectedCase.description}</p>
-                    <div class="flex items-center gap-4 mt-2">
-                        {#if selectedCase.priority === 'high'}
-                            <span class="flex items-center gap-1 text-[10px] text-red-600 bg-red-50 px-1.5 py-0.5 rounded border border-red-100">
-                                <AlertCircle class="w-3 h-3" /> Alta Prioridad
-                            </span>
-                        {/if}
-                        <span class="text-xs text-muted-foreground flex items-center gap-1">
-                            <Calendar class="w-3 h-3" /> {formatDate(selectedCase.createdAt)}
-                        </span>
-                        {#if selectedCase.files && selectedCase.files.length > 0}
-                            <div class="flex gap-2">
-                                {#each selectedCase.files as file}
-                                    <button 
-                                        on:click={() => openPreview(file.name, file.url)} 
-                                        class="flex items-center gap-1 text-[10px] bg-background border px-1.5 py-0.5 rounded hover:bg-accent transition-colors"
-                                    >
-                                        <Paperclip class="w-2.5 h-2.5" /> {file.name}
-                                    </button>
-                                {/each}
-                            </div>
-                        {/if}
-                    </div>
+            <div class="p-6 border-b bg-card z-10 space-y-2">
+                <div class="flex items-start justify-between">
+                    <h3 class="text-2xl font-bold">{selectedCase.title}</h3>
+                    <button on:click={closeCaseDetails} class="text-muted-foreground hover:text-foreground p-1 hover:bg-accent rounded-full transition-colors">
+                        <X class="w-5 h-5" />
+                    </button>
                 </div>
-                <button on:click={closeCaseDetails} class="text-muted-foreground hover:text-foreground p-1">
-                    <X class="w-5 h-5" />
-                </button>
+                <div class="flex items-center gap-3">
+                    <span class="text-sm text-muted-foreground flex items-center gap-1">
+                        <Calendar class="w-4 h-4" /> Created {formatDate(selectedCase.createdAt)}
+                    </span>
+                    <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold {selectedCase.status === 'open' ? 'bg-green-100 text-green-700 border-green-200' : 
+                            selectedCase.status === 'closed' ? 'bg-gray-100 text-gray-700 border-gray-200' : 
+                            'bg-yellow-100 text-yellow-700 border-yellow-200'}">
+                        {selectedCase.status}
+                    </span>
+                    {#if selectedCase.priority === 'high'}
+                        <span class="flex items-center gap-1 text-xs text-red-600 bg-red-50 px-2 py-0.5 rounded border border-red-100 font-medium">
+                            <AlertCircle class="w-3 h-3" /> Alta Prioridad
+                        </span>
+                    {/if}
+                </div>
             </div>
 
-            <!-- Chat Area -->
-            <div class="flex-1 relative min-h-0">
-                <div 
-                    class="absolute inset-0 overflow-y-auto p-4 space-y-4 bg-muted/10" 
-                    use:scrollToBottom={{ dependency: selectedCaseComments }}
-                    bind:this={chatContainer}
-                >
-                {#if !selectedCaseComments || selectedCaseComments.length === 0}
-                    <div class="text-center py-10 text-muted-foreground text-sm">
-                        <MessageSquare class="w-10 h-10 mx-auto mb-2 opacity-20" />
-                        <p>No hay mensajes aún.</p>
-                    </div>
-                {:else}
-                    {#each selectedCaseComments as comment}
-                        {@const isMe = comment.userId === (user ? parseInt(user.id) : -1)}
-                        <div class="border rounded-lg bg-card shadow-sm overflow-hidden {isMe ? 'border-primary/20' : ''}">
-                            <!-- Email Header -->
-                            <div class="{isMe ? 'bg-primary/5' : 'bg-muted/10'} px-4 py-3 border-b">
-                                <div class="flex justify-between items-center">
-                                    <div class="flex items-center gap-2">
-                                        <div class="w-8 h-8 rounded-full {isMe ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'} flex items-center justify-center font-bold text-xs">
-                                            {(comment.authorName || 'U').charAt(0).toUpperCase()}
-                                        </div>
-                                        <div class="flex flex-col">
-                                            <span class="text-sm font-semibold text-foreground flex items-center gap-2">
-                                                {comment.authorName || 'Usuario'}
-                                                {#if isMe}
-                                                    <span class="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full border border-primary/20">Yo</span>
-                                                {/if}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <span class="text-xs text-muted-foreground">{formatDate(comment.createdAt)}</span>
-                                </div>
-                            </div>
-                            
-                            <!-- Email Body -->
-                            <div class="p-4 text-sm whitespace-pre-wrap leading-relaxed">
-                                {comment.content}
+            <!-- Description (Anchored) -->
+            <div class="bg-card border-b z-20">
+                <div class="transition-all duration-300">
+                    <button 
+                        class="w-full px-6 py-4 flex items-center justify-between hover:bg-muted/50 transition-colors"
+                        on:click={() => isCaseDescriptionExpanded = !isCaseDescriptionExpanded}
+                    >
+                        <h3 class="text-sm font-semibold flex items-center gap-2 text-foreground">
+                            <FileText class="w-4 h-4 text-primary" />
+                            Detalle del Caso
+                        </h3>
+                        <div class="text-muted-foreground">
+                            {#if isCaseDescriptionExpanded}
+                                <ChevronUp class="w-4 h-4" />
+                            {:else}
+                                <ChevronDown class="w-4 h-4" />
+                            {/if}
+                        </div>
+                    </button>
+                    
+                    {#if isCaseDescriptionExpanded}
+                        <div class="px-6 pb-6 border-t pt-4 bg-card/50">
+                            <div class="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed pl-6">
+                                {selectedCase.description}
                             </div>
 
-                            <!-- Attachments -->
-                            {#if comment.files && comment.files.length > 0}
-                                <div class="px-4 py-3 bg-muted/5 border-t flex gap-2 overflow-x-auto">
-                                    {#each comment.files as file}
-                                        <button 
-                                            on:click={() => openPreview(file.name, file.url)} 
-                                            class="flex items-center gap-2 text-xs bg-background border px-2 py-1.5 rounded-md hover:bg-accent transition-colors flex-shrink-0"
-                                        >
-                                            <Paperclip class="w-3 h-3 text-muted-foreground" />
-                                            <span class="max-w-[150px] truncate">{file.name}</span>
-                                        </button>
-                                    {/each}
+                            {#if selectedCase.files && selectedCase.files.length > 0}
+                                <div class="pt-3 pl-6 border-t mt-3">
+                                    <h4 class="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">Archivos Adjuntos</h4>
+                                    <div class="flex flex-wrap gap-2">
+                                        {#each selectedCase.files as file}
+                                            <button 
+                                                on:click={() => openPreview(file.name, file.url)} 
+                                                class="flex items-center gap-2 text-xs bg-background border px-3 py-2 rounded-md hover:bg-accent transition-colors group shadow-sm"
+                                            >
+                                                <div class="bg-muted p-1 rounded group-hover:bg-muted/80">
+                                                    <Paperclip class="w-3 h-3 text-muted-foreground" />
+                                                </div>
+                                                <span class="font-medium text-foreground/90">{file.name}</span>
+                                            </button>
+                                        {/each}
+                                    </div>
                                 </div>
                             {/if}
                         </div>
-                    {/each}
-                {/if}
+                    {/if}
+                </div>
             </div>
-            {#if showScrollButton}
-                <button 
-                    on:click={scrollChatToBottom}
-                    class="absolute bottom-4 right-4 p-2 bg-background/80 backdrop-blur-sm border rounded-full shadow-lg hover:bg-background transition-all z-10 text-muted-foreground"
-                    title="Ir al final"
-                >
-                    <ArrowDown class="w-5 h-5" />
-                </button>
-            {/if}
+
+            <!-- Chat Area -->
+            <div class="flex-1 overflow-y-auto min-h-0 bg-muted/5">
+                <div class="p-6 space-y-6">
+                    <!-- Conversation -->
+                    <div class="space-y-4">
+                        <div class="flex items-center gap-2 pb-2 border-b">
+                            <MessageSquare class="w-4 h-4 text-primary" />
+                            <h3 class="text-sm font-semibold">Historial</h3>
+                        </div>
+
+                        <div 
+                            class="space-y-4 relative" 
+                            use:scrollToBottom={{ dependency: selectedCaseComments }}
+                            bind:this={chatContainer}
+                        >
+                        {#if !selectedCaseComments || selectedCaseComments.length === 0}
+                            <div class="text-center py-10 text-muted-foreground text-sm">
+                                <p>No hay mensajes aún.</p>
+                            </div>
+                        {:else}
+                            {#each selectedCaseComments as comment}
+                                {@const isMe = comment.userId === (user ? parseInt(user.id) : -1)}
+                                <div class="flex gap-3 {isMe ? 'flex-row-reverse' : ''}">
+                                    <div class="w-8 h-8 rounded-full {isMe ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'} flex items-center justify-center font-bold text-xs shrink-0 mt-1">
+                                        {(comment.authorName || 'U').charAt(0).toUpperCase()}
+                                    </div>
+                                    
+                                    <div class="flex flex-col gap-1 max-w-[85%]">
+                                        <div class="flex items-center gap-2 {isMe ? 'flex-row-reverse' : ''}">
+                                            <span class="text-xs font-medium text-foreground">
+                                                {comment.authorName || 'Usuario'}
+                                                {#if isMe} (Yo){/if}
+                                            </span>
+                                            <span class="text-[10px] text-muted-foreground">{formatDate(comment.createdAt)}</span>
+                                        </div>
+
+                                        <div class="rounded-lg p-3 text-sm shadow-sm border {isMe ? 'bg-primary/10 text-foreground border-primary/20' : 'bg-muted/40 text-foreground border-border'}">
+                                            <div class="whitespace-pre-wrap leading-relaxed">{comment.content}</div>
+                                            
+                                            {#if comment.files && comment.files.length > 0}
+                                                <div class="mt-2 pt-2 border-t {isMe ? 'border-primary/20' : 'border-border'}">
+                                                    <div class="text-[10px] opacity-70 mb-1">Adjuntos:</div>
+                                                    <div class="flex flex-wrap gap-1">
+                                                        {#each comment.files as file}
+                                                            <button 
+                                                                on:click={() => openPreview(file.name, file.url)}
+                                                                class="flex items-center gap-1.5 text-[10px] {isMe ? 'bg-background/50 hover:bg-background/80' : 'bg-background hover:bg-background/80'} px-2 py-1 rounded transition-colors border shadow-sm"
+                                                            >
+                                                                <Paperclip class="w-3 h-3" />
+                                                                <span class="truncate max-w-[100px]">{file.name}</span>
+                                                            </button>
+                                                        {/each}
+                                                    </div>
+                                                </div>
+                                            {/if}
+                                        </div>
+                                    </div>
+                                </div>
+                            {/each}
+                        {/if}
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Reply Box -->
-            <div class="p-4 border-t bg-background">
+            <div class="p-4 bg-background border-t z-10">
                 <form 
                     action="?/addCaseComment" 
                     method="POST" 
@@ -1087,130 +1122,145 @@
 
 <!-- Request Details (Chat) Modal -->
 {#if isRequestDetailsOpen && selectedRequest}
-    <div class="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50">
-        <div class="bg-card border rounded-lg shadow-lg w-full max-w-2xl h-[80vh] flex flex-col relative overflow-hidden">
+    <div use:portal class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[999] flex items-center justify-end" on:click={closeRequestDetails} role="button" tabindex="0" on:keydown={(e) => e.key === 'Escape' && closeRequestDetails()}>
+        <div class="bg-card h-full w-full max-w-2xl border-l shadow-2xl flex flex-col animate-in slide-in-from-right duration-300" on:click|stopPropagation role="presentation">
             <!-- Header -->
-            <div class="p-4 border-b bg-muted/20 space-y-4">
-                <div class="flex items-start justify-between">
-                    <div>
-                        <div class="flex items-center gap-2 mb-1">
-                            <h2 class="text-xl font-bold">{selectedRequest.title}</h2>
-                            <span class="px-2 py-0.5 rounded text-[10px] capitalize border
-                                {selectedRequest.status === 'completed' ? 'bg-green-100 text-green-700 border-green-200' : 
-                                 selectedRequest.status === 'in_progress' ? 'bg-blue-100 text-blue-700 border-blue-200' : 
-                                 'bg-yellow-100 text-yellow-700 border-yellow-200'}">
+                    <div class="p-6 border-b bg-card z-10 space-y-2">
+                        <div class="flex items-start justify-between">
+                            <h3 class="text-2xl font-bold">{selectedRequest.title}</h3>
+                            <button on:click={closeRequestDetails} class="text-muted-foreground hover:text-foreground p-1 hover:bg-accent rounded-full transition-colors">
+                                <X class="w-5 h-5" />
+                            </button>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="text-sm text-muted-foreground flex items-center gap-1">
+                                <Calendar class="w-4 h-4" /> Created {formatDate(selectedRequest.createdAt)}
+                            </span>
+                            <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold {selectedRequest.status === 'completed' ? 'bg-green-100 text-green-700 border-green-200' : 
+                                    selectedRequest.status === 'in_progress' ? 'bg-blue-100 text-blue-700 border-blue-200' : 
+                                    'bg-yellow-100 text-yellow-700 border-yellow-200'}">
                                 {selectedRequest.status}
                             </span>
                         </div>
-                        <span class="text-xs text-muted-foreground flex items-center gap-1">
-                            <Calendar class="w-3 h-3" /> {formatDate(selectedRequest.createdAt)}
-                        </span>
                     </div>
-                    <button on:click={closeRequestDetails} class="text-muted-foreground hover:text-foreground p-1">
-                        <X class="w-5 h-5" />
-                    </button>
-                </div>
 
-                <div class="bg-background/50 rounded-md p-3 border text-sm text-foreground/80 whitespace-pre-wrap leading-relaxed">
-                    <h3 class="text-xs font-semibold text-muted-foreground mb-1 uppercase tracking-wider">Detalle de la Solicitud</h3>
-                    {selectedRequest.description}
-                </div>
-
-                {#if selectedRequest.files && selectedRequest.files.length > 0}
-                    <div>
-                        <h3 class="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">Archivos Adjuntos</h3>
-                        <div class="flex flex-wrap gap-2">
-                            {#each selectedRequest.files as file}
-                                <button 
-                                    on:click={() => openPreview(file.name, file.url)} 
-                                    class="flex items-center gap-2 text-xs bg-background border px-3 py-2 rounded-md hover:bg-accent transition-colors group shadow-sm"
-                                >
-                                    <div class="bg-muted p-1 rounded group-hover:bg-muted/80">
-                                        <Paperclip class="w-3 h-3 text-muted-foreground" />
-                                    </div>
-                                    <span class="font-medium text-foreground/90">{file.name}</span>
-                                </button>
-                            {/each}
+            <!-- Description (Anchored) -->
+            <div class="bg-card border-b z-20">
+                <div class="transition-all duration-300">
+                    <button 
+                        class="w-full px-6 py-4 flex items-center justify-between hover:bg-muted/50 transition-colors"
+                        on:click={() => isRequestDescriptionExpanded = !isRequestDescriptionExpanded}
+                    >
+                        <h3 class="text-sm font-semibold flex items-center gap-2 text-foreground">
+                            <FileText class="w-4 h-4 text-primary" />
+                            Detalle de la Solicitud
+                        </h3>
+                        <div class="text-muted-foreground">
+                            {#if isRequestDescriptionExpanded}
+                                <ChevronUp class="w-4 h-4" />
+                            {:else}
+                                <ChevronDown class="w-4 h-4" />
+                            {/if}
                         </div>
-                    </div>
-                {/if}
-            </div>
+                    </button>
+                    
+                    {#if isRequestDescriptionExpanded}
+                        <div class="px-6 pb-6 border-t pt-4 bg-card/50">
+                            <div class="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed pl-6">
+                                {selectedRequest.description}
+                            </div>
 
-            <!-- Chat Area -->
-            <div class="flex-1 relative min-h-0">
-                <div 
-                    class="absolute inset-0 overflow-y-auto p-4 space-y-4 bg-muted/10" 
-                    use:scrollToBottom={{ dependency: selectedRequestComments }}
-                    bind:this={chatContainer}
-                >
-                {#if !selectedRequestComments || selectedRequestComments.length === 0}
-                    <div class="text-center py-10 text-muted-foreground text-sm">
-                        <MessageSquare class="w-10 h-10 mx-auto mb-2 opacity-20" />
-                        <p>No hay mensajes aún.</p>
-                    </div>
-                {:else}
-                    {#each selectedRequestComments as comment}
-                        {@const isMe = comment.userId === (user ? parseInt(user.id) : -1)}
-                        <div class="border rounded-lg bg-card shadow-sm overflow-hidden {isMe ? 'border-primary/20' : ''}">
-                            <div class="{isMe ? 'bg-primary/5' : 'bg-muted/10'} px-4 py-3 border-b">
-                                <div class="flex justify-between items-center">
-                                    <div class="flex items-center gap-2">
-                                        <div class="w-8 h-8 rounded-full {isMe ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'} flex items-center justify-center font-bold text-xs">
-                                            {(comment.authorName || 'U').charAt(0).toUpperCase()}
-                                        </div>
-                                        <div class="flex flex-col">
-                                            <span class="text-sm font-semibold text-foreground flex items-center gap-2">
-                                                {comment.authorName || 'Usuario'}
-                                                {#if isMe}
-                                                    <span class="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full border border-primary/20">Yo</span>
-                                                {/if}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <span class="text-xs text-muted-foreground">{formatDate(comment.createdAt)}</span>
-                                </div>
-                            </div>
-                            
-                            <div class="p-4 text-sm text-foreground/80 whitespace-pre-wrap leading-relaxed font-sans">
-                                {comment.content}
-                            </div>
-                            
-                            {#if comment.files && comment.files.length > 0}
-                                <div class="px-4 pb-4 pt-2">
-                                    <div class="text-xs font-medium text-muted-foreground mb-2">Adjuntos ({comment.files.length}):</div>
+                            {#if selectedRequest.files && selectedRequest.files.length > 0}
+                                <div class="pt-3 pl-6 border-t mt-3">
+                                    <h4 class="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">Archivos Adjuntos</h4>
                                     <div class="flex flex-wrap gap-2">
-                                        {#each comment.files as file}
+                                        {#each selectedRequest.files as file}
                                             <button 
-                                                on:click={() => openPreview(file.name, file.url)}
-                                                class="flex items-center gap-2 text-xs border bg-background hover:bg-accent px-3 py-2 rounded-md transition-colors group"
+                                                on:click={() => openPreview(file.name, file.url)} 
+                                                class="flex items-center gap-2 text-xs bg-background border px-3 py-2 rounded-md hover:bg-accent transition-colors group shadow-sm"
                                             >
                                                 <div class="bg-muted p-1 rounded group-hover:bg-muted/80">
                                                     <Paperclip class="w-3 h-3 text-muted-foreground" />
                                                 </div>
-                                                <span class="text-foreground/90">{file.name}</span>
+                                                <span class="font-medium text-foreground/90">{file.name}</span>
                                             </button>
                                         {/each}
                                     </div>
                                 </div>
                             {/if}
                         </div>
-                    {/each}
-                {/if}
+                    {/if}
+                </div>
             </div>
-            {#if showScrollButton}
-                <button 
-                    on:click={scrollChatToBottom}
-                    class="absolute bottom-4 right-4 p-2 bg-background/80 backdrop-blur-sm border rounded-full shadow-lg hover:bg-background transition-all z-10 text-muted-foreground"
-                    title="Ir al final"
-                >
-                    <ArrowDown class="w-5 h-5" />
-                </button>
-            {/if}
+
+            <!-- Chat Area -->
+            <div class="flex-1 overflow-y-auto min-h-0 bg-muted/5">
+                <div class="p-6 space-y-6">
+                    <!-- Conversation -->
+                    <div class="space-y-4">
+                        <div class="flex items-center gap-2 pb-2 border-b">
+                            <MessageSquare class="w-4 h-4 text-primary" />
+                            <h3 class="text-sm font-semibold">Historial</h3>
+                        </div>
+
+                        <div 
+                            class="space-y-4 relative" 
+                            use:scrollToBottom={{ dependency: selectedRequestComments }}
+                            bind:this={chatContainer}
+                        >
+                            {#if !selectedRequestComments || selectedRequestComments.length === 0}
+                                <div class="text-center py-10 text-muted-foreground text-sm">
+                                    <p>No hay mensajes aún.</p>
+                                </div>
+                            {:else}
+                                {#each selectedRequestComments as comment}
+                                    {@const isMe = comment.userId === (user ? parseInt(user.id) : -1)}
+                                    <div class="flex gap-3 {isMe ? 'flex-row-reverse' : ''}">
+                                        <div class="w-8 h-8 rounded-full {isMe ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'} flex items-center justify-center font-bold text-xs shrink-0 mt-1">
+                                            {(comment.authorName || 'U').charAt(0).toUpperCase()}
+                                        </div>
+                                        
+                                        <div class="flex flex-col gap-1 max-w-[85%]">
+                                            <div class="flex items-center gap-2 {isMe ? 'flex-row-reverse' : ''}">
+                                                <span class="text-xs font-medium text-foreground">
+                                                    {comment.authorName || 'Usuario'}
+                                                    {#if isMe} (Yo){/if}
+                                                </span>
+                                                <span class="text-[10px] text-muted-foreground">{formatDate(comment.createdAt)}</span>
+                                            </div>
+
+                                            <div class="rounded-lg p-3 text-sm shadow-sm border {isMe ? 'bg-primary/10 text-foreground border-primary/20' : 'bg-muted/40 text-foreground border-border'}">
+                                                <div class="whitespace-pre-wrap leading-relaxed">{comment.content}</div>
+                                                
+                                                {#if comment.files && comment.files.length > 0}
+                                                    <div class="mt-2 pt-2 border-t {isMe ? 'border-primary/20' : 'border-border'}">
+                                                        <div class="text-[10px] opacity-70 mb-1">Adjuntos:</div>
+                                                        <div class="flex flex-wrap gap-1">
+                                                            {#each comment.files as file}
+                                                                <button 
+                                                                    on:click={() => openPreview(file.name, file.url)}
+                                                                    class="flex items-center gap-1.5 text-[10px] {isMe ? 'bg-background/50 hover:bg-background/80' : 'bg-background hover:bg-background/80'} px-2 py-1 rounded transition-colors border shadow-sm"
+                                                                >
+                                                                    <Paperclip class="w-3 h-3" />
+                                                                    <span class="truncate max-w-[100px]">{file.name}</span>
+                                                                </button>
+                                                            {/each}
+                                                        </div>
+                                                    </div>
+                                                {/if}
+                                            </div>
+                                        </div>
+                                    </div>
+                                {/each}
+                            {/if}
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Reply Box -->
             {#if selectedRequest.status !== 'completed' && selectedRequest.status !== 'pending'}
-            <div class="p-4 bg-background border-t">
+            <div class="p-4 bg-background border-t z-10">
                 <form 
                     action="?/addRequestComment" 
                     method="POST" 
@@ -1308,155 +1358,170 @@
     </div>
 {/if}
 
-<!-- Requirement Details (Chat) Modal -->
+<!-- Requirement Details (Chat) Drawer -->
 {#if isRequirementDetailsOpen && selectedRequirement}
-    <div class="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50">
-        <div class="bg-card border rounded-lg shadow-lg w-full max-w-2xl h-[80vh] flex flex-col relative overflow-hidden">
+    <div use:portal class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[999] flex items-center justify-end" on:click={closeRequirementDetails} role="button" tabindex="0" on:keydown={(e) => e.key === 'Escape' && closeRequirementDetails()}>
+        <div class="bg-card h-full w-full max-w-2xl border-l shadow-2xl flex flex-col animate-in slide-in-from-right duration-300" on:click|stopPropagation role="presentation">
             <!-- Header -->
-            <div class="p-4 border-b bg-muted/20 space-y-4">
+            <div class="p-6 border-b bg-card z-10 space-y-2">
                 <div class="flex items-start justify-between">
-                    <div>
-                        <div class="flex items-center gap-2 mb-1">
-                            <h2 class="text-xl font-bold">{selectedRequirement.title}</h2>
-                            <span class="px-2 py-0.5 rounded text-[10px] capitalize border
-                                {selectedRequirement.status === 'approved' ? 'bg-green-100 text-green-700 border-green-200' : 
-                                 selectedRequirement.status === 'rejected' ? 'bg-red-100 text-red-700 border-red-200' : 
-                                 'bg-yellow-100 text-yellow-700 border-yellow-200'}">
-                                {selectedRequirement.status}
-                            </span>
-                        </div>
-                        <span class="text-xs text-muted-foreground flex items-center gap-1">
-                            <Calendar class="w-3 h-3" /> {formatDate(selectedRequirement.createdAt)}
-                        </span>
-                    </div>
-                    <button on:click={closeRequirementDetails} class="text-muted-foreground hover:text-foreground p-1">
+                    <h3 class="text-2xl font-bold">{selectedRequirement.title}</h3>
+                    <button on:click={closeRequirementDetails} class="text-muted-foreground hover:text-foreground p-1 hover:bg-accent rounded-full transition-colors">
                         <X class="w-5 h-5" />
                     </button>
                 </div>
-
-                <div class="bg-background/50 rounded-md p-3 border text-sm text-foreground/80 whitespace-pre-wrap leading-relaxed">
-                    <h3 class="text-xs font-semibold text-muted-foreground mb-1 uppercase tracking-wider">Detalle del Requerimiento</h3>
-                    {selectedRequirement.description}
+                <div class="flex items-center gap-3">
+                    <span class="text-sm text-muted-foreground flex items-center gap-1">
+                        <Calendar class="w-4 h-4" /> Created {formatDate(selectedRequirement.createdAt)}
+                    </span>
+                    <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold {selectedRequirement.status === 'approved' ? 'bg-green-100 text-green-700 border-green-200' : 
+                            selectedRequirement.status === 'rejected' ? 'bg-red-100 text-red-700 border-red-200' : 
+                            'bg-yellow-100 text-yellow-700 border-yellow-200'}">
+                        {selectedRequirement.status}
+                    </span>
                 </div>
-
-                {#if selectedRequirement.files && selectedRequirement.files.length > 0}
-                    <div>
-                        <h3 class="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">Archivos Adjuntos</h3>
-                        <div class="flex flex-wrap gap-2">
-                            {#each selectedRequirement.files as file}
-                                <button 
-                                    on:click={() => openPreview(file.name, file.url)} 
-                                    class="flex items-center gap-2 text-xs bg-background border px-3 py-2 rounded-md hover:bg-accent transition-colors group shadow-sm"
-                                >
-                                    <div class="bg-muted p-1 rounded group-hover:bg-muted/80">
-                                        <Paperclip class="w-3 h-3 text-muted-foreground" />
-                                    </div>
-                                    <span class="font-medium text-foreground/90">{file.name}</span>
-                                </button>
-                            {/each}
-                        </div>
-                    </div>
-                {/if}
             </div>
 
-            <!-- Chat Area -->
-            <div class="flex-1 relative min-h-0">
-                <div 
-                    class="absolute inset-0 overflow-y-auto p-4 space-y-4 bg-muted/10" 
-                    use:scrollToBottom={{ dependency: selectedRequirementComments }}
-                    bind:this={chatContainer}
-                >
-                {#if !selectedRequirementComments || selectedRequirementComments.length === 0}
-                    <div class="text-center py-10 text-muted-foreground text-sm">
-                        <MessageSquare class="w-10 h-10 mx-auto mb-2 opacity-20" />
-                        <p>No hay mensajes aún.</p>
-                    </div>
-                {:else}
-                    {#each selectedRequirementComments as comment}
-                        {@const isMe = comment.userId === (user ? parseInt(user.id) : -1)}
-                        <div class="border rounded-lg bg-card shadow-sm overflow-hidden {isMe ? 'border-primary/20' : ''}">
-                            <div class="{isMe ? 'bg-primary/5' : 'bg-muted/10'} px-4 py-3 border-b">
-                                <div class="flex justify-between items-center">
-                                    <div class="flex items-center gap-2">
-                                        <div class="w-8 h-8 rounded-full {isMe ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'} flex items-center justify-center font-bold text-xs">
-                                            {(comment.authorName || 'U').charAt(0).toUpperCase()}
-                                        </div>
-                                        <div class="flex flex-col">
-                                            <span class="text-sm font-semibold text-foreground flex items-center gap-2">
-                                                {comment.authorName || 'Usuario'}
-                                                {#if isMe}
-                                                    <span class="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full border border-primary/20">Yo</span>
-                                                {/if}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <span class="text-xs text-muted-foreground">{formatDate(comment.createdAt)}</span>
-                                </div>
+            <!-- Description (Anchored) -->
+            <div class="bg-card border-b z-20">
+                <div class="transition-all duration-300">
+                    <button 
+                        class="w-full px-6 py-4 flex items-center justify-between hover:bg-muted/50 transition-colors"
+                        on:click={() => isRequirementDescriptionExpanded = !isRequirementDescriptionExpanded}
+                    >
+                        <h3 class="text-sm font-semibold flex items-center gap-2 text-foreground">
+                            <FileText class="w-4 h-4 text-primary" />
+                            Detalle del Requerimiento
+                        </h3>
+                        <div class="text-muted-foreground">
+                            {#if isRequirementDescriptionExpanded}
+                                <ChevronUp class="w-4 h-4" />
+                            {:else}
+                                <ChevronDown class="w-4 h-4" />
+                            {/if}
+                        </div>
+                    </button>
+                    
+                    {#if isRequirementDescriptionExpanded}
+                        <div class="px-6 pb-6 border-t pt-4 bg-card/50">
+                            <div class="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed pl-6">
+                                {selectedRequirement.description}
                             </div>
-                            
-                            <div class="p-4 text-sm text-foreground/80 whitespace-pre-wrap leading-relaxed font-sans">
-                                {comment.content}
-                            </div>
-                            
-                            {#if comment.files && comment.files.length > 0}
-                                <div class="px-4 pb-4 pt-2">
-                                    <div class="text-xs font-medium text-muted-foreground mb-2">Adjuntos ({comment.files.length}):</div>
+
+                            {#if selectedRequirement.files && selectedRequirement.files.length > 0}
+                                <div class="pt-3 pl-6 border-t mt-3">
+                                    <h4 class="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">Archivos Adjuntos</h4>
                                     <div class="flex flex-wrap gap-2">
-                                        {#each comment.files as file}
+                                        {#each selectedRequirement.files as file}
                                             <button 
-                                                on:click={() => openPreview(file.name, file.url)}
-                                                class="flex items-center gap-2 text-xs border bg-background hover:bg-accent px-3 py-2 rounded-md transition-colors group"
+                                                on:click={() => openPreview(file.name, file.url)} 
+                                                class="flex items-center gap-2 text-xs bg-background border px-3 py-2 rounded-md hover:bg-accent transition-colors group shadow-sm"
                                             >
                                                 <div class="bg-muted p-1 rounded group-hover:bg-muted/80">
                                                     <Paperclip class="w-3 h-3 text-muted-foreground" />
                                                 </div>
-                                                <span class="text-foreground/90">{file.name}</span>
+                                                <span class="font-medium text-foreground/90">{file.name}</span>
                                             </button>
                                         {/each}
                                     </div>
                                 </div>
                             {/if}
                         </div>
-                    {/each}
-                {/if}
+                    {/if}
+                </div>
             </div>
-            {#if showScrollButton}
-                <button 
-                    on:click={scrollChatToBottom}
-                    class="absolute bottom-4 right-4 p-2 bg-background/80 backdrop-blur-sm border rounded-full shadow-lg hover:bg-background transition-all z-10 text-muted-foreground"
-                    title="Ir al final"
-                >
-                    <ArrowDown class="w-5 h-5" />
-                </button>
-            {/if}
+
+            <!-- Chat Area -->
+            <div class="flex-1 overflow-y-auto min-h-0 bg-muted/5">
+                <div class="p-6 space-y-6">
+                    <!-- Conversation -->
+                    <div class="space-y-4">
+                        <div class="flex items-center gap-2 pb-2 border-b">
+                            <MessageSquare class="w-4 h-4 text-primary" />
+                            <h3 class="text-sm font-semibold">Historial</h3>
+                        </div>
+
+                        <div 
+                            class="space-y-4 relative" 
+                            use:scrollToBottom={{ dependency: selectedRequirementComments }}
+                            bind:this={chatContainer}
+                        >
+                            {#if !selectedRequirementComments || selectedRequirementComments.length === 0}
+                                <div class="text-center py-10 text-muted-foreground text-sm">
+                                    <p>No hay mensajes aún.</p>
+                                </div>
+                            {:else}
+                                {#each selectedRequirementComments as comment}
+                                    {@const isMe = comment.userId === (user ? parseInt(user.id) : -1)}
+                                    <div class="flex gap-3 {isMe ? 'flex-row-reverse' : ''}">
+                                        <div class="w-8 h-8 rounded-full {isMe ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'} flex items-center justify-center font-bold text-xs shrink-0 mt-1">
+                                            {(comment.authorName || 'U').charAt(0).toUpperCase()}
+                                        </div>
+                                        
+                                        <div class="flex flex-col gap-1 max-w-[85%]">
+                                            <div class="flex items-center gap-2 {isMe ? 'flex-row-reverse' : ''}">
+                                                <span class="text-xs font-medium text-foreground">
+                                                    {comment.authorName || 'Usuario'}
+                                                    {#if isMe} (Yo){/if}
+                                                </span>
+                                                <span class="text-[10px] text-muted-foreground">{formatDate(comment.createdAt)}</span>
+                                            </div>
+
+                                            <div class="rounded-lg p-3 text-sm shadow-sm border {isMe ? 'bg-primary/10 text-foreground border-primary/20' : 'bg-muted/40 text-foreground border-border'}">
+                                                <div class="whitespace-pre-wrap leading-relaxed">{comment.content}</div>
+                                                
+                                                {#if comment.files && comment.files.length > 0}
+                                                    <div class="mt-2 pt-2 border-t {isMe ? 'border-primary/20' : 'border-border'}">
+                                                        <div class="text-[10px] opacity-70 mb-1">Adjuntos:</div>
+                                                        <div class="flex flex-wrap gap-1">
+                                                            {#each comment.files as file}
+                                                                <button 
+                                                                    on:click={() => openPreview(file.name, file.url)}
+                                                                    class="flex items-center gap-1.5 text-[10px] {isMe ? 'bg-background/50 hover:bg-background/80' : 'bg-background hover:bg-background/80'} px-2 py-1 rounded transition-colors border shadow-sm"
+                                                                >
+                                                                    <Paperclip class="w-3 h-3" />
+                                                                    <span class="truncate max-w-[100px]">{file.name}</span>
+                                                                </button>
+                                                            {/each}
+                                                        </div>
+                                                    </div>
+                                                {/if}
+                                            </div>
+                                        </div>
+                                    </div>
+                                {/each}
+                            {/if}
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Reply Box -->
             {#if selectedRequirement.status === 'pending'}
-                <div class="p-4 bg-background border-t">
+                <div class="p-4 bg-background border-t z-10">
                     <form 
                         action="?/addRequirementComment" 
                         method="POST" 
                         enctype="multipart/form-data"
                         use:enhance={({ formData }) => {
-                        isProposalSubmitting = true;
-                        // Append files from local state to formData
-                        formData.delete('files'); // Clear existing empty/partial input
-                        commentFiles.forEach((file) => {
-                            formData.append('files', file);
-                        });
+                            isRequirementSubmitting = true;
+                            // Append files from local state to formData
+                            formData.delete('files'); // Clear existing empty/partial input
+                            commentFiles.forEach((file) => {
+                                formData.append('files', file);
+                            });
 
-                        return async ({ result, update }) => {
-                            isProposalSubmitting = false;
-                            if (result.type === 'success') {
-                                commentContent = '';
-                                commentFiles = [];
-                                await invalidateAll();
-                            } else {
-                                await update();
-                            }
-                        };
-                    }}
+                            return async ({ result, update }) => {
+                                isRequirementSubmitting = false;
+                                if (result.type === 'success') {
+                                    commentContent = '';
+                                    commentFiles = [];
+                                    await invalidateAll();
+                                } else {
+                                    await update();
+                                }
+                            };
+                        }}
                         class="space-y-4"
                     >
                         <input type="hidden" name="requirementId" value={selectedRequirement.id} />
@@ -1531,137 +1596,152 @@
     </div>
 {/if}
 
-<!-- Proposal Details (Chat) Modal -->
+<!-- Proposal Details (Chat) Drawer -->
 {#if isProposalDetailsOpen && selectedProposal}
-    <div class="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50">
-        <div class="bg-card border rounded-lg shadow-lg w-full max-w-2xl h-[80vh] flex flex-col relative overflow-hidden">
+    <div use:portal class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[999] flex items-center justify-end" on:click={closeProposalDetails} role="button" tabindex="0" on:keydown={(e) => e.key === 'Escape' && closeProposalDetails()}>
+        <div class="bg-card h-full w-full max-w-2xl border-l shadow-2xl flex flex-col animate-in slide-in-from-right duration-300" on:click|stopPropagation role="presentation">
             <!-- Header -->
-            <div class="p-4 border-b bg-muted/20 space-y-4">
+            <div class="p-6 border-b bg-card z-10 space-y-2">
                 <div class="flex items-start justify-between">
-                    <div>
-                        <div class="flex items-center gap-2 mb-1">
-                            <h2 class="text-xl font-bold">{selectedProposal.title}</h2>
-                            <span class="px-2 py-0.5 rounded text-[10px] capitalize border
-                                {selectedProposal.status === 'approved' ? 'bg-green-100 text-green-700 border-green-200' : 
-                                 selectedProposal.status === 'rejected' ? 'bg-red-100 text-red-700 border-red-200' : 
-                                 'bg-yellow-100 text-yellow-700 border-yellow-200'}">
-                                {selectedProposal.status}
-                            </span>
-                        </div>
-                        <span class="text-xs text-muted-foreground flex items-center gap-1">
-                            <Calendar class="w-3 h-3" /> {formatDate(selectedProposal.createdAt)}
-                        </span>
-                    </div>
-                    <button on:click={closeProposalDetails} class="text-muted-foreground hover:text-foreground p-1">
+                    <h3 class="text-2xl font-bold">{selectedProposal.title}</h3>
+                    <button on:click={closeProposalDetails} class="text-muted-foreground hover:text-foreground p-1 hover:bg-accent rounded-full transition-colors">
                         <X class="w-5 h-5" />
                     </button>
                 </div>
-
-                <div class="bg-background/50 rounded-md p-3 border text-sm text-foreground/80 whitespace-pre-wrap leading-relaxed">
-                    <h3 class="text-xs font-semibold text-muted-foreground mb-1 uppercase tracking-wider">Detalle de la Propuesta</h3>
-                    {selectedProposal.description}
+                <div class="flex items-center gap-3">
+                    <span class="text-sm text-muted-foreground flex items-center gap-1">
+                        <Calendar class="w-4 h-4" /> Created {formatDate(selectedProposal.createdAt)}
+                    </span>
+                    <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold {selectedProposal.status === 'approved' ? 'bg-green-100 text-green-700 border-green-200' : 
+                            selectedProposal.status === 'rejected' ? 'bg-red-100 text-red-700 border-red-200' : 
+                            'bg-yellow-100 text-yellow-700 border-yellow-200'}">
+                        {selectedProposal.status}
+                    </span>
                 </div>
-
-                {#if selectedProposal.files && selectedProposal.files.length > 0}
-                    <div>
-                        <h3 class="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">Archivos Adjuntos</h3>
-                        <div class="flex flex-wrap gap-2">
-                            {#each selectedProposal.files as file}
-                                <button 
-                                    on:click={() => openPreview(file.name, file.url)} 
-                                    class="flex items-center gap-2 text-xs bg-background border px-3 py-2 rounded-md hover:bg-accent transition-colors group shadow-sm"
-                                >
-                                    <div class="bg-muted p-1 rounded group-hover:bg-muted/80">
-                                        <Paperclip class="w-3 h-3 text-muted-foreground" />
-                                    </div>
-                                    <span class="font-medium text-foreground/90">{file.name}</span>
-                                </button>
-                            {/each}
-                        </div>
-                    </div>
-                {/if}
             </div>
 
-            <!-- Chat Area -->
-            <div class="flex-1 relative min-h-0">
-                <div 
-                    class="absolute inset-0 overflow-y-auto p-4 space-y-6 bg-muted/10" 
-                    use:scrollToBottom={{ dependency: selectedProposalComments }}
-                    bind:this={chatContainer}
-                >
-                {#if !selectedProposalComments || selectedProposalComments.length === 0}
-                    <div class="text-center py-10 text-muted-foreground text-sm">
-                        <MessageSquare class="w-10 h-10 mx-auto mb-2 opacity-20" />
-                        <p>No hay mensajes aún.</p>
-                    </div>
-                {:else}
-                    {#each selectedProposalComments as comment}
-                        {@const isMe = comment.userId === (user ? parseInt(user.id) : -1)}
-                        <div class="border rounded-lg bg-card shadow-sm overflow-hidden {isMe ? 'border-primary/20' : ''}">
-                            <div class="{isMe ? 'bg-primary/5' : 'bg-muted/10'} px-4 py-3 border-b">
-                                <div class="flex justify-between items-center">
-                                    <div class="flex items-center gap-2">
-                                        <div class="w-8 h-8 rounded-full {isMe ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'} flex items-center justify-center font-bold text-xs">
-                                            {(comment.authorName || 'U').charAt(0).toUpperCase()}
-                                        </div>
-                                        <div class="flex flex-col">
-                                            <span class="text-sm font-semibold text-foreground flex items-center gap-2">
-                                                {comment.authorName || 'Usuario'}
-                                                {#if isMe}
-                                                    <span class="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full border border-primary/20">Yo</span>
-                                                {/if}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <span class="text-xs text-muted-foreground">{formatDate(comment.createdAt)}</span>
-                                </div>
+            <!-- Description (Anchored) -->
+            <div class="bg-card border-b z-20">
+                <div class="transition-all duration-300">
+                    <button 
+                        class="w-full px-6 py-4 flex items-center justify-between hover:bg-muted/50 transition-colors"
+                        on:click={() => isProposalDescriptionExpanded = !isProposalDescriptionExpanded}
+                    >
+                        <h3 class="text-sm font-semibold flex items-center gap-2 text-foreground">
+                            <FileText class="w-4 h-4 text-primary" />
+                            Detalle de la Propuesta
+                        </h3>
+                        <div class="text-muted-foreground">
+                            {#if isProposalDescriptionExpanded}
+                                <ChevronUp class="w-4 h-4" />
+                            {:else}
+                                <ChevronDown class="w-4 h-4" />
+                            {/if}
+                        </div>
+                    </button>
+                    
+                    {#if isProposalDescriptionExpanded}
+                        <div class="px-6 pb-6 border-t pt-4 bg-card/50">
+                            <div class="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed pl-6">
+                                {selectedProposal.description}
                             </div>
-                            
-                            <div class="p-4 text-sm text-foreground/80 whitespace-pre-wrap leading-relaxed font-sans">
-                                {comment.content}
-                            </div>
-                            
-                            {#if comment.files && comment.files.length > 0}
-                                <div class="px-4 pb-4 pt-2">
-                                    <div class="text-xs font-medium text-muted-foreground mb-2">Adjuntos ({comment.files.length}):</div>
+
+                            {#if selectedProposal.files && selectedProposal.files.length > 0}
+                                <div class="pt-3 pl-6 border-t mt-3">
+                                    <h4 class="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">Archivos Adjuntos</h4>
                                     <div class="flex flex-wrap gap-2">
-                                        {#each comment.files as file}
+                                        {#each selectedProposal.files as file}
                                             <button 
-                                                on:click={() => openPreview(file.name, file.url)}
-                                                class="flex items-center gap-2 text-xs border bg-background hover:bg-accent px-3 py-2 rounded-md transition-colors group"
+                                                on:click={() => openPreview(file.name, file.url)} 
+                                                class="flex items-center gap-2 text-xs bg-background border px-3 py-2 rounded-md hover:bg-accent transition-colors group shadow-sm"
                                             >
                                                 <div class="bg-muted p-1 rounded group-hover:bg-muted/80">
                                                     <Paperclip class="w-3 h-3 text-muted-foreground" />
                                                 </div>
-                                                <span class="text-foreground/90">{file.name}</span>
+                                                <span class="font-medium text-foreground/90">{file.name}</span>
                                             </button>
                                         {/each}
                                     </div>
                                 </div>
                             {/if}
                         </div>
-                    {/each}
-                {/if}
+                    {/if}
+                </div>
             </div>
-            {#if showScrollButton}
-                <button 
-                    on:click={scrollChatToBottom}
-                    class="absolute bottom-4 right-4 p-2 bg-background/80 backdrop-blur-sm border rounded-full shadow-lg hover:bg-background transition-all z-10 text-muted-foreground"
-                    title="Ir al final"
-                >
-                    <ArrowDown class="w-5 h-5" />
-                </button>
-            {/if}
+
+            <!-- Chat Area -->
+            <div class="flex-1 overflow-y-auto min-h-0 bg-muted/5">
+                <div class="p-6 space-y-6">
+                    <!-- Conversation -->
+                    <div class="space-y-4">
+                        <div class="flex items-center gap-2 pb-2 border-b">
+                            <MessageSquare class="w-4 h-4 text-primary" />
+                            <h3 class="text-sm font-semibold">Historial</h3>
+                        </div>
+
+                        <div 
+                            class="space-y-4 relative" 
+                            use:scrollToBottom={{ dependency: selectedProposalComments }}
+                            bind:this={chatContainer}
+                        >
+                        {#if !selectedProposalComments || selectedProposalComments.length === 0}
+                            <div class="text-center py-10 text-muted-foreground text-sm">
+                                <p>No hay mensajes aún.</p>
+                            </div>
+                        {:else}
+                            {#each selectedProposalComments as comment}
+                                {@const isMe = comment.userId === (user ? parseInt(user.id) : -1)}
+                                <div class="flex gap-3 {isMe ? 'flex-row-reverse' : ''}">
+                                    <div class="w-8 h-8 rounded-full {isMe ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'} flex items-center justify-center font-bold text-xs shrink-0 mt-1">
+                                        {(comment.authorName || 'U').charAt(0).toUpperCase()}
+                                    </div>
+                                    
+                                    <div class="flex flex-col gap-1 max-w-[85%]">
+                                        <div class="flex items-center gap-2 {isMe ? 'flex-row-reverse' : ''}">
+                                            <span class="text-xs font-medium text-foreground">
+                                                {comment.authorName || 'Usuario'}
+                                                {#if isMe} (Yo){/if}
+                                            </span>
+                                            <span class="text-[10px] text-muted-foreground">{formatDate(comment.createdAt)}</span>
+                                        </div>
+
+                                        <div class="rounded-lg p-3 text-sm shadow-sm border {isMe ? 'bg-primary/10 text-foreground border-primary/20' : 'bg-muted/40 text-foreground border-border'}">
+                                            <div class="whitespace-pre-wrap leading-relaxed">{comment.content}</div>
+                                            
+                                            {#if comment.files && comment.files.length > 0}
+                                                <div class="mt-2 pt-2 border-t {isMe ? 'border-primary/20' : 'border-border'}">
+                                                    <div class="text-[10px] opacity-70 mb-1">Adjuntos:</div>
+                                                    <div class="flex flex-wrap gap-1">
+                                                        {#each comment.files as file}
+                                                            <button 
+                                                                on:click={() => openPreview(file.name, file.url)}
+                                                                class="flex items-center gap-1.5 text-[10px] {isMe ? 'bg-background/50 hover:bg-background/80' : 'bg-background hover:bg-background/80'} px-2 py-1 rounded transition-colors border shadow-sm"
+                                                            >
+                                                                <Paperclip class="w-3 h-3" />
+                                                                <span class="truncate max-w-[100px]">{file.name}</span>
+                                                            </button>
+                                                        {/each}
+                                                    </div>
+                                                </div>
+                                            {/if}
+                                        </div>
+                                    </div>
+                                </div>
+                            {/each}
+                        {/if}
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Reply Box -->
-            <div class="p-4 bg-background border-t">
+            <div class="p-4 bg-background border-t z-10">
                 <form 
                     action="?/addProposalComment" 
                     method="POST" 
                     enctype="multipart/form-data"
                     use:enhance={({ formData }) => {
-                        isRequirementSubmitting = true;
+                        isProposalSubmitting = true;
                         // Append files from local state to formData
                         formData.delete('files'); // Clear existing empty/partial input
                         commentFiles.forEach((file) => {
@@ -1669,7 +1749,7 @@
                         });
 
                         return async ({ result, update }) => {
-                            isRequirementSubmitting = false;
+                            isProposalSubmitting = false;
                             if (result.type === 'success') {
                                 commentContent = '';
                                 commentFiles = [];
@@ -1700,51 +1780,51 @@
                             ></textarea>
                         </div>
 
-                        <!-- File Attachments -->
-                        <div class="flex items-center gap-2">
-                            <input 
-                                type="file" 
-                                name="files" 
-                                multiple 
-                                class="hidden" 
-                                bind:this={commentFileInput}
-                                on:change={handleCommentFileSelect}
-                            />
-                            <button 
-                                type="button" 
-                                on:click={() => commentFileInput.click()}
-                                class="text-xs flex items-center gap-1 px-2 py-1.5 rounded-md border hover:bg-accent transition-colors text-muted-foreground"
-                            >
-                                <Paperclip class="w-3 h-3" /> Adjuntar archivos
-                            </button>
-                            
-                            {#if commentFiles.length > 0}
-                                <div class="flex gap-2 overflow-x-auto">
-                                    {#each commentFiles as file, i}
-                                        <div class="flex items-center gap-1 text-xs bg-muted px-2 py-1 rounded-md border">
-                                            <span class="max-w-[100px] truncate">{file.name}</span>
-                                            <button type="button" on:click={() => removeCommentFile(i)} class="text-muted-foreground hover:text-red-500">
-                                                <X class="w-3 h-3" />
-                                            </button>
-                                        </div>
-                                    {/each}
-                                </div>
-                            {/if}
-                        </div>
-                    </div>
+                        <!-- Actions Row -->
+                        <div class="flex justify-between items-center pt-2">
+                            <div class="flex items-center gap-2 flex-1 overflow-hidden">
+                                <input 
+                                    type="file" 
+                                    name="files" 
+                                    multiple 
+                                    class="hidden" 
+                                    bind:this={commentFileInput}
+                                    on:change={handleCommentFileSelect}
+                                />
+                                <button 
+                                    type="button" 
+                                    on:click={() => commentFileInput.click()}
+                                    class="text-xs flex items-center gap-1 px-2 py-1.5 rounded-md border hover:bg-accent transition-colors text-muted-foreground shrink-0"
+                                >
+                                    <Paperclip class="w-3 h-3" /> Adjuntar
+                                </button>
+                                
+                                {#if commentFiles.length > 0}
+                                    <div class="flex gap-2 overflow-x-auto no-scrollbar">
+                                        {#each commentFiles as file, i}
+                                            <div class="flex items-center gap-1 text-xs bg-muted px-2 py-1 rounded-md border shrink-0">
+                                                <span class="max-w-[80px] truncate">{file.name}</span>
+                                                <button type="button" on:click={() => removeCommentFile(i)} class="text-muted-foreground hover:text-red-500">
+                                                    <X class="w-3 h-3" />
+                                                </button>
+                                            </div>
+                                        {/each}
+                                    </div>
+                                {/if}
+                            </div>
 
-                    <div class="flex justify-end">
-                        <button 
-                            type="submit" 
-                            disabled={!commentContent.trim() || isProposalSubmitting}
-                            class="px-4 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 rounded-md transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            {#if isProposalSubmitting}
-                                <Loader2 class="w-4 h-4 animate-spin" /> Enviando...
-                            {:else}
-                                <Send class="w-4 h-4" /> Enviar Respuesta
-                            {/if}
-                        </button>
+                            <button 
+                                type="submit" 
+                                disabled={!commentContent.trim() || isProposalSubmitting}
+                                class="px-3 py-1.5 text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90 rounded-md transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shrink-0 ml-2"
+                            >
+                                {#if isProposalSubmitting}
+                                    <Loader2 class="w-3 h-3 animate-spin" /> Enviando...
+                                {:else}
+                                    <Send class="w-3 h-3" /> Enviar
+                                {/if}
+                            </button>
+                        </div>
                     </div>
                 </form>
             </div>

@@ -300,7 +300,7 @@
                     </button>
 
                     {#if isNotificationsOpen}
-                        <div class="absolute right-0 mt-2 w-[400px] rounded-lg border bg-popover shadow-lg z-50 animate-in fade-in zoom-in-95 duration-200 overflow-hidden flex flex-col max-h-[600px]">
+                        <div class="fixed left-4 right-4 top-16 mt-2 md:absolute md:left-auto md:right-0 md:top-auto md:mt-2 w-auto md:w-[400px] rounded-lg border bg-popover shadow-lg z-50 animate-in fade-in zoom-in-95 duration-200 overflow-hidden flex flex-col max-h-[80vh] md:max-h-[600px]">
                             <!-- Header with Tabs -->
                             <div class="flex items-center border-b bg-muted/30">
                                 <button 

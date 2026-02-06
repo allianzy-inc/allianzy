@@ -98,18 +98,18 @@
     <div use:portal class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 sm:p-6" transition:fade={{ duration: 200 }}>
         <div class="bg-background w-full max-w-5xl h-[85vh] rounded-xl shadow-2xl flex flex-col overflow-hidden" transition:scale={{ duration: 200, start: 0.95 }}>
             <!-- Header -->
-            <div class="flex items-center justify-between px-6 py-4 border-b bg-muted/30">
-                <div class="flex items-center gap-3">
-                    <div class="p-2 bg-primary/10 rounded-lg text-primary">
+            <div class="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b bg-muted/30 gap-3">
+                <div class="flex items-center gap-3 min-w-0 flex-1">
+                    <div class="p-2 bg-primary/10 rounded-lg text-primary shrink-0">
                         <FileText class="w-5 h-5" />
                     </div>
-                    <div>
-                        <h3 class="font-semibold text-lg leading-tight">{title}</h3>
-                        <p class="text-xs text-muted-foreground mt-0.5 truncate max-w-[300px]">{fileName.split('/').pop() || 'Documento'}</p>
+                    <div class="min-w-0 flex-1">
+                        <h3 class="font-semibold text-base sm:text-lg leading-tight truncate" title={title}>{title}</h3>
+                        <p class="text-xs text-muted-foreground mt-0.5 truncate" title={fileName}>{fileName}</p>
                     </div>
                 </div>
                 
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-1 sm:gap-2 shrink-0">
                     {#if fileUrl}
                         <a href={fileUrl} download target="_blank" class="p-2 hover:bg-accent rounded-md text-muted-foreground hover:text-foreground transition-colors" title="Descargar">
                             <Download class="w-5 h-5" />
@@ -118,7 +118,7 @@
                             <ExternalLink class="w-5 h-5" />
                         </a>
                     {/if}
-                    <button on:click={handleClose} class="p-2 hover:bg-red-100 hover:text-red-600 rounded-md transition-colors ml-2" title="Cerrar">
+                    <button on:click={handleClose} class="p-2 hover:bg-red-100 hover:text-red-600 rounded-md transition-colors ml-1 sm:ml-2" title="Cerrar">
                         <X class="w-5 h-5" />
                     </button>
                 </div>

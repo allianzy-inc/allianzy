@@ -214,11 +214,12 @@
             <p class="text-muted-foreground">{t.dashboard.page.support.subtitle}</p>
         </div>
         <button 
-            class="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:opacity-90 flex items-center gap-2"
+            class="bg-primary text-primary-foreground p-2 sm:px-4 sm:py-2 rounded-md hover:opacity-90 flex items-center gap-2"
             on:click={openCreateModal}
+            aria-label="Nueva solicitud"
         >
-            <Plus class="w-4 h-4" />
-            Nueva solicitud
+            <Plus class="w-5 h-5 sm:w-4 sm:h-4" />
+            <span class="hidden sm:inline">Nueva solicitud</span>
         </button>
     </div>
 
@@ -549,7 +550,8 @@
                     <p class="text-muted-foreground mt-1">Aún no tienes tickets de soporte registrados.</p>
                 </div>
             {:else}
-                <div class="relative w-full overflow-auto">
+                <!-- Desktop Table View -->
+                <div class="hidden md:block relative w-full overflow-auto">
                     <table class="w-full caption-bottom text-sm text-left">
                         <thead class="[&_tr]:border-b">
                             <tr class="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
@@ -595,6 +597,42 @@
                             {/each}
                         </tbody>
                     </table>
+                </div>
+
+                <!-- Mobile Card View -->
+                <div class="grid gap-4 md:hidden">
+                    {#each tickets as ticket}
+                        <!-- svelte-ignore a11y-click-events-have-key-events -->
+                        <!-- svelte-ignore a11y-no-static-element-interactions -->
+                        <div 
+                            class="bg-card rounded-lg border p-4 space-y-3 cursor-pointer hover:bg-muted/50 transition-colors shadow-sm"
+                            on:click={() => openTicketDetails(ticket)}
+                        >
+                            <div class="flex items-start justify-between gap-4">
+                                <div class="space-y-1 overflow-hidden">
+                                    <h3 class="font-medium leading-none truncate">{ticket.title}</h3>
+                                    <div class="flex flex-col text-sm text-muted-foreground">
+                                        <span class="truncate">{ticket.projectName}</span>
+                                        {#if ticket.serviceName}
+                                            <span class="text-xs opacity-80 truncate">{ticket.serviceName}</span>
+                                        {/if}
+                                    </div>
+                                </div>
+                                <span class="shrink-0 inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors {getStatusColor(ticket.status || 'open')}">
+                                    {getStatusLabel(ticket.status || 'open')}
+                                </span>
+                            </div>
+                            
+                            <div class="flex items-center text-sm text-muted-foreground pt-2 border-t">
+                                <Calendar class="mr-2 h-3 w-3" />
+                                {#if ticket.createdAt}
+                                    {new Date(ticket.createdAt).toLocaleDateString()}
+                                {:else}
+                                    -
+                                {/if}
+                            </div>
+                        </div>
+                    {/each}
                 </div>
             {/if}
         </div>

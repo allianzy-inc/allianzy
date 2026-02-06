@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ArrowLeft, CheckCircle2, Circle, Clock, MessageSquare, FileText, User, Calendar, Briefcase, AlertCircle, DollarSign, CreditCard, ExternalLink, Download, Plus, X, Eye, Inbox, Send, Paperclip, ArrowDown, Loader2, Info } from 'lucide-svelte';
+    import { ArrowLeft, CheckCircle2, Circle, Clock, MessageSquare, FileText, User, Calendar, Briefcase, AlertCircle, DollarSign, CreditCard, ExternalLink, Download, Plus, X, Eye, Inbox, Send, Paperclip, ArrowDown, Loader2, Info, Building } from 'lucide-svelte';
     import type { PageData } from './$types';
     import { enhance } from '$app/forms';
     import DocumentPreviewModal from '$lib/components/DocumentPreviewModal.svelte';
@@ -329,46 +329,22 @@
     </div>
 
     <!-- Header -->
-    <div class="flex items-center gap-4">
-        <a href="../projects" class="p-2 hover:bg-accent rounded-full transition-colors">
-            <ArrowLeft class="w-5 h-5" />
-        </a>
-        <div>
-            <div class="flex items-center gap-2">
-                <h1 class="text-2xl font-bold tracking-tight">{project.name}</h1>
+    <div class="flex flex-col gap-4 md:flex-row md:items-center">
+        <div class="flex items-start gap-4 w-full">
+            <a href="../projects" class="p-2 hover:bg-accent rounded-full transition-colors mt-1 md:mt-0">
+                <ArrowLeft class="w-5 h-5" />
+            </a>
+            <div class="flex-1 min-w-0">
+                <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+                    <h1 class="text-2xl font-bold tracking-tight truncate">{project.name}</h1>
+                </div>
             </div>
-            <p class="text-muted-foreground flex items-center gap-2 text-sm">
-                <span class="inline-flex items-center gap-1">
-                    <User class="w-3 h-3" /> {project.clientName}
-                    {#if project.clientCompany}
-                        <span class="text-muted-foreground font-semibold">| {project.clientCompany}</span>
-                    {/if}
-                </span>
-                <span>•</span>
-                <span class="inline-flex items-center gap-1">
-                    <Briefcase class="w-3 h-3" /> {project.serviceName}
-                </span>
-                <span>•</span>
-                <span class="inline-flex items-center gap-1">
-                    <span class="text-xs font-medium px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-700">
-                        {project.provider || 'Allianzy'}
-                    </span>
-                </span>
-            </p>
-        </div>
-        <div class="ml-auto flex gap-2">
-            <span class="px-3 py-1 rounded-full text-sm font-medium 
-                {project.status === 'In Progress' ? 'bg-blue-100 text-blue-700' : 
-                 project.status === 'Completed' ? 'bg-green-100 text-green-700' : 
-                 'bg-yellow-100 text-yellow-700'}">
-                {project.status}
-            </span>
         </div>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         <!-- Left Column: Main Content -->
-        <div class="md:col-span-2 space-y-6">
+        <div class="md:col-span-2 space-y-6 order-2 md:order-1">
             
             <!-- Tabs -->
             <div class="flex border-b overflow-x-auto">
@@ -434,7 +410,7 @@
 
                         <div class="space-y-0">
                             {#each milestones as step, i}
-                                <div class="relative pl-10 pb-12 last:pb-0">
+                                <div class="relative pl-8 sm:pl-10 pb-12 last:pb-0">
                                     {#if i !== milestones.length - 1}
                                         <div class="absolute left-[11px] top-0 bottom-0 w-[2px] bg-border"></div>
                                     {/if}
@@ -484,11 +460,11 @@
                                     on:click={() => openRequestDetails(req)}
                                 >
                                     <div class="flex-1">
-                                        <div class="flex items-center gap-2">
-                                            <h4 class="font-medium text-sm flex items-center gap-2">
+                                        <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+                                            <h4 class="font-medium text-sm">
                                                 {req.title}
                                             </h4>
-                                            <span class="px-2 py-0.5 rounded text-[10px] capitalize border
+                                            <span class="w-fit px-2 py-0.5 rounded text-[10px] capitalize border
                                                 {req.status === 'completed' ? 'bg-green-100 text-green-700 border-green-200' : 
                                                  req.status === 'in_progress' ? 'bg-blue-100 text-blue-700 border-blue-200' : 
                                                  'bg-yellow-100 text-yellow-700 border-yellow-200'}">
@@ -496,7 +472,7 @@
                                             </span>
                                         </div>
                                         <p class="text-xs text-muted-foreground mt-1 line-clamp-2">{req.description}</p>
-                                        <div class="flex items-center gap-4 mt-2">
+                                        <div class="flex flex-wrap items-center gap-x-4 gap-y-2 mt-2">
                                             <span class="text-xs text-muted-foreground flex items-center gap-1">
                                                 <Calendar class="w-3 h-3" /> {formatDate(req.createdAt)}
                                             </span>
@@ -529,11 +505,11 @@
                                     on:click={() => openRequirementDetails(req)}
                                 >
                                     <div class="flex-1">
-                                        <div class="flex items-center gap-2">
-                                            <h4 class="font-medium text-sm flex items-center gap-2">
+                                        <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+                                            <h4 class="font-medium text-sm">
                                                 {req.title}
                                             </h4>
-                                            <span class="px-2 py-0.5 rounded text-[10px] capitalize border
+                                            <span class="w-fit px-2 py-0.5 rounded text-[10px] capitalize border
                                                 {req.status === 'approved' ? 'bg-green-100 text-green-700 border-green-200' : 
                                                  req.status === 'rejected' ? 'bg-red-100 text-red-700 border-red-200' : 
                                                  'bg-yellow-100 text-yellow-700 border-yellow-200'}">
@@ -541,7 +517,7 @@
                                             </span>
                                         </div>
                                         <p class="text-xs text-muted-foreground mt-1 line-clamp-2">{req.description}</p>
-                                        <div class="flex items-center gap-4 mt-2">
+                                        <div class="flex flex-wrap items-center gap-x-4 gap-y-2 mt-2">
                                             <span class="text-xs text-muted-foreground flex items-center gap-1">
                                                 <Calendar class="w-3 h-3" /> {formatDate(req.createdAt)}
                                             </span>
@@ -576,9 +552,9 @@
                                         on:click={() => openCaseDetails(c)}
                                     >
                                         <div>
-                                            <div class="flex items-center gap-2">
+                                            <div class="flex flex-col sm:flex-row sm:items-center gap-2">
                                                 <h4 class="font-medium text-sm">{c.title}</h4>
-                                                <span class="px-2 py-0.5 rounded text-[10px] capitalize border
+                                                <span class="w-fit px-2 py-0.5 rounded text-[10px] capitalize border
                                                     {c.status === 'open' ? 'bg-green-100 text-green-700 border-green-200' : 
                                                      c.status === 'closed' ? 'bg-gray-100 text-gray-700 border-gray-200' : 
                                                      'bg-yellow-100 text-yellow-700 border-yellow-200'}">
@@ -586,7 +562,7 @@
                                                 </span>
                                             </div>
                                             <p class="text-xs text-muted-foreground mt-1 line-clamp-1">{c.description}</p>
-                                            <div class="flex items-center gap-4 mt-2">
+                                            <div class="flex flex-wrap items-center gap-x-4 gap-y-2 mt-2">
                                                 {#if c.priority === 'high'}
                                                     <span class="flex items-center gap-1 text-[10px] text-red-600 bg-red-50 px-1.5 py-0.5 rounded border border-red-100">
                                                         <AlertCircle class="w-3 h-3" /> Alta Prioridad
@@ -620,11 +596,11 @@
                                     on:click={() => openProposalDetails(prop)}
                                 >
                                     <div class="flex-1">
-                                        <div class="flex items-center gap-2">
-                                            <h4 class="font-medium text-sm flex items-center gap-2">
+                                        <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+                                            <h4 class="font-medium text-sm">
                                                 {prop.title}
                                             </h4>
-                                            <span class="px-2 py-0.5 rounded text-[10px] capitalize border
+                                            <span class="w-fit px-2 py-0.5 rounded text-[10px] capitalize border
                                                 {prop.status === 'approved' ? 'bg-green-100 text-green-700 border-green-200' : 
                                                  prop.status === 'rejected' ? 'bg-red-100 text-red-700 border-red-200' : 
                                                  'bg-yellow-100 text-yellow-700 border-yellow-200'}">
@@ -632,7 +608,7 @@
                                             </span>
                                         </div>
                                         <p class="text-xs text-muted-foreground mt-1 line-clamp-2">{prop.description}</p>
-                                        <div class="flex items-center gap-4 mt-2">
+                                        <div class="flex flex-wrap items-center gap-x-4 gap-y-2 mt-2">
                                             <span class="text-xs text-muted-foreground flex items-center gap-1">
                                                 <Calendar class="w-3 h-3" /> {formatDate(prop.createdAt)}
                                             </span>
@@ -661,18 +637,18 @@
                                 {#each payments as pay}
                                     <div class="flex items-start justify-between p-4 border rounded-lg bg-background/50 hover:bg-accent/5 transition-colors">
                                         <div class="flex-1">
-                                            <div class="flex items-center gap-2">
-                                                <h4 class="font-medium text-sm flex items-center gap-2">
+                                            <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+                                                <h4 class="font-medium text-sm">
                                                     {pay.title}
                                                 </h4>
-                                                <span class="px-2 py-0.5 rounded text-[10px] capitalize border
+                                                <span class="w-fit px-2 py-0.5 rounded text-[10px] capitalize border
                                                     {pay.status === 'paid' ? 'bg-green-100 text-green-700 border-green-200' : 
                                                      pay.status === 'overdue' ? 'bg-red-100 text-red-700 border-red-200' : 
                                                      'bg-yellow-100 text-yellow-700 border-yellow-200'}">
                                                     {pay.status}
                                                 </span>
                                             </div>
-                                            <div class="flex items-center gap-4 mt-2">
+                                            <div class="flex flex-wrap items-center gap-x-4 gap-y-2 mt-2">
                                                 <span class="font-medium text-sm">{pay.amount}</span>
                                                 <span class="text-xs text-muted-foreground flex items-center gap-1">
                                                     <Calendar class="w-3 h-3" /> Vence: {formatDate(pay.dueDate)}
@@ -703,19 +679,51 @@
         </div>
 
         <!-- Right Column: Project Info -->
-        <div class="space-y-6">
+        <div class="space-y-6 order-1 md:order-2">
             <div class="bg-card rounded-lg border p-6 space-y-6">
                 <div>
-                    <h3 class="font-semibold mb-2">Detalles</h3>
-                    <div class="space-y-3 text-sm">
-                        <div>
-                            <span class="text-muted-foreground block text-xs">Fecha de Inicio</span>
-                            <span>{formatDate(project.startDate)}</span>
-                        </div>
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-semibold">Detalles</h3>
+                        <span class="px-3 py-1 rounded-full text-sm font-medium 
+                            {project.status === 'In Progress' ? 'bg-blue-100 text-blue-700' : 
+                             project.status === 'Completed' ? 'bg-green-100 text-green-700' : 
+                             'bg-yellow-100 text-yellow-700'}">
+                            {project.status}
+                        </span>
+                    </div>
+                    <div class="space-y-4 text-sm">
+                        {#if project.startDate}
+                            <div class="flex items-center gap-3 text-muted-foreground">
+                                <Calendar class="w-4 h-4 shrink-0" />
+                                <span>{formatDate(project.startDate)}</span>
+                            </div>
+                        {/if}
+                        
+                        {#if project.clientName}
+                            <div class="flex items-center gap-3 text-muted-foreground">
+                                <User class="w-4 h-4 shrink-0" />
+                                <span>{project.clientName}</span>
+                            </div>
+                        {/if}
+
+                        {#if project.clientCompany}
+                            <div class="flex items-center gap-3 text-muted-foreground">
+                                <Building class="w-4 h-4 shrink-0" />
+                                <span>{project.clientCompany}</span>
+                            </div>
+                        {/if}
+
+                        {#if project.serviceName}
+                            <div class="flex items-center gap-3 text-muted-foreground">
+                                <Briefcase class="w-4 h-4 shrink-0" />
+                                <span>{project.serviceName}</span>
+                            </div>
+                        {/if}
+
                         {#if project.endDate && (project.status === 'Completed' || project.status === 'completed')}
-                            <div>
-                                <span class="text-muted-foreground block text-xs">Fecha de Finalización</span>
-                                <span>{formatDate(project.endDate)}</span>
+                            <div class="flex items-center gap-3 text-muted-foreground">
+                                <CheckCircle2 class="w-4 h-4 shrink-0" />
+                                <span>Completado: {formatDate(project.endDate)}</span>
                             </div>
                         {/if}
                     </div>

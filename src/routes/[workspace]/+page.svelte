@@ -352,7 +352,7 @@
         </header>
 
             <!-- Hero Section -->
-             <section id="home" class="relative z-10 flex-1 flex flex-col items-center justify-center py-32 lg:py-48 text-center px-4 overflow-visible">
+             <section id="home" class="relative z-10 flex-1 flex flex-col items-center justify-center py-32 lg:py-48 text-center px-4 overflow-visible scroll-mt-[98px]">
                 <!-- Hero Specific Intense Lights -->
                 <div class="absolute inset-0 w-full h-full pointer-events-none -z-10">
                     <div class="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-blue-500/30 blur-[120px] animate-pulse"></div>
@@ -416,7 +416,7 @@
             </section>
 
         <!-- Capabilities Section -->
-        <section id="capabilities" class="py-12 md:py-24 px-4 relative">
+        <section id="capabilities" class="py-12 md:py-24 px-4 relative scroll-mt-[98px]">
             <div class="container mx-auto max-w-6xl relative z-10">
                 <!-- Bento Box Container -->
                 <div class="rounded-[2.5rem] border border-gray-200 dark:border-white/10 bg-white/70 dark:bg-[#05050A]/60 backdrop-blur-3xl overflow-hidden relative grid lg:grid-cols-5 shadow-2xl transition-colors duration-500">
@@ -627,7 +627,7 @@
         </section>
 
         <!-- Services Section -->
-        <section id="services" class="py-12 md:py-24 px-4 relative">
+        <section id="services" class="py-12 md:py-24 px-4 relative scroll-mt-[98px]">
             <div class="container mx-auto max-w-6xl relative z-10">
                 <div class="text-center mb-16">
                     <h2 class="text-3xl md:text-5xl font-bold mb-4">{t.services.title}</h2>
@@ -664,7 +664,7 @@
         </section>
 
         <!-- How We Work -->
-        <section id="how-we-work" class="py-12 md:py-24 px-4 relative">
+        <section id="how-we-work" class="py-12 md:py-24 px-4 relative scroll-mt-[98px]">
             <div class="container mx-auto max-w-6xl relative z-10">
                 <div class="text-center mb-16">
                     <h2 class="text-3xl md:text-5xl font-bold mb-6">{t.process.title}</h2>
@@ -797,7 +797,7 @@
         </section>
 
         <!-- FAQ -->
-        <section id="faq" class="py-12 md:py-24 px-4 relative isolate overflow-hidden">
+        <section id="faq" class="py-12 md:py-24 px-4 relative isolate overflow-hidden scroll-mt-[98px]">
              <!-- Subtle Background -->
              <div class="absolute inset-0 w-full h-full overflow-hidden pointer-events-none -z-10">
                 <div class="absolute top-[20%] right-[30%] w-[40%] h-[40%] rounded-full bg-blue-500/5 blur-[90px] animate-pulse" style="animation-duration: 9s;"></div>

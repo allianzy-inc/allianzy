@@ -1,18 +1,19 @@
 // @ts-nocheck
 import { db } from '$lib/server/db';
 import { payments, projects, services } from '$lib/server/schema';
+import { getSignedUrlForFile } from '$lib/server/storage';
 import { eq, or, desc } from 'drizzle-orm';
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 
-export const load = async ({ locals }: Parameters<PageServerLoad>[0]) => {
+export const load = async ({ locals, params }: Parameters<PageServerLoad>[0]) => {
     const userId = Number(locals.user?.id);
 
     if (!userId || isNaN(userId)) {
         return { payments: [] };
     }
 
-    const userPayments = await db.select({
+    const rawPayments = await db.select({
         id: payments.id,
         title: payments.title,
         amount: payments.amount,
@@ -31,6 +32,11 @@ export const load = async ({ locals }: Parameters<PageServerLoad>[0]) => {
         eq(services.clientId, userId)
     ))
     .orderBy(desc(payments.dueDate));
+
+    const userPayments = await Promise.all(rawPayments.map(async (p) => ({
+        ...p,
+        documentUrl: await getSignedUrlForFile(p.documentUrl, params.workspace)
+    })));
 
     return {
         payments: userPayments

@@ -429,14 +429,27 @@ export const actions: Actions = {
                 createdAt = new Date(`${reqDate}T${timeStr}`);
             }
 
-            await db.insert(requirements).values({
+            const [newRequirement] = await db.insert(requirements).values({
                 projectId,
                 title,
                 description,
                 status: 'pending',
                 files: uploadedFiles,
                 createdAt
-            });
+            }).returning({ id: requirements.id });
+
+            // Notify Client
+            const project = await db.select({ clientId: projects.clientId }).from(projects).where(eq(projects.id, projectId)).limit(1);
+            if (project.length > 0 && project[0].clientId) {
+                await db.insert(notifications).values({
+                    userId: project[0].clientId,
+                    title: 'Nuevo Requerimiento',
+                    message: `Se ha creado un nuevo requerimiento: ${title}`,
+                    type: 'info',
+                    link: `/${params.workspace}/dashboard/projects/${projectId}?requirementId=${newRequirement.id}`
+                });
+            }
+
             return { success: true };
         } catch (err) {
             console.error('Error creating requirement:', err);
@@ -444,8 +457,9 @@ export const actions: Actions = {
         }
     },
 
-    updateRequirement: async ({ request }) => {
+    updateRequirement: async ({ request, params }) => {
         const formData = await request.formData();
+        const projectId = Number(params.id);
         const id = Number(formData.get('id'));
         const title = formData.get('title') as string;
         const description = formData.get('description') as string;
@@ -508,6 +522,19 @@ export const actions: Actions = {
             await db.update(requirements)
                 .set(updateData)
                 .where(eq(requirements.id, id));
+
+            // Notify Client
+            const project = await db.select({ clientId: projects.clientId }).from(projects).where(eq(projects.id, projectId)).limit(1);
+            if (project.length > 0 && project[0].clientId) {
+                await db.insert(notifications).values({
+                    userId: project[0].clientId,
+                    title: 'Requerimiento Actualizado',
+                    message: `Se ha actualizado el requerimiento: ${title}`,
+                    type: 'info',
+                    link: `/${params.workspace}/dashboard/projects/${projectId}?requirementId=${id}`
+                });
+            }
+
             return { success: true };
         } catch (err) {
             console.error('Error updating requirement:', err);
@@ -548,6 +575,19 @@ export const actions: Actions = {
                 order,
                 status: 'pending'
             });
+
+            // Notify Client
+            const project = await db.select({ clientId: projects.clientId }).from(projects).where(eq(projects.id, projectId)).limit(1);
+            if (project.length > 0 && project[0].clientId) {
+                await db.insert(notifications).values({
+                    userId: project[0].clientId,
+                    title: 'Nuevo Hito en el Proceso',
+                    message: `Se ha agregado un nuevo hito: ${title}`,
+                    type: 'info',
+                    link: `/${params.workspace}/dashboard/projects/${projectId}`
+                });
+            }
+
             return { success: true };
         } catch (err) {
             console.error('Error creating milestone:', err);
@@ -555,8 +595,9 @@ export const actions: Actions = {
         }
     },
 
-    updateMilestone: async ({ request }) => {
+    updateMilestone: async ({ request, params }) => {
         const formData = await request.formData();
+        const projectId = Number(params.id);
         const id = Number(formData.get('id'));
         const title = formData.get('title') as string;
         const status = formData.get('status') as string;
@@ -591,6 +632,19 @@ export const actions: Actions = {
             await db.update(projectMilestones)
                 .set(updateData)
                 .where(eq(projectMilestones.id, id));
+
+            // Notify Client
+            const project = await db.select({ clientId: projects.clientId }).from(projects).where(eq(projects.id, projectId)).limit(1);
+            if (project.length > 0 && project[0].clientId) {
+                await db.insert(notifications).values({
+                    userId: project[0].clientId,
+                    title: 'Hito del Proceso Actualizado',
+                    message: `Se ha actualizado el hito: ${title}`,
+                    type: 'info',
+                    link: `/${params.workspace}/dashboard/projects/${projectId}`
+                });
+            }
+
             return { success: true };
         } catch (err) {
             console.error('Error updating milestone:', err);
@@ -650,7 +704,7 @@ export const actions: Actions = {
                 createdAt = new Date(`${propDate}T${timeStr}Z`);
             }
 
-            await db.insert(proposals).values({
+            const [newProposal] = await db.insert(proposals).values({
                 projectId,
                 title,
                 description,
@@ -658,7 +712,20 @@ export const actions: Actions = {
                 status: 'pending',
                 files: uploadedFiles,
                 createdAt
-            });
+            }).returning({ id: proposals.id });
+
+            // Notify Client
+            const project = await db.select({ clientId: projects.clientId }).from(projects).where(eq(projects.id, projectId)).limit(1);
+            if (project.length > 0 && project[0].clientId) {
+                await db.insert(notifications).values({
+                    userId: project[0].clientId,
+                    title: 'Nueva Propuesta',
+                    message: `Se ha creado una nueva propuesta: ${title}`,
+                    type: 'info',
+                    link: `/${params.workspace}/dashboard/projects/${projectId}?proposalId=${newProposal.id}`
+                });
+            }
+
             return { success: true };
         } catch (err) {
             console.error('Error creating proposal:', err);
@@ -666,8 +733,9 @@ export const actions: Actions = {
         }
     },
 
-    updateProposal: async ({ request }) => {
+    updateProposal: async ({ request, params }) => {
         const formData = await request.formData();
+        const projectId = Number(params.id);
         const id = Number(formData.get('id'));
         const title = formData.get('title') as string;
         const description = formData.get('description') as string;
@@ -728,6 +796,19 @@ export const actions: Actions = {
             await db.update(proposals)
                 .set(updateData)
                 .where(eq(proposals.id, id));
+
+            // Notify Client
+            const project = await db.select({ clientId: projects.clientId }).from(projects).where(eq(projects.id, projectId)).limit(1);
+            if (project.length > 0 && project[0].clientId) {
+                await db.insert(notifications).values({
+                    userId: project[0].clientId,
+                    title: 'Propuesta Actualizada',
+                    message: `Se ha actualizado la propuesta: ${title}`,
+                    type: 'info',
+                    link: `/${params.workspace}/dashboard/projects/${projectId}?proposalId=${id}`
+                });
+            }
+
             return { success: true };
         } catch (err) {
             console.error('Error updating proposal:', err);
@@ -831,6 +912,18 @@ export const actions: Actions = {
                 );
             }
 
+            // Notify Client
+            const project = await db.select({ clientId: projects.clientId }).from(projects).where(eq(projects.id, currentProjectId)).limit(1);
+            if (project.length > 0 && project[0].clientId) {
+                await db.insert(notifications).values({
+                    userId: project[0].clientId,
+                    title: 'Nuevo Pago',
+                    message: `Se ha creado un nuevo pago: ${title}`,
+                    type: 'info',
+                    link: `/${params.workspace}/dashboard/projects/${currentProjectId}`
+                });
+            }
+
             return { success: true };
         } catch (err) {
             console.error('Error creating payment:', err);
@@ -838,8 +931,9 @@ export const actions: Actions = {
         }
     },
 
-    updatePayment: async ({ request }) => {
+    updatePayment: async ({ request, params }) => {
         const formData = await request.formData();
+        const projectId = Number(params.id);
         const id = Number(formData.get('id'));
         const title = formData.get('title') as string;
         const amount = formData.get('amount') as string;
@@ -913,6 +1007,18 @@ export const actions: Actions = {
                         projectId: pid
                     }))
                 );
+            }
+
+            // Notify Client
+            const project = await db.select({ clientId: projects.clientId }).from(projects).where(eq(projects.id, projectId)).limit(1);
+            if (project.length > 0 && project[0].clientId) {
+                await db.insert(notifications).values({
+                    userId: project[0].clientId,
+                    title: 'Pago Actualizado',
+                    message: `Se ha actualizado el pago: ${title}`,
+                    type: 'info',
+                    link: `/${params.workspace}/dashboard/projects/${projectId}`
+                });
             }
 
             return { success: true };
@@ -1386,7 +1492,7 @@ export const actions: Actions = {
         }
     },
 
-    addRequirementComment: async ({ request }) => {
+    addRequirementComment: async ({ request, params }) => {
         const formData = await request.formData();
         const requirementId = Number(formData.get('requirementId'));
         const content = formData.get('content') as string;
@@ -1420,6 +1526,24 @@ export const actions: Actions = {
                 content,
                 files: uploadedFiles
             });
+
+            // Notify Client
+            const requirementData = await db.select({ projectId: requirements.projectId }).from(requirements).where(eq(requirements.id, requirementId)).limit(1);
+            if (requirementData.length > 0 && requirementData[0].projectId) {
+                const projectId = requirementData[0].projectId;
+                const project = await db.select({ clientId: projects.clientId }).from(projects).where(eq(projects.id, projectId)).limit(1);
+                
+                if (project.length > 0 && project[0].clientId) {
+                    await db.insert(notifications).values({
+                        userId: project[0].clientId,
+                        title: 'Nuevo Mensaje en Requerimiento',
+                        message: `Nuevo comentario en el requerimiento: ${subject || 'Sin asunto'}`,
+                        type: 'info',
+                        link: `/${params.workspace}/dashboard/projects/${projectId}?requirementId=${requirementId}`
+                    });
+                }
+            }
+
             return { success: true };
         } catch (err) {
             console.error('Error adding requirement comment:', err);
@@ -1427,7 +1551,7 @@ export const actions: Actions = {
         }
     },
 
-    addProposalComment: async ({ request }) => {
+    addProposalComment: async ({ request, params }) => {
         const formData = await request.formData();
         const proposalId = Number(formData.get('proposalId'));
         const content = formData.get('content') as string;
@@ -1461,6 +1585,24 @@ export const actions: Actions = {
                 content,
                 files: uploadedFiles
             });
+
+            // Notify Client
+            const proposalData = await db.select({ projectId: proposals.projectId }).from(proposals).where(eq(proposals.id, proposalId)).limit(1);
+            if (proposalData.length > 0 && proposalData[0].projectId) {
+                const projectId = proposalData[0].projectId;
+                const project = await db.select({ clientId: projects.clientId }).from(projects).where(eq(projects.id, projectId)).limit(1);
+                
+                if (project.length > 0 && project[0].clientId) {
+                    await db.insert(notifications).values({
+                        userId: project[0].clientId,
+                        title: 'Nuevo Mensaje en Propuesta',
+                        message: `Nuevo comentario en la propuesta: ${subject || 'Sin asunto'}`,
+                        type: 'info',
+                        link: `/${params.workspace}/dashboard/projects/${projectId}?proposalId=${proposalId}`
+                    });
+                }
+            }
+
             return { success: true };
         } catch (err) {
             console.error('Error adding proposal comment:', err);

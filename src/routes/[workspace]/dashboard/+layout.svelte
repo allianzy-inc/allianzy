@@ -269,9 +269,9 @@
                 {t.dashboard.footer.help_support}
             </a>
             <div class="text-xs text-muted-foreground px-2 space-y-1">
-                <p>&copy; Allianzy. {t.dashboard.footer.rights}</p>
+                <p>&copy; {t.dashboard.footer.rights}</p>
                 <p class="flex items-center gap-1">
-                    {t.dashboard.footer.made_with_love} <Heart class="w-3 h-3 text-red-500 fill-current" />
+                    {t.dashboard.footer.made_with_love} <Heart class="w-3 h-3 text-red-500 fill-current" /> {isSpanish ? 'por Allianzy.' : 'by Allianzy.'}
                 </p>
             </div>
         </div>

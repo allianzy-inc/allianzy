@@ -61,7 +61,7 @@
         <div class="flex items-center justify-between">
             <div>
                 <h2 class="text-2xl font-bold tracking-tight">
-                    {isSpanish ? 'Bienvenido de nuevo,' : 'Welcome back,'} {user?.firstName ? `${user.firstName} ${user.lastName || ''}` : (user?.name || 'Client')}
+                    {isSpanish ? 'Bienvenido de nuevo,' : 'Welcome back,'} {user?.firstName || user?.name?.split(' ')[0] || 'Client'}
                 </h2>
                 <p class="text-muted-foreground">
                     {isSpanish 
@@ -72,9 +72,9 @@
             </div>
         </div>
         
-        <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div class="grid gap-4 md:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
             <!-- Projects Status -->
-            <div class="bg-card border rounded-lg p-6 shadow-sm col-span-2">
+            <div class="bg-card border rounded-lg p-4 md:p-6 shadow-sm col-span-1 md:col-span-2">
                 <h3 class="text-lg font-semibold mb-4">{isSpanish ? 'Tus Proyectos' : 'Your Projects'}</h3>
                 <div class="space-y-4">
                     {#if userProjects.length === 0}
@@ -83,21 +83,23 @@
                         </div>
                     {:else}
                         {#each userProjects as project}
-                            <a href="/{workspace}/dashboard/projects/{project.id}" class="flex items-center gap-4 p-4 bg-muted/50 rounded-md hover:bg-muted/80 transition-colors">
-                                <div class="h-12 w-12 rounded-md bg-muted flex-shrink-0 overflow-hidden">
-                                    {#if project.imageUrl}
-                                        <img src={project.imageUrl} alt={project.name} class="w-full h-full object-cover" />
-                                    {:else}
-                                        <div class="w-full h-full bg-primary/10 flex items-center justify-center text-primary font-bold">
-                                            {project.name[0]}
-                                        </div>
-                                    {/if}
+                            <a href="/{workspace}/dashboard/projects/{project.id}" class="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 bg-muted/50 rounded-md hover:bg-muted/80 transition-colors">
+                                <div class="flex items-center gap-4 w-full sm:w-auto flex-1">
+                                    <div class="h-12 w-12 rounded-md bg-muted flex-shrink-0 overflow-hidden">
+                                        {#if project.imageUrl}
+                                            <img src={project.imageUrl} alt={project.name} class="w-full h-full object-cover" />
+                                        {:else}
+                                            <div class="w-full h-full bg-primary/10 flex items-center justify-center text-primary font-bold">
+                                                {project.name[0]}
+                                            </div>
+                                        {/if}
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="font-medium truncate">{project.name}</p>
+                                        <p class="text-sm text-muted-foreground truncate">{project.description || ''}</p>
+                                    </div>
                                 </div>
-                                <div class="flex-1 min-w-0">
-                                    <p class="font-medium truncate">{project.name}</p>
-                                    <p class="text-sm text-muted-foreground truncate">{project.description || ''}</p>
-                                </div>
-                                <div class="text-right">
+                                <div class="w-full sm:w-auto text-left sm:text-right pl-[4rem] sm:pl-0">
                                     <span class="inline-block px-2 py-1 text-xs font-medium rounded-full 
                                         {project.status === 'Completed' ? 'bg-green-100 text-green-700' : 
                                          project.status === 'In Progress' ? 'bg-blue-100 text-blue-700' : 
@@ -112,7 +114,7 @@
             </div>
             
             <!-- Quick Actions -->
-            <div class="bg-card border rounded-lg p-6 shadow-sm">
+            <div class="bg-card border rounded-lg p-4 md:p-6 shadow-sm col-span-1">
                  <h3 class="text-lg font-semibold mb-4">{isSpanish ? 'Acciones Rápidas' : 'Quick Actions'}</h3>
                  <div class="grid gap-4">
                     {#each quickActions as action}

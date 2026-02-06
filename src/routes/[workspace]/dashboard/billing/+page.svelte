@@ -1,13 +1,28 @@
 <script lang="ts">
-    import { CreditCard, Download, Calendar, ExternalLink } from 'lucide-svelte';
+    import { CreditCard, Download, Calendar, ExternalLink, Eye } from 'lucide-svelte';
     import { currentLang, translations } from '$lib/i18n';
     import { enhance } from '$app/forms';
+    import DocumentPreviewModal from '$lib/components/DocumentPreviewModal.svelte';
     import type { PageData } from './$types';
 
     export let data: PageData;
     
     $: t = translations[$currentLang];
     $: payments = data.payments;
+
+    let isPreviewModalOpen = false;
+    let previewFile = { title: '', url: null as string | null };
+
+    function openPreview(title: string, url: string | null) {
+        if (!url) return;
+        previewFile = { title, url };
+        isPreviewModalOpen = true;
+    }
+
+    function closePreview() {
+        isPreviewModalOpen = false;
+        previewFile = { title: '', url: null };
+    }
 
     function getStatusColor(status: string) {
         switch (status) {
@@ -33,15 +48,6 @@
             <h2 class="text-2xl font-bold tracking-tight">{t.dashboard.page.billing.title}</h2>
             <p class="text-muted-foreground">{t.dashboard.page.billing.subtitle}</p>
         </div>
-        <form action="?/manageStripe" method="POST" use:enhance>
-            <button 
-                type="submit"
-                class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
-            >
-                <ExternalLink class="mr-2 h-4 w-4" />
-                {t.dashboard.menu.manage_stripe}
-            </button>
-        </form>
     </div>
 
     <div class="rounded-md border bg-card">
@@ -53,7 +59,8 @@
                     <p class="text-muted-foreground mt-1">Aún no tienes historial de pagos o facturas pendientes.</p>
                 </div>
             {:else}
-                <div class="relative w-full overflow-auto">
+                <!-- Desktop Table View -->
+                <div class="hidden md:block relative w-full overflow-auto">
                     <table class="w-full caption-bottom text-sm text-left">
                         <thead class="[&_tr]:border-b">
                             <tr class="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
@@ -95,10 +102,14 @@
                                     </td>
                                     <td class="p-4 align-middle text-right">
                                         {#if payment.documentUrl}
-                                            <a href={payment.documentUrl} target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8">
-                                                <Download class="h-4 w-4" />
-                                                <span class="sr-only">Descargar comprobante</span>
-                                            </a>
+                                            <button 
+                                                on:click={() => openPreview(payment.title, payment.documentUrl)}
+                                                class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
+                                                title="Ver comprobante"
+                                            >
+                                                <Eye class="h-4 w-4" />
+                                                <span class="sr-only">Ver comprobante</span>
+                                            </button>
                                         {/if}
                                     </td>
                                 </tr>
@@ -106,7 +117,59 @@
                         </tbody>
                     </table>
                 </div>
+
+                <!-- Mobile Card View -->
+                <div class="md:hidden space-y-4">
+                    {#each payments as payment}
+                        <div class="rounded-lg border bg-card text-card-foreground shadow-sm p-4 space-y-4">
+                            <div class="flex justify-between items-start gap-4">
+                                <div class="space-y-1">
+                                    <h4 class="font-semibold leading-none tracking-tight">{payment.title}</h4>
+                                    <p class="text-sm text-muted-foreground">{payment.projectName}</p>
+                                    {#if payment.serviceName}
+                                        <p class="text-xs text-muted-foreground">{payment.serviceName}</p>
+                                    {/if}
+                                </div>
+                                <div class="font-mono font-medium whitespace-nowrap">
+                                    {payment.amount}
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center justify-between pt-2 border-t">
+                                <div class="space-y-2">
+                                    {#if payment.dueDate}
+                                        <div class="flex items-center gap-2 text-sm text-muted-foreground">
+                                            <Calendar class="h-3 w-3" />
+                                            {new Date(payment.dueDate).toLocaleDateString()}
+                                        </div>
+                                    {/if}
+                                    <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors {getStatusColor(payment.status || 'pending')}">
+                                        {getStatusLabel(payment.status || 'pending')}
+                                    </span>
+                                </div>
+
+                                {#if payment.documentUrl}
+                                    <button 
+                                        on:click={() => openPreview(payment.title, payment.documentUrl)}
+                                        class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 w-9"
+                                        title="Ver comprobante"
+                                    >
+                                        <Eye class="h-4 w-4" />
+                                        <span class="sr-only">Ver comprobante</span>
+                                    </button>
+                                {/if}
+                            </div>
+                        </div>
+                    {/each}
+                </div>
             {/if}
         </div>
     </div>
+    
+    <DocumentPreviewModal 
+        isOpen={isPreviewModalOpen} 
+        title={previewFile.title} 
+        fileUrl={previewFile.url} 
+        onClose={closePreview} 
+    />
 </div>

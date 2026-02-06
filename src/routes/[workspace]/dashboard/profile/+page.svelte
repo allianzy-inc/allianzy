@@ -65,7 +65,7 @@
             const result = deserialize(await response.text());
             
             if (result.type === 'success') {
-                saveMessage = t.dashboard.page.saved;
+                saveMessage = t.dashboard.page.profile.saved;
                 setTimeout(() => saveMessage = null, 2000);
                 await invalidateAll();
             }
@@ -151,16 +151,16 @@
 <div class="max-w-3xl mx-auto pb-32">
     <div class="flex items-center justify-between mb-8">
         <div>
-            <h2 class="text-3xl font-bold tracking-tight">{t.dashboard.page.title}</h2>
-            <p class="text-muted-foreground mt-2">{t.dashboard.page.subtitle}</p>
+            <h2 class="text-3xl font-bold tracking-tight">{t.dashboard.page.profile.title}</h2>
+            <p class="text-muted-foreground mt-2">{t.dashboard.page.profile.subtitle}</p>
             <!-- Delete Avatar Modal -->
     {#if isDeleteAvatarModalOpen}
         <div class="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm" transition:fade>
             <div class="fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 sm:rounded-lg">
                 <div class="flex flex-col space-y-1.5 text-center sm:text-left">
-                    <h2 class="text-lg font-semibold leading-none tracking-tight">{t.dashboard.page.personal_info.avatar.delete_confirm.title}</h2>
+                    <h2 class="text-lg font-semibold leading-none tracking-tight">{t.dashboard.page.profile.personal_info.avatar.delete_confirm.title}</h2>
                     <p class="text-sm text-muted-foreground">
-                        {t.dashboard.page.personal_info.avatar.delete_confirm.desc}
+                        {t.dashboard.page.profile.personal_info.avatar.delete_confirm.desc}
                     </p>
                 </div>
                 <div class="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2">
@@ -168,13 +168,13 @@
                         class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 mt-2 sm:mt-0"
                         on:click={() => isDeleteAvatarModalOpen = false}
                     >
-                        {t.dashboard.page.personal_info.avatar.delete_confirm.cancel}
+                        {t.dashboard.page.profile.personal_info.avatar.delete_confirm.cancel}
                     </button>
                     <button 
                         class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-destructive text-destructive-foreground hover:bg-destructive/90 h-10 px-4 py-2"
                         on:click={confirmDeleteAvatar}
                     >
-                        {t.dashboard.page.personal_info.avatar.delete_confirm.delete}
+                        {t.dashboard.page.profile.personal_info.avatar.delete_confirm.delete}
                     </button>
                 </div>
             </div>
@@ -195,7 +195,7 @@
             <div class="p-6 border-b">
                 <h3 class="text-lg font-semibold flex items-center gap-2">
                     <User class="w-5 h-5 text-primary" />
-                    {t.dashboard.page.personal_info.title}
+                    {t.dashboard.page.profile.personal_info.title}
                 </h3>
             </div>
             <div class="p-6 space-y-8">
@@ -224,7 +224,7 @@
                                 type="button"
                                 on:click={deleteAvatar}
                                 class="absolute top-0 right-0 p-1.5 bg-destructive text-destructive-foreground rounded-full hover:bg-destructive/90 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
-                                title={t.dashboard.page.personal_info.avatar.delete_tooltip}
+                                title={t.dashboard.page.profile.personal_info.avatar.delete_tooltip}
                             >
                                 <Trash2 class="w-4 h-4" />
                             </button>
@@ -247,15 +247,15 @@
                         />
                     </div>
                     <div class="flex-1">
-                        <h4 class="font-medium">{t.dashboard.page.personal_info.avatar.label}</h4>
-                        <p class="text-sm text-muted-foreground">{t.dashboard.page.personal_info.avatar.desc}</p>
+                        <h4 class="font-medium">{t.dashboard.page.profile.personal_info.avatar.label}</h4>
+                        <p class="text-sm text-muted-foreground">{t.dashboard.page.profile.personal_info.avatar.desc}</p>
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="space-y-2">
                         <label class="text-sm font-medium flex items-center justify-between">
-                            {t.dashboard.page.personal_info.name}
+                            {t.dashboard.page.profile.personal_info.name}
                             {#if saving['firstName']}
                                 <Loader2 class="w-3 h-3 animate-spin text-muted-foreground" />
                             {/if}
@@ -269,7 +269,7 @@
                     </div>
                     <div class="space-y-2">
                         <label class="text-sm font-medium flex items-center justify-between">
-                            {t.dashboard.page.personal_info.lastname}
+                            {t.dashboard.page.profile.personal_info.lastname}
                             {#if saving['lastName']}
                                 <Loader2 class="w-3 h-3 animate-spin text-muted-foreground" />
                             {/if}
@@ -282,7 +282,7 @@
                         />
                     </div>
                     <div class="space-y-2">
-                        <label class="text-sm font-medium">{t.dashboard.page.personal_info.email}</label>
+                        <label class="text-sm font-medium">{t.dashboard.page.profile.personal_info.email}</label>
                         <input 
                             type="email" 
                             value={profile?.email || ''} 
@@ -292,7 +292,7 @@
                     </div>
                     <div class="space-y-2">
                         <label class="text-sm font-medium flex items-center justify-between">
-                            {t.dashboard.page.personal_info.phone}
+                            {t.dashboard.page.profile.personal_info.phone}
                             {#if saving['phone']}
                                 <Loader2 class="w-3 h-3 animate-spin text-muted-foreground" />
                             {/if}
@@ -313,7 +313,7 @@
             <div class="p-6 border-b flex items-center justify-between">
                 <h3 class="text-lg font-semibold flex items-center gap-2">
                     <MapPin class="w-5 h-5 text-primary" />
-                    {t.dashboard.page.addresses.title}
+                    {t.dashboard.page.profile.addresses.title}
                     {#if saving['addresses']}
                         <Loader2 class="w-4 h-4 animate-spin text-muted-foreground ml-2" />
                     {/if}
@@ -346,26 +346,26 @@
                     <div class="border rounded-lg p-4 space-y-4 bg-muted/30" transition:slide>
                         <input 
                             type="text" 
-                            placeholder={t.dashboard.page.addresses.form.label}
+                            placeholder={t.dashboard.page.profile.addresses.form.label}
                             class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
                             bind:value={newAddress.label}
                         />
                         <input 
                             type="text" 
-                            placeholder={t.dashboard.page.addresses.form.address}
+                            placeholder={t.dashboard.page.profile.addresses.form.address}
                             class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
                             bind:value={newAddress.address}
                         />
                         <div class="grid grid-cols-2 gap-2">
                             <input 
                                 type="text" 
-                                placeholder={t.dashboard.page.addresses.form.city}
+                                placeholder={t.dashboard.page.profile.addresses.form.city}
                                 class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
                                 bind:value={newAddress.city}
                             />
                             <input 
                                 type="text" 
-                                placeholder={t.dashboard.page.addresses.form.country}
+                                placeholder={t.dashboard.page.profile.addresses.form.country}
                                 class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
                                 bind:value={newAddress.country}
                             />
@@ -375,13 +375,13 @@
                                 class="px-3 py-1.5 text-sm font-medium hover:bg-muted rounded-md"
                                 on:click={() => isAddingAddress = false}
                             >
-                                {t.dashboard.page.addresses.form.cancel}
+                                {t.dashboard.page.profile.addresses.form.cancel}
                             </button>
                             <button 
                                 class="px-3 py-1.5 text-sm font-medium bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
                                 on:click={addAddress}
                             >
-                                {t.dashboard.page.addresses.form.save}
+                                {t.dashboard.page.profile.addresses.form.save}
                             </button>
                         </div>
                     </div>
@@ -391,7 +391,7 @@
                         on:click={() => isAddingAddress = true}
                     >
                         <Plus class="w-4 h-4" />
-                        {t.dashboard.page.addresses.add_button}
+                        {t.dashboard.page.profile.addresses.add_button}
                     </button>
                 {/if}
             </div>
@@ -402,7 +402,7 @@
             <div class="p-6 border-b flex items-center justify-between">
                 <h3 class="text-lg font-semibold flex items-center gap-2">
                     <FileText class="w-5 h-5 text-primary" />
-                    {t.dashboard.page.documents.title}
+                    {t.dashboard.page.profile.documents.title}
                     {#if saving['identification']}
                         <Loader2 class="w-4 h-4 animate-spin text-muted-foreground ml-2" />
                     {/if}
@@ -430,13 +430,13 @@
                         <div class="grid grid-cols-3 gap-2">
                             <input 
                                 type="text" 
-                                placeholder={t.dashboard.page.documents.form.type}
+                                placeholder={t.dashboard.page.profile.documents.form.type}
                                 class="col-span-1 flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
                                 bind:value={newId.type}
                             />
                             <input 
                                 type="text" 
-                                placeholder={t.dashboard.page.documents.form.value}
+                                placeholder={t.dashboard.page.profile.documents.form.value}
                                 class="col-span-2 flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
                                 bind:value={newId.value}
                             />
@@ -446,13 +446,13 @@
                                 class="px-3 py-1.5 text-sm font-medium hover:bg-muted rounded-md"
                                 on:click={() => isAddingId = false}
                             >
-                                {t.dashboard.page.documents.form.cancel}
+                                {t.dashboard.page.profile.documents.form.cancel}
                             </button>
                             <button 
                                 class="px-3 py-1.5 text-sm font-medium bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
                                 on:click={addId}
                             >
-                                {t.dashboard.page.documents.form.save}
+                                {t.dashboard.page.profile.documents.form.save}
                             </button>
                         </div>
                     </div>
@@ -462,7 +462,7 @@
                         on:click={() => isAddingId = true}
                     >
                         <Plus class="w-4 h-4" />
-                        {t.dashboard.page.documents.add_button}
+                        {t.dashboard.page.profile.documents.add_button}
                     </button>
                 {/if}
             </div>
@@ -473,7 +473,7 @@
             <div class="p-6 border-b flex items-center justify-between">
                 <h3 class="text-lg font-semibold flex items-center gap-2">
                     <LinkIcon class="w-5 h-5 text-primary" />
-                    {t.dashboard.page.links.title}
+                    {t.dashboard.page.profile.links.title}
                     {#if saving['links']}
                         <Loader2 class="w-4 h-4 animate-spin text-muted-foreground ml-2" />
                     {/if}
@@ -501,13 +501,13 @@
                         <div class="grid grid-cols-3 gap-2">
                             <input 
                                 type="text" 
-                                placeholder={t.dashboard.page.links.form.title}
+                                placeholder={t.dashboard.page.profile.links.form.title}
                                 class="col-span-1 flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
                                 bind:value={newLink.title}
                             />
                             <input 
                                 type="url" 
-                                placeholder={t.dashboard.page.links.form.url}
+                                placeholder={t.dashboard.page.profile.links.form.url}
                                 class="col-span-2 flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
                                 bind:value={newLink.url}
                             />
@@ -517,13 +517,13 @@
                                 class="px-3 py-1.5 text-sm font-medium hover:bg-muted rounded-md"
                                 on:click={() => isAddingLink = false}
                             >
-                                {t.dashboard.page.links.form.cancel}
+                                {t.dashboard.page.profile.links.form.cancel}
                             </button>
                             <button 
                                 class="px-3 py-1.5 text-sm font-medium bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
                                 on:click={addLink}
                             >
-                                {t.dashboard.page.links.form.save}
+                                {t.dashboard.page.profile.links.form.save}
                             </button>
                         </div>
                     </div>
@@ -533,7 +533,7 @@
                         on:click={() => isAddingLink = true}
                     >
                         <Plus class="w-4 h-4" />
-                        {t.dashboard.page.links.add_button}
+                        {t.dashboard.page.profile.links.add_button}
                     </button>
                 {/if}
             </div>

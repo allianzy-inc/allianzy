@@ -1,13 +1,14 @@
 <script lang="ts">
     import { page } from '$app/stores';
     import { onMount } from 'svelte';
-    import { User, LayoutDashboard, Briefcase, Ticket, Settings, LogOut, Shield, Bell, BellOff, Moon, Sun, Monitor, Languages, Check, ChevronRight, HelpCircle, Heart, CreditCard, ChevronsUpDown, Building, AlertTriangle, Trash } from 'lucide-svelte';
+    import { User, LayoutDashboard, Briefcase, Ticket, Settings, LogOut, Shield, Bell, BellOff, Moon, Sun, Monitor, Languages, Check, ChevronRight, HelpCircle, Heart, CreditCard, ChevronsUpDown, Building, AlertTriangle, Trash, Menu, X } from 'lucide-svelte';
     import { authClient } from '$lib/auth-client';
     import { goto } from '$app/navigation';
     import logoLight from '$lib/assets/brand/allianzy/logo-light.svg';
     import logoDark from '$lib/assets/brand/allianzy/logo-dark.svg';
     import { currentLang, translations } from '$lib/i18n';
     import { enhance } from '$app/forms';
+    import { fade } from 'svelte/transition';
     import type { LayoutData } from './$types';
 
     export let data: LayoutData;
@@ -100,6 +101,7 @@
     let isThemeMenuOpen = false;
     let isLangMenuOpen = false;
     let isCompanyMenuOpen = false;
+    let isMobileMenuOpen = false;
     
     $: companies = data.companies || [];
     let selectedCompany: any = null;
@@ -107,6 +109,11 @@
     let activeNotificationTab = 'inbox'; // 'inbox' | 'archive'
     
     $: isSpanish = $currentLang === 'es';
+
+    // Close mobile menu when navigating
+    $: if (path) {
+        isMobileMenuOpen = false;
+    }
 
     $: if (companies.length > 0 && !selectedCompany) {
         // Try to match with user's companyId if available, otherwise first
@@ -139,6 +146,7 @@
         isThemeMenuOpen = false;
         isLangMenuOpen = false;
         isCompanyMenuOpen = false;
+        isMobileMenuOpen = false;
     }
 
     function closeProfileMenu() {
@@ -166,9 +174,18 @@
 </svelte:head>
 
 <div class="flex h-screen overflow-hidden bg-background">
+    <!-- Mobile Menu Overlay -->
+    {#if isMobileMenuOpen}
+        <div 
+            class="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 lg:hidden" 
+            on:click={() => isMobileMenuOpen = false}
+            transition:fade={{ duration: 200 }}
+        ></div>
+    {/if}
+
     <!-- Sidebar -->
-    <aside class="w-64 bg-background border-r flex flex-col">
-        <div class="p-6 border-b h-16 flex items-center">
+    <aside class="fixed inset-y-0 left-0 z-50 w-64 bg-background border-r flex flex-col transition-transform duration-200 ease-in-out lg:relative lg:translate-x-0 {isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}">
+        <div class="p-6 border-b h-16 flex items-center justify-between">
             {#if workspace === 'allianzy'}
                 <a href="/{workspace}" class="block">
                     <img src={logoLight} alt="Allianzy" class="h-8 dark:hidden" />
@@ -177,6 +194,9 @@
             {:else}
                 <h2 class="text-lg font-bold tracking-tight uppercase truncate">{workspace}</h2>
             {/if}
+            <button class="lg:hidden ml-auto" on:click={() => isMobileMenuOpen = false}>
+                <X class="w-5 h-5" />
+            </button>
         </div>
         
         {#if companies.length > 0}
@@ -259,8 +279,13 @@
 
     <!-- Main Content -->
     <main class="flex-1 flex flex-col overflow-hidden">
-        <header class="h-16 bg-background border-b flex items-center justify-between px-8 shrink-0">
-            <h1 class="text-lg font-semibold">Dashboard</h1>
+        <header class="h-16 bg-background border-b flex items-center justify-between px-4 md:px-8 shrink-0">
+            <div class="flex items-center gap-4">
+                <button class="lg:hidden" on:click={() => isMobileMenuOpen = !isMobileMenuOpen}>
+                    <Menu class="w-5 h-5" />
+                </button>
+                <h1 class="text-lg font-semibold">Dashboard</h1>
+            </div>
             <div class="flex items-center gap-4">
                 <!-- Notifications -->
                  <div class="relative" use:clickOutside on:click_outside={closeNotificationsMenu}>

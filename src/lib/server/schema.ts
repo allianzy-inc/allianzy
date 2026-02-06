@@ -18,7 +18,7 @@ export const users = pgTable('users', {
     role: text('role').default('staff'), // staff, client, provider
     avatarUrl: text('avatar_url'),
     phone: text('phone'),
-    addresses: jsonb('addresses'), // Array of { label, address, city, country }
+    addresses: jsonb('addresses'), // Array of { label, address, city, country, state, postalCode }
     company: text('company'),
     companyLogo: text('company_logo'),
     companyLinks: jsonb('company_links'), // Array of { title, url }
@@ -208,6 +208,9 @@ export const companies = pgTable('companies', {
     region: text('region'),
     timezone: text('timezone'),
     address: jsonb('address'), // { street, city, state, postalCode, country, officeName }
+    addresses: jsonb('addresses'), // Array of { label, address, city, country, state, postalCode }
+    links: jsonb('links'), // Array of { title, url }
+    documents: jsonb('documents'), // Array of { type: string, value: string }
     registrationDetails: jsonb('registration_details'), // { acn, abn, ndisRegistration }
     workspaceId: integer('workspace_id').references(() => workspaces.id),
     createdAt: timestamp('created_at').defaultNow(),

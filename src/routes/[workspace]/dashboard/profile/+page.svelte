@@ -26,7 +26,7 @@
     }
 
     // Temporary state for new items
-    let newAddress = { label: '', address: '', city: '', country: '' };
+    let newAddress = { label: '', address: '', city: '', country: '', state: '', postalCode: '' };
     let newLink = { title: '', url: '' };
     let newId = { type: '', value: '' };
     
@@ -104,7 +104,7 @@
             const updatedAddresses = [...addresses, { ...newAddress }];
             addresses = updatedAddresses;
             saveField('addresses', updatedAddresses);
-            newAddress = { label: '', address: '', city: '', country: '' };
+            newAddress = { label: '', address: '', city: '', country: '', state: '', postalCode: '' };
             isAddingAddress = false;
         }
     }
@@ -402,9 +402,12 @@
                                 <div class="font-medium">{address.label}</div>
                                 <div class="text-sm text-muted-foreground mt-1">
                                     {address.address}
-                                    {#if address.city || address.country}
+                                    {#if address.city || address.state || address.postalCode || address.country}
                                         <br />
-                                        {[address.city, address.country].filter(Boolean).join(', ')}
+                                        {[
+                                            [address.city, address.state, address.postalCode].filter(Boolean).join(' '),
+                                            address.country
+                                        ].filter(Boolean).join(', ')}
                                     {/if}
                                 </div>
                             </div>
@@ -438,6 +441,20 @@
                                     placeholder={t.dashboard.page.profile.addresses.form.city}
                                     class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
                                     bind:value={newAddress.city}
+                                />
+                                <input 
+                                    type="text" 
+                                    placeholder="State"
+                                    class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
+                                    bind:value={newAddress.state}
+                                />
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <input 
+                                    type="text" 
+                                    placeholder="Postal Code"
+                                    class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
+                                    bind:value={newAddress.postalCode}
                                 />
                                 <input 
                                     type="text" 

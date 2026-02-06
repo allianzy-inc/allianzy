@@ -355,7 +355,83 @@ export const translations = {
                 },
                 settings: {
                     title: 'Settings',
-                    subtitle: 'Manage your account and preferences.'
+                    subtitle: 'Manage your account and preferences.',
+                    tabs: {
+                        organization: 'Business',
+                        users: 'Users & Permissions',
+                        compliance: 'Compliance'
+                    },
+                    organization: {
+                        details: {
+                            title: 'Business Details',
+                            logo: {
+                                label: 'Company Logo',
+                                desc: 'Upload your company logo. Recommended size 400x400px.',
+                                delete_confirm: {
+                                    title: 'Are you sure?',
+                                    desc: 'This action will remove the current company logo.',
+                                    cancel: 'Cancel',
+                                    delete: 'Delete'
+                                }
+                            },
+                            name: 'Company Name',
+                            email: 'Email Address',
+                            phone: 'Phone Number',
+                            description: 'Description'
+                        },
+                        addresses: {
+                            title: 'Addresses',
+                            add_button: 'Add Address',
+                            form: {
+                                label: 'Label (e.g. HQ)',
+                                address: 'Address',
+                                city: 'City',
+                                state: 'State',
+                                postal_code: 'Postal Code',
+                                country: 'Country',
+                                cancel: 'Cancel',
+                                save: 'Save'
+                            }
+                        },
+                        links: {
+                            title: 'Important Links',
+                            add_button: 'Add Link',
+                            form: {
+                                title: 'Title',
+                                url: 'URL',
+                                cancel: 'Cancel',
+                                save: 'Save'
+                            }
+                        },
+                        documents: {
+                            title: 'Documents & IDs',
+                            add_button: 'Add Document',
+                            form: {
+                                type: 'Type (e.g. ABN, Tax ID)',
+                                value: 'Value/ID',
+                                cancel: 'Cancel',
+                                save: 'Save'
+                            }
+                        }
+                    },
+                    users: {
+                        title: 'Users & Permissions',
+                        subtitle: 'Manage users and their roles within the organization.',
+                        add_button: 'Add User',
+                        table: {
+                            name: 'Name',
+                            email: 'Email',
+                            role: 'Role',
+                            status: 'Status',
+                            actions: 'Actions',
+                            active: 'Active'
+                        }
+                    },
+                    compliance: {
+                        title: 'Compliance',
+                        coming_soon: 'Coming Soon',
+                        desc: 'This section is currently under development. Check back later for updates.'
+                    }
                 },
                 // This part was malformed in previous read (nested title/subtitle directly under settings object or something). 
                 // Based on previous read, it seemed 'title': 'My Account' was at the same level as 'settings'. 
@@ -784,7 +860,83 @@ export const translations = {
                 },
                 settings: {
                     title: 'Configuraciones',
-                    subtitle: 'Gestiona tu cuenta y preferencias.'
+                    subtitle: 'Gestiona tu cuenta y preferencias.',
+                    tabs: {
+                        organization: 'Negocio',
+                        users: 'Usuarios y Permisos',
+                        compliance: 'Cumplimiento'
+                    },
+                    organization: {
+                        details: {
+                            title: 'Detalles del Negocio',
+                            logo: {
+                                label: 'Logo de la Empresa',
+                                desc: 'Sube el logo de tu empresa. Tamaño recomendado 400x400px.',
+                                delete_confirm: {
+                                    title: '¿Estás seguro?',
+                                    desc: 'Esta acción eliminará el logo actual de la empresa.',
+                                    cancel: 'Cancelar',
+                                    delete: 'Eliminar'
+                                }
+                            },
+                            name: 'Nombre de la Empresa',
+                            email: 'Correo Electrónico',
+                            phone: 'Número de Teléfono',
+                            description: 'Descripción'
+                        },
+                        addresses: {
+                            title: 'Direcciones',
+                            add_button: 'Agregar Dirección',
+                            form: {
+                                label: 'Etiqueta (ej. Sede Central)',
+                                address: 'Dirección',
+                                city: 'Ciudad',
+                                state: 'Estado',
+                                postal_code: 'Código Postal',
+                                country: 'País',
+                                cancel: 'Cancelar',
+                                save: 'Guardar'
+                            }
+                        },
+                        links: {
+                            title: 'Enlaces Importantes',
+                            add_button: 'Agregar Enlace',
+                            form: {
+                                title: 'Título',
+                                url: 'URL',
+                                cancel: 'Cancelar',
+                                save: 'Guardar'
+                            }
+                        },
+                        documents: {
+                            title: 'Documentos e IDs',
+                            add_button: 'Agregar Documento',
+                            form: {
+                                type: 'Tipo (ej. RUC, CIF)',
+                                value: 'Valor/ID',
+                                cancel: 'Cancelar',
+                                save: 'Guardar'
+                            }
+                        }
+                    },
+                    users: {
+                        title: 'Usuarios y Permisos',
+                        subtitle: 'Gestiona usuarios y sus roles dentro de la organización.',
+                        add_button: 'Agregar Usuario',
+                        table: {
+                            name: 'Nombre',
+                            email: 'Correo',
+                            role: 'Rol',
+                            status: 'Estado',
+                            actions: 'Acciones',
+                            active: 'Activo'
+                        }
+                    },
+                    compliance: {
+                        title: 'Cumplimiento',
+                        coming_soon: 'Próximamente',
+                        desc: 'Esta sección está actualmente en desarrollo. Vuelve más tarde para ver actualizaciones.'
+                    }
                 },
                 profile: {
                     title: 'Mi Cuenta',

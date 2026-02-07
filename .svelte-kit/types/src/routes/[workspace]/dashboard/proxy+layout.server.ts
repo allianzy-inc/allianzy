@@ -28,7 +28,7 @@ export const load = async ({ locals, url, params }: Parameters<LayoutServerLoad>
         }
     });
 
-    const validCompanies = userCompaniesList.filter(uc => uc.company);
+    const validCompanies = userCompaniesList.filter(uc => uc.company && uc.status === 'active');
 
     const mappedCompanies = await Promise.all(validCompanies.map(async (uc) => {
         const company = uc.company!;
@@ -36,7 +36,9 @@ export const load = async ({ locals, url, params }: Parameters<LayoutServerLoad>
         return {
             id: company.id,
             name: company.name,
-            logo: logoUrl
+            logo: logoUrl,
+            permissions: uc.permissions,
+            role: uc.role
         };
     }));
 

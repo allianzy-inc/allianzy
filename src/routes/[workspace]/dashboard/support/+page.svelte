@@ -1,11 +1,12 @@
 <script lang="ts">
-    import { MessageSquare, Calendar, X, Plus, Paperclip, Send, FileText, Download, Eye, Loader2 } from 'lucide-svelte';
+    import { MessageSquare, Calendar, X, Plus, Paperclip, Send, FileText, Download, Eye, Loader2, ChevronUp, ChevronDown, AlertCircle, ArrowDown } from 'lucide-svelte';
     import { currentLang, translations } from '$lib/i18n';
     import type { PageData } from './$types';
     import { enhance } from '$app/forms';
     import { goto, invalidateAll } from '$app/navigation';
     import { page } from '$app/stores';
     import { onMount, tick, onDestroy } from 'svelte';
+    import { fade } from 'svelte/transition';
     import DocumentPreviewModal from '$lib/components/DocumentPreviewModal.svelte';
     import { portal } from '$lib/actions/portal';
 
@@ -15,6 +16,49 @@
     $: projectsList = data.projectsList;
     $: selectedCaseComments = data.selectedCaseComments;
     $: user = data.user;
+
+    // Scroll to bottom logic
+    let showScrollButton = false;
+    let chatContainer: HTMLElement;
+
+    const scrollChatToBottom = () => {
+        if (chatContainer) {
+            chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
+        }
+    };
+
+    function scrollToBottom(node: HTMLElement, { dependency }: { dependency: any }) {
+        let isAutoScrolling = false;
+        
+        const checkScroll = () => {
+            if (isAutoScrolling) return;
+            const { scrollTop, scrollHeight, clientHeight } = node;
+            const distance = scrollHeight - scrollTop - clientHeight;
+            showScrollButton = distance > 100;
+        };
+
+        const scroll = (behavior: ScrollBehavior = 'smooth') => {
+            if (!showScrollButton) {
+                isAutoScrolling = true;
+                node.scrollTo({ top: node.scrollHeight, behavior });
+                setTimeout(() => { isAutoScrolling = false; }, 500);
+            }
+        };
+        
+        showScrollButton = false;
+        node.scrollTo({ top: node.scrollHeight, behavior: 'auto' });
+        
+        node.addEventListener('scroll', checkScroll);
+
+        return {
+            update({ dependency: newDep }: { dependency: any }) {
+                scroll('smooth');
+            },
+            destroy() {
+                node.removeEventListener('scroll', checkScroll);
+            }
+        };
+    }
 
     // Polling for real-time updates
     let pollInterval: ReturnType<typeof setInterval>;
@@ -61,6 +105,7 @@
     let isCreateModalOpen = false;
     let isSubmitting = false;
     let isTicketDetailsOpen = false;
+    let isCaseDescriptionExpanded = false;
     let selectedTicket: any = null;
     let createFiles: File[] = [];
     let commentFiles: File[] = [];
@@ -344,17 +389,17 @@
                 <!-- Header -->
                 <div class="p-6 border-b flex items-start justify-between bg-card z-10">
                     <div class="space-y-1">
-                        <div class="flex items-center gap-2">
-                            <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold {getStatusColor(selectedTicket.status || 'open')}">
-                                {getStatusLabel(selectedTicket.status || 'open')}
-                            </span>
-                        </div>
                         <h3 class="text-xl font-bold">{selectedTicket.title}</h3>
                         <div class="text-sm text-muted-foreground flex flex-col gap-0.5">
                             <span>{selectedTicket.projectName} {#if selectedTicket.serviceName}({selectedTicket.serviceName}){/if}</span>
-                            <span class="flex items-center gap-1">
-                                <Calendar class="w-3 h-3" /> Created {formatDate(selectedTicket.createdAt)}
-                            </span>
+                            <div class="flex items-center gap-3">
+                                <span class="flex items-center gap-1">
+                                    <Calendar class="w-3 h-3" /> Created {formatDate(selectedTicket.createdAt)}
+                                </span>
+                                <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold {getStatusColor(selectedTicket.status || 'open')}">
+                                    {getStatusLabel(selectedTicket.status || 'open')}
+                                </span>
+                            </div>
                         </div>
                     </div>
                     <button on:click={closeTicketDetails} class="text-muted-foreground hover:text-foreground p-1 hover:bg-accent rounded-full transition-colors">
@@ -363,69 +408,91 @@
                 </div>
 
                 <!-- Content -->
-                <div class="flex-1 overflow-y-auto p-6 space-y-8">
-                    <!-- Ticket Description -->
-                    <div class="space-y-3">
-                        <div class="text-sm text-muted-foreground whitespace-pre-wrap">{selectedTicket.description || 'Sin descripción'}</div>
+                <div class="flex-1 flex flex-col min-h-0 overflow-hidden">
+                    <!-- Collapsible Ticket Description -->
+                    <div class="border-b bg-card z-10 shadow-sm shrink-0">
+                        <button 
+                            class="w-full flex items-center justify-between p-4 hover:bg-accent/50 transition-colors"
+                            on:click={() => isCaseDescriptionExpanded = !isCaseDescriptionExpanded}
+                        >
+                            <div class="flex items-center gap-2 font-medium text-sm">
+                                <FileText class="w-4 h-4" />
+                                <span>Detalle del Caso</span>
+                            </div>
+                            {#if isCaseDescriptionExpanded}
+                                <ChevronUp class="w-4 h-4 text-muted-foreground" />
+                            {:else}
+                                <ChevronDown class="w-4 h-4 text-muted-foreground" />
+                            {/if}
+                        </button>
                         
-                        {#if selectedTicket.files && selectedTicket.files.length > 0}
-                            <div class="flex flex-wrap gap-2 mt-4">
-                                {#each selectedTicket.files as file}
-                                    <div class="flex items-center gap-2 px-3 py-1.5 bg-muted rounded-md border text-sm group">
-                                        <FileText class="w-4 h-4 text-muted-foreground" />
-                                        <span class="truncate max-w-[150px]">{file.name}</span>
-                                        <div class="flex items-center gap-1 ml-2">
-                                            {#if isPreviewable(file)}
-                                                <button 
-                                                    class="p-1 hover:bg-background rounded-full transition-colors"
-                                                    title="Vista previa"
-                                                    on:click={() => openPreview(file.name, file.url)}
-                                                >
-                                                    <Eye class="w-3 h-3" />
-                                                </button>
-                                            {/if}
-                                            <a 
-                                                href={file.url} 
-                                                download={file.name}
-                                                class="p-1 hover:bg-background rounded-full transition-colors"
-                                                title="Descargar"
-                                                target="_blank"
-                                            >
-                                                <Download class="w-3 h-3" />
-                                            </a>
-                                        </div>
+                        {#if isCaseDescriptionExpanded}
+                            <div class="px-6 py-6 space-y-3 animate-in slide-in-from-top-2 duration-200">
+                                <div class="text-sm text-muted-foreground whitespace-pre-wrap">{selectedTicket.description || 'Sin descripción'}</div>
+                                
+                                {#if selectedTicket.files && selectedTicket.files.length > 0}
+                                    <div class="flex flex-wrap gap-2 mt-4">
+                                        {#each selectedTicket.files as file}
+                                            <div class="flex items-center gap-2 px-3 py-1.5 bg-muted rounded-md border text-sm group">
+                                                <FileText class="w-4 h-4 text-muted-foreground" />
+                                                <span class="truncate max-w-[150px]">{file.name}</span>
+                                                <div class="flex items-center gap-1 ml-2">
+                                                    {#if isPreviewable(file)}
+                                                        <button 
+                                                            class="p-1 hover:bg-background rounded-full transition-colors"
+                                                            title="Vista previa"
+                                                            on:click={() => openPreview(file.name, file.url)}
+                                                        >
+                                                            <Eye class="w-3 h-3" />
+                                                        </button>
+                                                    {/if}
+                                                    <a 
+                                                        href={file.url} 
+                                                        download={file.name}
+                                                        class="p-1 hover:bg-background rounded-full transition-colors"
+                                                        title="Descargar"
+                                                        target="_blank"
+                                                    >
+                                                        <Download class="w-3 h-3" />
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        {/each}
                                     </div>
-                                {/each}
+                                {/if}
                             </div>
                         {/if}
                     </div>
 
-                    <div class="border-t"></div>
-
-                    <!-- Timeline/Comments -->
-                    <div class="space-y-6">
-                        <h4 class="font-semibold text-sm flex items-center gap-2">
-                            <MessageSquare class="w-4 h-4" />
-                            Historial de soporte
-                        </h4>
-                        
+                    <!-- Chat Area -->
+                    <div 
+                        class="flex-1 overflow-y-auto p-4 space-y-4 relative bg-muted/5"
+                        use:scrollToBottom={{ dependency: selectedCaseComments }}
+                        bind:this={chatContainer}
+                    >
                         {#if !selectedCaseComments || selectedCaseComments.length === 0}
-                            <p class="text-sm text-muted-foreground italic">No hay comentarios aún.</p>
+                            <div class="text-center py-8 text-muted-foreground text-sm">
+                                No hay mensajes aún. Inicia la conversación abajo.
+                            </div>
                         {:else}
                             {#each selectedCaseComments as comment}
-                                <div class="flex gap-4 group">
-                                    <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                                        <span class="text-xs font-medium text-primary">
-                                            {comment.authorName ? comment.authorName[0].toUpperCase() : 'U'}
-                                        </span>
+                                {@const isMe = comment.userId === (user ? parseInt(user.id) : -1)}
+                                {@const isClient = ['client', 'owner', 'member', 'admin'].includes(comment.authorRole) || ['owner', 'member', 'admin'].includes(comment.companyRole)}
+                                <div class="flex gap-3 {isClient ? 'flex-row-reverse' : ''}">
+                                    <div class="w-8 h-8 rounded-full {isClient ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'} flex items-center justify-center font-bold text-xs shrink-0 mt-1">
+                                        {(comment.authorName || 'U').charAt(0).toUpperCase()}
                                     </div>
-                                    <div class="flex-1 space-y-1">
-                                        <div class="flex items-center justify-between">
-                                            <span class="text-sm font-medium">{comment.authorName}</span>
-                                            <span class="text-xs text-muted-foreground">{formatDate(comment.createdAt)}</span>
+                                    <div class="flex flex-col gap-1 max-w-[85%]">
+                                        <div class="flex items-center gap-2 {isClient ? 'flex-row-reverse' : ''}">
+                                            <span class="text-xs font-medium text-foreground">
+                                                {comment.authorName || 'Usuario'}
+                                                {#if isMe} (Yo){/if}
+                                            </span>
+                                            <span class="text-[10px] text-muted-foreground">{formatDate(comment.createdAt)}</span>
                                         </div>
-                                        <div class="text-sm text-muted-foreground bg-muted/30 p-3 rounded-lg border">
-                                            <div class="whitespace-pre-wrap">{comment.content}</div>
+                                        <div class="rounded-lg p-3 text-sm shadow-sm border {isClient ? 'bg-primary/10 text-foreground border-primary/20' : 'bg-muted/40 text-foreground border-border'}">
+                                            <div class="whitespace-pre-wrap leading-relaxed">{comment.content}</div>
+                                            
                                             {#if comment.files && comment.files.length > 0}
                                                 <div class="flex flex-wrap gap-2 mt-3 pt-3 border-t border-border/50">
                                                     {#each comment.files as file}
@@ -452,6 +519,17 @@
                                     </div>
                                 </div>
                             {/each}
+                        {/if}
+
+                        <!-- Scroll Button -->
+                        {#if showScrollButton}
+                            <button 
+                                class="absolute bottom-4 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground rounded-full p-2 shadow-lg hover:opacity-90 transition-opacity z-10"
+                                on:click={scrollChatToBottom}
+                                transition:fade
+                            >
+                                <ArrowDown class="w-4 h-4" />
+                            </button>
                         {/if}
                     </div>
                 </div>

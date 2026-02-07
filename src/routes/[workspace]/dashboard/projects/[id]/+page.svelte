@@ -10,7 +10,7 @@
 
     export let data: PageData;
 
-    $: ({ project, requirements, milestones, supportCases, proposals, payments, requests, selectedCaseComments, selectedRequestComments, selectedRequirementComments, selectedProposalComments, user } = data);
+    $: ({ project, requirements, milestones, supportCases, proposals, payments, requests, selectedCaseComments, selectedRequestComments, selectedRequirementComments, selectedProposalComments, user, permissions } = data);
 
     // Polling for real-time updates
     let pollInterval: ReturnType<typeof setInterval>;
@@ -172,6 +172,11 @@
     }
 
     let activeTab = 'process'; // process, requests, requirements, support, proposals, payments
+
+    // Validate activeTab against permissions
+    $: if (permissions && permissions.length > 0 && !permissions.includes(activeTab)) {
+        activeTab = permissions[0];
+    }
 
     // Document Preview Modal Logic
     let isPreviewModalOpen = false;
@@ -355,6 +360,7 @@
             
             <!-- Tabs -->
             <div class="flex border-b overflow-x-auto">
+                {#if !permissions || permissions.includes('process')}
                 <button 
                     class="px-4 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap
                     {activeTab === 'process' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}"
@@ -363,6 +369,9 @@
                     <Clock class="w-4 h-4" />
                     Proceso
                 </button>
+                {/if}
+
+                {#if !permissions || permissions.includes('requests')}
                 <button 
                     class="px-4 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap
                     {activeTab === 'requests' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}"
@@ -371,6 +380,9 @@
                     <Inbox class="w-4 h-4" />
                     Solicitudes
                 </button>
+                {/if}
+
+                {#if !permissions || permissions.includes('requirements')}
                 <button 
                     class="px-4 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap
                     {activeTab === 'requirements' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}"
@@ -379,6 +391,9 @@
                     <FileText class="w-4 h-4" />
                     Requerimientos
                 </button>
+                {/if}
+
+                {#if !permissions || permissions.includes('support')}
                 <button 
                     class="px-4 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap
                     {activeTab === 'support' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}"
@@ -387,6 +402,9 @@
                     <MessageSquare class="w-4 h-4" />
                     Soporte
                 </button>
+                {/if}
+
+                {#if !permissions || permissions.includes('proposals')}
                 <button 
                     class="px-4 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap
                     {activeTab === 'proposals' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}"
@@ -395,6 +413,9 @@
                     <DollarSign class="w-4 h-4" />
                     Propuestas
                 </button>
+                {/if}
+
+                {#if !permissions || permissions.includes('payments')}
                 <button 
                     class="px-4 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap
                     {activeTab === 'payments' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}"
@@ -403,6 +424,7 @@
                     <CreditCard class="w-4 h-4" />
                     Pagos
                 </button>
+                {/if}
             </div>
 
             <!-- Tab Content -->
@@ -979,13 +1001,14 @@
                         {:else}
                             {#each selectedCaseComments as comment}
                                 {@const isMe = comment.userId === (user ? parseInt(user.id) : -1)}
-                                <div class="flex gap-3 {isMe ? 'flex-row-reverse' : ''}">
-                                    <div class="w-8 h-8 rounded-full {isMe ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'} flex items-center justify-center font-bold text-xs shrink-0 mt-1">
+                                {@const isClient = ['client', 'owner', 'member', 'admin'].includes(comment.authorRole) || ['owner', 'member', 'admin'].includes(comment.companyRole)}
+                                <div class="flex gap-3 {isClient ? 'flex-row-reverse' : ''}">
+                                    <div class="w-8 h-8 rounded-full {isClient ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'} flex items-center justify-center font-bold text-xs shrink-0 mt-1">
                                         {(comment.authorName || 'U').charAt(0).toUpperCase()}
                                     </div>
                                     
                                     <div class="flex flex-col gap-1 max-w-[85%]">
-                                        <div class="flex items-center gap-2 {isMe ? 'flex-row-reverse' : ''}">
+                                        <div class="flex items-center gap-2 {isClient ? 'flex-row-reverse' : ''}">
                                             <span class="text-xs font-medium text-foreground">
                                                 {comment.authorName || 'Usuario'}
                                                 {#if isMe} (Yo){/if}
@@ -993,17 +1016,17 @@
                                             <span class="text-[10px] text-muted-foreground">{formatDate(comment.createdAt)}</span>
                                         </div>
 
-                                        <div class="rounded-lg p-3 text-sm shadow-sm border {isMe ? 'bg-primary/10 text-foreground border-primary/20' : 'bg-muted/40 text-foreground border-border'}">
+                                        <div class="rounded-lg p-3 text-sm shadow-sm border {isClient ? 'bg-primary/10 text-foreground border-primary/20' : 'bg-muted/40 text-foreground border-border'}">
                                             <div class="whitespace-pre-wrap leading-relaxed">{comment.content}</div>
                                             
                                             {#if comment.files && comment.files.length > 0}
-                                                <div class="mt-2 pt-2 border-t {isMe ? 'border-primary/20' : 'border-border'}">
+                                                <div class="mt-2 pt-2 border-t {isClient ? 'border-primary/20' : 'border-border'}">
                                                     <div class="text-[10px] opacity-70 mb-1">Adjuntos:</div>
                                                     <div class="flex flex-wrap gap-1">
                                                         {#each comment.files as file}
                                                             <button 
                                                                 on:click={() => openPreview(file.name, file.url)}
-                                                                class="flex items-center gap-1.5 text-[10px] {isMe ? 'bg-background/50 hover:bg-background/80' : 'bg-background hover:bg-background/80'} px-2 py-1 rounded transition-colors border shadow-sm"
+                                                                class="flex items-center gap-1.5 text-[10px] {isClient ? 'bg-background/50 hover:bg-background/80' : 'bg-background hover:bg-background/80'} px-2 py-1 rounded transition-colors border shadow-sm"
                                                             >
                                                                 <Paperclip class="w-3 h-3" />
                                                                 <span class="truncate max-w-[100px]">{file.name}</span>
@@ -1215,13 +1238,14 @@
                             {:else}
                                 {#each selectedRequestComments as comment}
                                     {@const isMe = comment.userId === (user ? parseInt(user.id) : -1)}
-                                    <div class="flex gap-3 {isMe ? 'flex-row-reverse' : ''}">
-                                        <div class="w-8 h-8 rounded-full {isMe ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'} flex items-center justify-center font-bold text-xs shrink-0 mt-1">
+                                    {@const isClient = ['client', 'owner', 'member', 'admin'].includes(comment.authorRole) || ['owner', 'member', 'admin'].includes(comment.companyRole)}
+                                    <div class="flex gap-3 {isClient ? 'flex-row-reverse' : ''}">
+                                        <div class="w-8 h-8 rounded-full {isClient ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'} flex items-center justify-center font-bold text-xs shrink-0 mt-1">
                                             {(comment.authorName || 'U').charAt(0).toUpperCase()}
                                         </div>
                                         
                                         <div class="flex flex-col gap-1 max-w-[85%]">
-                                            <div class="flex items-center gap-2 {isMe ? 'flex-row-reverse' : ''}">
+                                            <div class="flex items-center gap-2 {isClient ? 'flex-row-reverse' : ''}">
                                                 <span class="text-xs font-medium text-foreground">
                                                     {comment.authorName || 'Usuario'}
                                                     {#if isMe} (Yo){/if}
@@ -1229,17 +1253,17 @@
                                                 <span class="text-[10px] text-muted-foreground">{formatDate(comment.createdAt)}</span>
                                             </div>
 
-                                            <div class="rounded-lg p-3 text-sm shadow-sm border {isMe ? 'bg-primary/10 text-foreground border-primary/20' : 'bg-muted/40 text-foreground border-border'}">
+                                            <div class="rounded-lg p-3 text-sm shadow-sm border {isClient ? 'bg-primary/10 text-foreground border-primary/20' : 'bg-muted/40 text-foreground border-border'}">
                                                 <div class="whitespace-pre-wrap leading-relaxed">{comment.content}</div>
                                                 
                                                 {#if comment.files && comment.files.length > 0}
-                                                    <div class="mt-2 pt-2 border-t {isMe ? 'border-primary/20' : 'border-border'}">
+                                                    <div class="mt-2 pt-2 border-t {isClient ? 'border-primary/20' : 'border-border'}">
                                                         <div class="text-[10px] opacity-70 mb-1">Adjuntos:</div>
                                                         <div class="flex flex-wrap gap-1">
                                                             {#each comment.files as file}
                                                                 <button 
                                                                     on:click={() => openPreview(file.name, file.url)}
-                                                                    class="flex items-center gap-1.5 text-[10px] {isMe ? 'bg-background/50 hover:bg-background/80' : 'bg-background hover:bg-background/80'} px-2 py-1 rounded transition-colors border shadow-sm"
+                                                                    class="flex items-center gap-1.5 text-[10px] {isClient ? 'bg-background/50 hover:bg-background/80' : 'bg-background hover:bg-background/80'} px-2 py-1 rounded transition-colors border shadow-sm"
                                                                 >
                                                                     <Paperclip class="w-3 h-3" />
                                                                     <span class="truncate max-w-[100px]">{file.name}</span>
@@ -1453,13 +1477,14 @@
                             {:else}
                                 {#each selectedRequirementComments as comment}
                                     {@const isMe = comment.userId === (user ? parseInt(user.id) : -1)}
-                                    <div class="flex gap-3 {isMe ? 'flex-row-reverse' : ''}">
-                                        <div class="w-8 h-8 rounded-full {isMe ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'} flex items-center justify-center font-bold text-xs shrink-0 mt-1">
+                                    {@const isClient = ['client', 'owner', 'member', 'admin'].includes(comment.authorRole) || ['owner', 'member', 'admin'].includes(comment.companyRole)}
+                                    <div class="flex gap-3 {isClient ? 'flex-row-reverse' : ''}">
+                                        <div class="w-8 h-8 rounded-full {isClient ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'} flex items-center justify-center font-bold text-xs shrink-0 mt-1">
                                             {(comment.authorName || 'U').charAt(0).toUpperCase()}
                                         </div>
                                         
                                         <div class="flex flex-col gap-1 max-w-[85%]">
-                                            <div class="flex items-center gap-2 {isMe ? 'flex-row-reverse' : ''}">
+                                            <div class="flex items-center gap-2 {isClient ? 'flex-row-reverse' : ''}">
                                                 <span class="text-xs font-medium text-foreground">
                                                     {comment.authorName || 'Usuario'}
                                                     {#if isMe} (Yo){/if}
@@ -1467,17 +1492,17 @@
                                                 <span class="text-[10px] text-muted-foreground">{formatDate(comment.createdAt)}</span>
                                             </div>
 
-                                            <div class="rounded-lg p-3 text-sm shadow-sm border {isMe ? 'bg-primary/10 text-foreground border-primary/20' : 'bg-muted/40 text-foreground border-border'}">
+                                            <div class="rounded-lg p-3 text-sm shadow-sm border {isClient ? 'bg-primary/10 text-foreground border-primary/20' : 'bg-muted/40 text-foreground border-border'}">
                                                 <div class="whitespace-pre-wrap leading-relaxed">{comment.content}</div>
                                                 
                                                 {#if comment.files && comment.files.length > 0}
-                                                    <div class="mt-2 pt-2 border-t {isMe ? 'border-primary/20' : 'border-border'}">
+                                                    <div class="mt-2 pt-2 border-t {isClient ? 'border-primary/20' : 'border-border'}">
                                                         <div class="text-[10px] opacity-70 mb-1">Adjuntos:</div>
                                                         <div class="flex flex-wrap gap-1">
                                                             {#each comment.files as file}
                                                                 <button 
                                                                     on:click={() => openPreview(file.name, file.url)}
-                                                                    class="flex items-center gap-1.5 text-[10px] {isMe ? 'bg-background/50 hover:bg-background/80' : 'bg-background hover:bg-background/80'} px-2 py-1 rounded transition-colors border shadow-sm"
+                                                                    class="flex items-center gap-1.5 text-[10px] {isClient ? 'bg-background/50 hover:bg-background/80' : 'bg-background hover:bg-background/80'} px-2 py-1 rounded transition-colors border shadow-sm"
                                                                 >
                                                                     <Paperclip class="w-3 h-3" />
                                                                     <span class="truncate max-w-[100px]">{file.name}</span>
@@ -1691,13 +1716,14 @@
                         {:else}
                             {#each selectedProposalComments as comment}
                                 {@const isMe = comment.userId === (user ? parseInt(user.id) : -1)}
-                                <div class="flex gap-3 {isMe ? 'flex-row-reverse' : ''}">
-                                    <div class="w-8 h-8 rounded-full {isMe ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'} flex items-center justify-center font-bold text-xs shrink-0 mt-1">
+                                {@const isClient = ['client', 'owner', 'member', 'admin'].includes(comment.authorRole) || ['owner', 'member', 'admin'].includes(comment.companyRole)}
+                                <div class="flex gap-3 {isClient ? 'flex-row-reverse' : ''}">
+                                    <div class="w-8 h-8 rounded-full {isClient ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'} flex items-center justify-center font-bold text-xs shrink-0 mt-1">
                                         {(comment.authorName || 'U').charAt(0).toUpperCase()}
                                     </div>
                                     
                                     <div class="flex flex-col gap-1 max-w-[85%]">
-                                        <div class="flex items-center gap-2 {isMe ? 'flex-row-reverse' : ''}">
+                                        <div class="flex items-center gap-2 {isClient ? 'flex-row-reverse' : ''}">
                                             <span class="text-xs font-medium text-foreground">
                                                 {comment.authorName || 'Usuario'}
                                                 {#if isMe} (Yo){/if}
@@ -1705,17 +1731,17 @@
                                             <span class="text-[10px] text-muted-foreground">{formatDate(comment.createdAt)}</span>
                                         </div>
 
-                                        <div class="rounded-lg p-3 text-sm shadow-sm border {isMe ? 'bg-primary/10 text-foreground border-primary/20' : 'bg-muted/40 text-foreground border-border'}">
+                                        <div class="rounded-lg p-3 text-sm shadow-sm border {isClient ? 'bg-primary/10 text-foreground border-primary/20' : 'bg-muted/40 text-foreground border-border'}">
                                             <div class="whitespace-pre-wrap leading-relaxed">{comment.content}</div>
                                             
                                             {#if comment.files && comment.files.length > 0}
-                                                <div class="mt-2 pt-2 border-t {isMe ? 'border-primary/20' : 'border-border'}">
+                                                <div class="mt-2 pt-2 border-t {isClient ? 'border-primary/20' : 'border-border'}">
                                                     <div class="text-[10px] opacity-70 mb-1">Adjuntos:</div>
                                                     <div class="flex flex-wrap gap-1">
                                                         {#each comment.files as file}
                                                             <button 
                                                                 on:click={() => openPreview(file.name, file.url)}
-                                                                class="flex items-center gap-1.5 text-[10px] {isMe ? 'bg-background/50 hover:bg-background/80' : 'bg-background hover:bg-background/80'} px-2 py-1 rounded transition-colors border shadow-sm"
+                                                                class="flex items-center gap-1.5 text-[10px] {isClient ? 'bg-background/50 hover:bg-background/80' : 'bg-background hover:bg-background/80'} px-2 py-1 rounded transition-colors border shadow-sm"
                                                             >
                                                                 <Paperclip class="w-3 h-3" />
                                                                 <span class="truncate max-w-[100px]">{file.name}</span>

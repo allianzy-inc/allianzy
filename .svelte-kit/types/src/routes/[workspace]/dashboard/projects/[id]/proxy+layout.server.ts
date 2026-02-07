@@ -1,8 +1,8 @@
 // @ts-nocheck
 import { db } from '$lib/server/db';
-import { projects, services, users, requirements, projectMilestones, cases, proposals, payments, requests, workspaces, projectPayments as projectPaymentsTable } from '$lib/server/schema';
+import { projects, services, users, requirements, projectMilestones, cases, proposals, payments, requests, workspaces, projectPayments as projectPaymentsTable, userCompanies } from '$lib/server/schema';
 import { getSignedUrlForFile } from '$lib/server/storage';
-import { eq, asc, desc, sql, and, or, isNull, getTableColumns } from 'drizzle-orm';
+import { eq, asc, desc, sql, and, or, isNull, getTableColumns, inArray } from 'drizzle-orm';
 import { error } from '@sveltejs/kit';
 import type { LayoutServerLoad } from './$types';
 import * as fs from 'fs';
@@ -30,6 +30,29 @@ export const load = async ({ params, locals }: Parameters<LayoutServerLoad>[0]) 
     }
 
     try {
+        // Fetch user permissions
+        let allowedProjectIds: number[] = [];
+        let currentProjectPermissions: string[] = [];
+        
+        if (locals.user.companyId) {
+            const userCompany = await db.query.userCompanies.findFirst({
+                where: and(
+                    eq(userCompanies.userId, parseInt(locals.user.id)),
+                    eq(userCompanies.companyId, locals.user.companyId)
+                )
+            });
+            
+            if (userCompany && userCompany.status === 'active' && userCompany.permissions) {
+                const perms = userCompany.permissions as Record<string, any>;
+                allowedProjectIds = Object.keys(perms).map(id => parseInt(id)).filter(id => !isNaN(id));
+                
+                // Get permissions for current project
+                if (perms[projectId.toString()] && Array.isArray(perms[projectId.toString()])) {
+                    currentProjectPermissions = perms[projectId.toString()];
+                }
+            }
+        }
+
         // 1. Fetch Project with Client and Service info
         // Security: Ensure the project belongs to the user via service -> client
         const projectData = await db.select({
@@ -44,10 +67,12 @@ export const load = async ({ params, locals }: Parameters<LayoutServerLoad>[0]) 
             endDate: projects.endDate,
             imageUrl: projects.imageUrl,
             serviceName: services.name,
+            serviceClientId: services.clientId,
             clientName: sql<string>`TRIM(BOTH ' ' FROM COALESCE(${users.firstName}, '') || ' ' || COALESCE(${users.lastName}, ''))`,
             clientCompany: users.company,
             clientEmail: users.email,
-            clientId: users.id
+            clientId: users.id,
+            projectClientId: projects.clientId
         })
         .from(projects)
         .leftJoin(services, eq(projects.serviceId, services.id))
@@ -65,7 +90,10 @@ export const load = async ({ params, locals }: Parameters<LayoutServerLoad>[0]) 
                         eq(workspaces.slug, locals.allowedWorkspace),
                         eq(services.clientId, parseInt(locals.user.id)),
                         isNull(projects.clientId)
-                    )
+                    ),
+
+                    // 3. Permission-based Access
+                    allowedProjectIds.length > 0 ? inArray(projects.id, allowedProjectIds) : undefined
                 )
             )
         )
@@ -192,6 +220,17 @@ export const load = async ({ params, locals }: Parameters<LayoutServerLoad>[0]) 
             return { ...r, files };
         }));
 
+        // Determine effective permissions
+        let effectivePermissions = currentProjectPermissions;
+        
+        // If user is the direct client (owner) or service owner, they get all permissions
+        const isOwner = project.projectClientId === parseInt(locals.user.id);
+        const isServiceOwner = !project.projectClientId && project.serviceClientId === parseInt(locals.user.id);
+        
+        if (isOwner || isServiceOwner) {
+            effectivePermissions = ['process', 'requests', 'requirements', 'support', 'proposals', 'payments'];
+        }
+
         return {
             project,
             requirements: projectRequirements,
@@ -200,7 +239,8 @@ export const load = async ({ params, locals }: Parameters<LayoutServerLoad>[0]) 
             proposals: projectProposals,
             payments: projectPayments,
             requests: projectRequests,
-            user: locals.user
+            user: locals.user,
+            permissions: effectivePermissions
         };
     } catch (err) {
         console.error('Error fetching project details:', err);

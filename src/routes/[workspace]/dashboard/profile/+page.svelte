@@ -444,7 +444,7 @@
                                 />
                                 <input 
                                     type="text" 
-                                    placeholder="State"
+                                    placeholder={t.dashboard.page.profile.addresses.form.state}
                                     class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
                                     bind:value={newAddress.state}
                                 />
@@ -452,7 +452,7 @@
                             <div class="grid grid-cols-2 gap-2">
                                 <input 
                                     type="text" 
-                                    placeholder="Postal Code"
+                                    placeholder={t.dashboard.page.profile.addresses.form.postal_code}
                                     class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
                                     bind:value={newAddress.postalCode}
                                 />

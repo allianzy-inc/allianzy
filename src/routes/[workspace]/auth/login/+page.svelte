@@ -7,7 +7,7 @@
     import logoDark from '$lib/assets/brand/allianzy/logo-dark.svg';
     
     const workspace = $page.params.workspace;
-    let email = '';
+    let email = $page.url.searchParams.get('email') || '';
     let password = '';
     let name = '';
     let isRegister = $page.url.searchParams.get('mode') === 'register';

@@ -227,7 +227,7 @@
                 </div>
 
                 <!-- Desktop Nav -->
-                <nav class="hidden md:flex items-center gap-8 text-sm font-medium absolute left-1/2 -translate-x-1/2">
+                <nav class="hidden lg:flex items-center gap-8 text-sm font-medium absolute left-1/2 -translate-x-1/2">
                     <a href="#home" class="transition-colors hover:text-primary relative group">
                         {t.nav.home}
                     </a>
@@ -236,7 +236,7 @@
                     <a href="#faq" class="transition-colors hover:text-primary">{t.nav.faq}</a>
                 </nav>
 
-                <div class="hidden md:flex items-center gap-4">
+                <div class="hidden lg:flex items-center gap-4">
                     <div class="flex items-center gap-1">
                         <!-- Theme Toggle -->
                         <div class="relative">
@@ -305,7 +305,7 @@
                 </div>
 
                 <!-- Mobile Menu Button -->
-                <button class="md:hidden p-2" on:click={toggleMenu}>
+                <button class="lg:hidden p-2" on:click={toggleMenu}>
                     {#if isMenuOpen}
                         <XIcon class="h-6 w-6" />
                     {:else}
@@ -316,7 +316,7 @@
 
             <!-- Mobile Nav -->
             {#if isMenuOpen}
-                <div transition:slide class="md:hidden border-t bg-background">
+                <div transition:slide class="lg:hidden border-t bg-background">
                     <div class="container flex flex-col gap-4 p-4">
                         <a href="#home" class="text-lg font-medium py-2" on:click={toggleMenu}>{t.nav.home}</a>
                         <a href="#capabilities" class="text-lg font-medium py-2" on:click={toggleMenu}>{t.nav.capabilities}</a>

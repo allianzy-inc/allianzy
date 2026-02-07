@@ -33,22 +33,34 @@
     $: user = data.user || session?.user;
     $: isSpanish = $currentLang === 'es';
 
+    // Permissions Logic (Mirrors layout logic)
+    $: companies = data.companies || [];
+    $: selectedCompany = companies.length > 0 && user?.companyId 
+        ? (companies.find((c: any) => c.id === user.companyId) || companies[0]) 
+        : (companies[0] || null);
+
+    $: currentUserRole = selectedCompany?.role;
+    $: currentUserPermissions = selectedCompany?.permissions || {};
+    
+    $: canViewBilling = currentUserRole === 'owner' || currentUserRole === 'admin' || Object.values(currentUserPermissions).some((p: any) => Array.isArray(p) && p.includes('payments'));
+    $: canViewSupport = currentUserRole === 'owner' || currentUserRole === 'admin' || Object.values(currentUserPermissions).some((p: any) => Array.isArray(p) && p.includes('support'));
+
     $: quickActions = [
         { 
             name: isSpanish ? 'Agendar Reunión' : 'Book Meeting', 
             href: 'mailto:support@allianzy.us', 
             icon: 'Calendar' 
         },
-        { 
+        ...(canViewSupport ? [{ 
             name: isSpanish ? 'Contactar Soporte' : 'Contact Support', 
             href: `/${workspace}/dashboard/support`, 
             icon: 'MessageSquare' 
-        },
-        { 
+        }] : []),
+        ...(canViewBilling ? [{ 
             name: isSpanish ? 'Ver Facturación' : 'View Invoices', 
             href: `/${workspace}/dashboard/billing`, 
             icon: 'FileText' 
-        }
+        }] : [])
     ];
 </script>
 

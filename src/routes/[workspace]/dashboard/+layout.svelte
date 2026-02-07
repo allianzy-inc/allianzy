@@ -1,7 +1,7 @@
 <script lang="ts">
     import { page } from '$app/stores';
     import { onMount } from 'svelte';
-    import { User, LayoutDashboard, Briefcase, Ticket, Settings, LogOut, Shield, Bell, BellOff, Moon, Sun, Monitor, Languages, Check, ChevronRight, HelpCircle, Heart, CreditCard, ChevronsUpDown, Building, AlertTriangle, Trash, Menu, X } from 'lucide-svelte';
+    import { User, LayoutDashboard, Briefcase, Ticket, Settings, LogOut, Shield, Bell, BellOff, Moon, Sun, Monitor, Languages, Check, ChevronRight, HelpCircle, Heart, CreditCard, ChevronsUpDown, Building, AlertTriangle, Trash, Menu, X, Loader2 } from 'lucide-svelte';
     import { authClient } from '$lib/auth-client';
     import { goto } from '$app/navigation';
     import logoLight from '$lib/assets/brand/allianzy/logo-light.svg';
@@ -65,12 +65,20 @@
         }
     }
     
+    // Permissions Logic
+    $: currentUserRole = selectedCompany?.role;
+    $: currentUserPermissions = selectedCompany?.permissions || {};
+    
+    // Check if user has permission in ANY project
+    $: canViewBilling = currentUserRole === 'owner' || currentUserRole === 'admin' || Object.values(currentUserPermissions).some((p: any) => p && p.includes('payments'));
+    $: canViewSupport = currentUserRole === 'owner' || currentUserRole === 'admin' || Object.values(currentUserPermissions).some((p: any) => p && p.includes('support'));
+
     // Client Menu Items
     $: menuItems = [
         { href: `/${workspace}/dashboard`, label: t.dashboard.menu.overview, icon: LayoutDashboard },
         { href: `/${workspace}/dashboard/projects`, label: t.dashboard.menu.projects, icon: Briefcase },
-        { href: `/${workspace}/dashboard/billing`, label: t.dashboard.menu.billing, icon: CreditCard },
-        { href: `/${workspace}/dashboard/support`, label: t.dashboard.menu.support, icon: Ticket },
+        ...(canViewBilling ? [{ href: `/${workspace}/dashboard/billing`, label: t.dashboard.menu.billing, icon: CreditCard }] : []),
+        ...(canViewSupport ? [{ href: `/${workspace}/dashboard/support`, label: t.dashboard.menu.support, icon: Ticket }] : []),
         { href: `/${workspace}/dashboard/settings`, label: t.dashboard.menu.settings, icon: Settings },
         ...( (data.user?.role === 'admin' || clientRole === 'admin') ? [{ href: `/${workspace}/admin`, label: t.dashboard.menu.admin_panel, icon: Shield }] : [])
     ];
@@ -107,6 +115,9 @@
     let selectedCompany: any = null;
 
     let activeNotificationTab = 'inbox'; // 'inbox' | 'archive'
+    let isArchivingAll = false;
+    let deletingNotificationIds: Record<string, boolean> = {};
+    let archivingNotificationIds: Record<string, boolean> = {};
     
     $: isSpanish = $currentLang === 'es';
 
@@ -356,49 +367,86 @@
                                                     </div>
                                                     
                                                     <!-- Content -->
-                                                    <div class="flex-1 min-w-0">
-                                                        <a 
-                                                            href="{notification.link || '#'}" 
-                                                            class="block group-hover:text-primary transition-colors"
-                                                            on:click|preventDefault={async () => {
-                                                                if (!notification.read) {
-                                                                    const formData = new FormData();
-                                                                    formData.append('id', notification.id.toString());
-                                                                    try {
-                                                                        await fetch(`/${workspace}/dashboard?/markNotificationRead`, {
-                                                                            method: 'POST',
-                                                                            body: formData
-                                                                        });
-                                                                    } catch (e) {
-                                                                        console.error('Failed to mark as read', e);
+                                                    {#if notification.type === 'invitation'}
+                                                        <div class="flex-1 min-w-0">
+                                                            <div class="flex flex-col">
+                                                                <p class="text-sm font-medium leading-snug text-foreground mb-0.5">
+                                                                    {notification.title}
+                                                                </p>
+                                                                <p class="text-xs text-muted-foreground mb-2">
+                                                                    {notification.message}
+                                                                </p>
+                                                                <div class="flex items-center gap-2 mt-1">
+                                                                     <form action="/{workspace}/dashboard?/acceptInvitation" method="POST" use:enhance>
+                                                                        <input type="hidden" name="id" value={notification.id} />
+                                                                        <button type="submit" class="px-2.5 py-1.5 bg-primary text-primary-foreground text-xs font-medium rounded hover:bg-primary/90 transition-colors shadow-sm">
+                                                                            {isSpanish ? 'Aceptar' : 'Accept'}
+                                                                        </button>
+                                                                     </form>
+                                                                     <form action="/{workspace}/dashboard?/rejectInvitation" method="POST" use:enhance>
+                                                                        <input type="hidden" name="id" value={notification.id} />
+                                                                        <button type="submit" class="px-2.5 py-1.5 bg-background border hover:bg-muted text-foreground text-xs font-medium rounded transition-colors">
+                                                                            {isSpanish ? 'Rechazar' : 'Reject'}
+                                                                        </button>
+                                                                     </form>
+                                                                </div>
+                                                                 <p class="text-[10px] text-muted-foreground mt-2">
+                                                                    {new Date(notification.createdAt || new Date()).toLocaleDateString()}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    {:else}
+                                                        <div class="flex-1 min-w-0">
+                                                            <a 
+                                                                href="{notification.link || '#'}" 
+                                                                class="block group-hover:text-primary transition-colors"
+                                                                on:click|preventDefault={async () => {
+                                                                    if (!notification.read) {
+                                                                        const formData = new FormData();
+                                                                        formData.append('id', notification.id.toString());
+                                                                        try {
+                                                                            await fetch(`/${workspace}/dashboard?/markNotificationRead`, {
+                                                                                method: 'POST',
+                                                                                body: formData
+                                                                            });
+                                                                        } catch (e) {
+                                                                            console.error('Failed to mark as read', e);
+                                                                        }
                                                                     }
-                                                                }
-                                                                isNotificationsOpen = false;
-                                                                if (notification.link) window.location.href = notification.link;
-                                                            }}
-                                                        >
-                                                            <p class="text-sm font-medium leading-snug text-foreground mb-0.5">
-                                                                {notification.title}
-                                                            </p>
-                                                            <p class="text-xs text-muted-foreground line-clamp-2">
-                                                                {notification.message}
-                                                            </p>
-                                                            <p class="text-[10px] text-muted-foreground mt-1">
-                                                                {new Date(notification.createdAt || new Date()).toLocaleDateString()}
-                                                            </p>
-                                                        </a>
-                                                    </div>
+                                                                    isNotificationsOpen = false;
+                                                                    if (notification.link) window.location.href = notification.link;
+                                                                }}
+                                                            >
+                                                                <p class="text-sm font-medium leading-snug text-foreground mb-0.5">
+                                                                    {notification.title}
+                                                                </p>
+                                                                <p class="text-xs text-muted-foreground line-clamp-2">
+                                                                    {notification.message}
+                                                                </p>
+                                                                <p class="text-[10px] text-muted-foreground mt-1">
+                                                                    {new Date(notification.createdAt || new Date()).toLocaleDateString()}
+                                                                </p>
+                                                            </a>
+                                                        </div>
+                                                    {/if}
 
                                                     <!-- Actions -->
-                                                    <div class="shrink-0 flex flex-col items-end gap-2">
+                                                    <div class="shrink-0 flex flex-col items-end gap-2 justify-center">
                                                         {#if !notification.read}
-                                                            <div class="w-2 h-2 rounded-full bg-blue-500"></div>
+                                                            <div class="w-2 h-2 rounded-full bg-blue-500 absolute top-4 right-4"></div>
                                                         {/if}
                                                         
                                                         <form 
                                                             action="/{workspace}/dashboard?/archiveNotification" 
                                                             method="POST" 
-                                                            use:enhance
+                                                            use:enhance={() => {
+                                                                archivingNotificationIds[notification.id] = true;
+                                                                return async ({ update }) => {
+                                                                    await update();
+                                                                    delete archivingNotificationIds[notification.id];
+                                                                    archivingNotificationIds = archivingNotificationIds; // Trigger reactivity
+                                                                };
+                                                            }}
                                                             class="opacity-0 group-hover:opacity-100 transition-opacity"
                                                         >
                                                             <input type="hidden" name="id" value={notification.id} />
@@ -406,8 +454,13 @@
                                                                 type="submit" 
                                                                 class="p-1 text-muted-foreground hover:text-foreground hover:bg-muted rounded"
                                                                 title={isSpanish ? 'Archivar' : 'Archive'}
+                                                                disabled={archivingNotificationIds[notification.id]}
                                                             >
-                                                                <Check class="w-3 h-3" />
+                                                                {#if archivingNotificationIds[notification.id]}
+                                                                    <Loader2 class="w-3 h-3 animate-spin" />
+                                                                {:else}
+                                                                    <Check class="w-3 h-3" />
+                                                                {/if}
                                                             </button>
                                                         </form>
                                                     </div>
@@ -439,11 +492,18 @@
                                                              <p class="text-[10px] text-muted-foreground mt-1">{new Date(notification.createdAt || new Date()).toLocaleDateString()}</p>
                                                         </a>
                                                      </div>
-                                                     <div class="shrink-0 flex flex-col items-end gap-2">
+                                                     <div class="shrink-0 flex flex-col items-end gap-2 justify-center">
                                                         <form 
                                                             action="/{workspace}/dashboard?/deleteNotification" 
                                                             method="POST" 
-                                                            use:enhance
+                                                            use:enhance={() => {
+                                                                deletingNotificationIds[notification.id] = true;
+                                                                return async ({ update }) => {
+                                                                    await update();
+                                                                    delete deletingNotificationIds[notification.id];
+                                                                    deletingNotificationIds = deletingNotificationIds; // Trigger reactivity
+                                                                };
+                                                            }}
                                                             class="opacity-0 group-hover:opacity-100 transition-opacity"
                                                         >
                                                             <input type="hidden" name="id" value={notification.id} />
@@ -451,8 +511,13 @@
                                                                 type="submit" 
                                                                 class="p-1 text-muted-foreground hover:text-red-500 hover:bg-muted rounded"
                                                                 title={isSpanish ? 'Eliminar' : 'Delete'}
+                                                                disabled={deletingNotificationIds[notification.id]}
                                                             >
-                                                                <Trash class="w-3 h-3" />
+                                                                {#if deletingNotificationIds[notification.id]}
+                                                                    <Loader2 class="w-3 h-3 animate-spin" />
+                                                                {:else}
+                                                                    <Trash class="w-3 h-3" />
+                                                                {/if}
                                                             </button>
                                                         </form>
                                                      </div>
@@ -466,12 +531,29 @@
                             <!-- Footer -->
                             {#if activeNotificationTab === 'inbox' && inboxNotifications.length > 0}
                                 <div class="p-2 border-t bg-muted/30">
-                                    <form action="/{workspace}/dashboard?/archiveAllNotifications" method="POST" use:enhance class="w-full">
+                                    <form 
+                                        action="/{workspace}/dashboard?/archiveAllNotifications" 
+                                        method="POST" 
+                                        use:enhance={() => {
+                                            isArchivingAll = true;
+                                            return async ({ update }) => {
+                                                await update();
+                                                isArchivingAll = false;
+                                            };
+                                        }} 
+                                        class="w-full"
+                                    >
                                         <button 
                                             type="submit"
                                             class="w-full py-2 text-sm font-medium text-foreground hover:bg-background rounded-md transition-colors border shadow-sm flex items-center justify-center gap-2"
+                                            disabled={isArchivingAll}
                                         >
-                                            {isSpanish ? 'Archivar todo' : 'Archive All'}
+                                            {#if isArchivingAll}
+                                                <Loader2 class="w-4 h-4 animate-spin" />
+                                                {isSpanish ? 'Archivando...' : 'Archiving...'}
+                                            {:else}
+                                                {isSpanish ? 'Archivar todo' : 'Archive All'}
+                                            {/if}
                                         </button>
                                     </form>
                                 </div>

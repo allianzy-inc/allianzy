@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { db } from '$lib/server/db';
-import { cases, requestComments, caseComments, requirementComments, proposalComments, users } from '$lib/server/schema';
+import { cases, requestComments, caseComments, requirementComments, proposalComments, users, userCompanies } from '$lib/server/schema';
 import { uploadFile, getSignedUrlForFile } from '$lib/server/storage';
 import { eq, asc, sql } from 'drizzle-orm';
 import { fail } from '@sveltejs/kit';
@@ -19,6 +19,8 @@ export const load = async ({ params, url }: Parameters<PageServerLoad>[0]) => {
             subject: caseComments.subject,
             userId: caseComments.userId,
             userName: sql<string>`${users.firstName} || ' ' || ${users.lastName}`,
+            authorRole: users.role,
+            companyRole: sql<string>`(SELECT role FROM ${userCompanies} WHERE ${userCompanies.userId} = ${users.id} LIMIT 1)`,
             files: caseComments.files
         })
         .from(caseComments)
@@ -51,6 +53,8 @@ export const load = async ({ params, url }: Parameters<PageServerLoad>[0]) => {
             subject: requestComments.subject,
             userId: requestComments.userId,
             userName: sql<string>`${users.firstName} || ' ' || ${users.lastName}`,
+            authorRole: users.role,
+            companyRole: sql<string>`(SELECT role FROM ${userCompanies} WHERE ${userCompanies.userId} = ${users.id} LIMIT 1)`,
             files: requestComments.files
         })
         .from(requestComments)
@@ -82,6 +86,8 @@ export const load = async ({ params, url }: Parameters<PageServerLoad>[0]) => {
             subject: requirementComments.subject,
             userId: requirementComments.userId,
             userName: sql<string>`${users.firstName} || ' ' || ${users.lastName}`,
+            authorRole: users.role,
+            companyRole: sql<string>`(SELECT role FROM ${userCompanies} WHERE ${userCompanies.userId} = ${users.id} LIMIT 1)`,
             files: requirementComments.files
         })
         .from(requirementComments)
@@ -113,6 +119,8 @@ export const load = async ({ params, url }: Parameters<PageServerLoad>[0]) => {
             subject: proposalComments.subject,
             userId: proposalComments.userId,
             userName: sql<string>`${users.firstName} || ' ' || ${users.lastName}`,
+            authorRole: users.role,
+            companyRole: sql<string>`(SELECT role FROM ${userCompanies} WHERE ${userCompanies.userId} = ${users.id} LIMIT 1)`,
             files: proposalComments.files
         })
         .from(proposalComments)

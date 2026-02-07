@@ -69,7 +69,7 @@ export const handle: Handle = async ({ event, resolve }) => {
             const avatarUrl = await getSignedUrlForFile(localUser.avatarUrl, event.locals.allowedWorkspace);
             
             // Fetch primary company
-            const primaryCompanyLink = await db.query.userCompanies.findFirst({
+            let primaryCompanyLink = await db.query.userCompanies.findFirst({
                 where: and(
                     eq(userCompanies.userId, localUser.id),
                     eq(userCompanies.isPrimary, true)
@@ -78,6 +78,16 @@ export const handle: Handle = async ({ event, resolve }) => {
                     company: true
                 }
             });
+
+            // Fallback: If no primary, take the first one available
+            if (!primaryCompanyLink) {
+                primaryCompanyLink = await db.query.userCompanies.findFirst({
+                    where: eq(userCompanies.userId, localUser.id),
+                    with: {
+                        company: true
+                    }
+                });
+            }
 
             event.locals.user = {
                 id: localUser.id.toString(),

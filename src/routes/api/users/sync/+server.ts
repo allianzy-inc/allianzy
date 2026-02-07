@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
-import { users, workspaces } from '$lib/server/schema';
-import { eq, ilike } from 'drizzle-orm';
+import { users, workspaces, userCompanies } from '$lib/server/schema';
+import { eq, ilike, and } from 'drizzle-orm';
 import type { RequestHandler } from './$types';
 
 export const POST: RequestHandler = async ({ request }) => {
@@ -34,25 +34,37 @@ export const POST: RequestHandler = async ({ request }) => {
         // Check if user already exists (case-insensitive)
         const existingUser = await db.select().from(users).where(ilike(users.email, cleanEmail)).limit(1);
 
+        let user;
+
         if (existingUser.length > 0) {
-            // User exists
-            return json({ success: true, message: 'User already exists', user: existingUser[0] });
+            user = existingUser[0];
+        } else {
+            // Create new user (ensure email is lowercase)
+            const parts = (name || '').trim().split(' ');
+            const firstName = parts[0] || '';
+            const lastName = parts.slice(1).join(' ') || '';
+
+            const newUser = await db.insert(users).values({
+                email: cleanEmail,
+                firstName,
+                lastName,
+                role: role || 'client',
+                workspaceId: workspaceId
+            }).returning();
+            
+            user = newUser[0];
         }
 
-        // Create new user (ensure email is lowercase)
-        const parts = (name || '').trim().split(' ');
-        const firstName = parts[0] || '';
-        const lastName = parts.slice(1).join(' ') || '';
+        // Activate any pending company memberships when user logs in/syncs.
+        // This ensures invited users are automatically enabled upon accepting the invite (signing up/in).
+        await db.update(userCompanies)
+            .set({ status: 'active' })
+            .where(and(
+                eq(userCompanies.userId, user.id),
+                eq(userCompanies.status, 'pending')
+            ));
 
-        const newUser = await db.insert(users).values({
-            email: cleanEmail,
-            firstName,
-            lastName,
-            role: role || 'client',
-            workspaceId: workspaceId
-        }).returning();
-
-        return json({ success: true, user: newUser[0] });
+        return json({ success: true, user });
 
     } catch (error) {
         console.error('Error syncing user:', error);

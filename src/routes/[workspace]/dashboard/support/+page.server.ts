@@ -1,6 +1,6 @@
 import { db } from '$lib/server/db';
-import { cases, projects, services, users, caseComments, workspaces } from '$lib/server/schema';
-import { eq, desc, or, and, sql, asc, isNull } from 'drizzle-orm';
+import { cases, projects, services, users, caseComments, workspaces, userCompanies } from '$lib/server/schema';
+import { eq, desc, or, and, sql, asc, isNull, inArray } from 'drizzle-orm';
 import type { PageServerLoad, Actions } from './$types';
 import { error, fail } from '@sveltejs/kit';
 import { uploadFile, getSignedUrlForFile } from '$lib/server/storage';
@@ -10,6 +10,26 @@ export const load: PageServerLoad = async ({ locals, url, params }) => {
 
     if (!userId || isNaN(userId)) {
         return { tickets: [], projectsList: [], selectedCaseComments: [] };
+    }
+
+    // 0. Fetch permissions
+    let allowedProjectIds: number[] = [];
+    if (locals.user?.companyId) {
+        const userCompany = await db.query.userCompanies.findFirst({
+            where: and(
+                eq(userCompanies.userId, userId),
+                eq(userCompanies.companyId, locals.user.companyId)
+            )
+        });
+
+        if (userCompany && userCompany.permissions) {
+            const perms = userCompany.permissions as Record<string, string[]>;
+            for (const [pid, pList] of Object.entries(perms)) {
+                if (Array.isArray(pList) && pList.includes('support')) {
+                    allowedProjectIds.push(Number(pid));
+                }
+            }
+        }
     }
 
     // 1. Fetch user's tickets
@@ -33,7 +53,10 @@ export const load: PageServerLoad = async ({ locals, url, params }) => {
         // 1. Direct Project Assignment
         eq(projects.clientId, userId),
 
-        // 2. Service Fallback (Only if Project has NO specific client assigned)
+        // 2. Explicit Permissions
+        allowedProjectIds.length > 0 ? inArray(projects.id, allowedProjectIds) : undefined,
+
+        // 3. Service Fallback (Only if Project has NO specific client assigned)
         and(
             eq(workspaces.slug, params.workspace),
             eq(services.clientId, userId),
@@ -66,7 +89,10 @@ export const load: PageServerLoad = async ({ locals, url, params }) => {
         // 1. Direct Project Assignment
         eq(projects.clientId, userId),
 
-        // 2. Service Fallback (Only if Project has NO specific client assigned)
+        // 2. Explicit Permissions
+        allowedProjectIds.length > 0 ? inArray(projects.id, allowedProjectIds) : undefined,
+
+        // 3. Service Fallback (Only if Project has NO specific client assigned)
         and(
             eq(workspaces.slug, params.workspace),
             eq(services.clientId, userId),
@@ -90,9 +116,12 @@ export const load: PageServerLoad = async ({ locals, url, params }) => {
                 authorName: caseComments.authorName,
                 subject: caseComments.subject,
                 userId: caseComments.userId,
+                authorRole: users.role,
+                companyRole: sql<string>`(SELECT role FROM ${userCompanies} WHERE ${userCompanies.userId} = ${users.id} LIMIT 1)`,
                 files: caseComments.files
             })
             .from(caseComments)
+            .leftJoin(users, eq(caseComments.userId, users.id))
             .where(eq(caseComments.caseId, Number(selectedCaseId)))
             .orderBy(asc(caseComments.createdAt));
 

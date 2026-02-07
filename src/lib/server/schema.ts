@@ -222,6 +222,8 @@ export const userCompanies = pgTable('user_companies', {
     userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }),
     companyId: integer('company_id').references(() => companies.id, { onDelete: 'cascade' }),
     role: text('role').default('member'), // admin, member, owner
+    status: text('status').default('active'), // active, inactive
+    permissions: jsonb('permissions'), // { projectId: [permissions] }
     isPrimary: boolean('is_primary').default(false),
     createdAt: timestamp('created_at').defaultNow(),
 });
@@ -241,6 +243,7 @@ export const notifications = pgTable('notifications', {
     message: text('message'),
     type: text('type').default('info'), // info, success, warning, error
     link: text('link'),
+    metadata: jsonb('metadata'), // Extra data for interactive notifications
     read: boolean('read').default(false),
     archived: boolean('archived').default(false),
     createdAt: timestamp('created_at').defaultNow(),

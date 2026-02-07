@@ -422,9 +422,45 @@ export const translations = {
                             name: 'Name',
                             email: 'Email',
                             role: 'Role',
+                            projects: 'Projects',
                             status: 'Status',
                             actions: 'Actions',
-                            active: 'Active'
+                            active: 'Active',
+                            pending: 'Pending',
+                            rejected: 'Rejected',
+                            inactive: 'Inactive',
+                            guest: 'Guest'
+                        },
+                        form: {
+                            title_add: 'Add User',
+                            title_edit: 'Edit User',
+                            first_name: 'First Name',
+                            last_name: 'Last Name',
+                            email: 'Email',
+                            role: 'Role',
+                            role_collaborator: 'Collaborator',
+                            role_admin: 'Admin',
+                            permissions: {
+                                title: 'Permissions',
+                                desc: 'Configure what this user can access.',
+                                projects: 'Projects',
+                                requirements: 'Requirements',
+                                requests: 'Requests',
+                                process: 'Process',
+                                payments: 'Payments',
+                                support: 'Support',
+                                proposals: 'Proposals',
+                                no_projects: 'No projects available to assign.'
+                            },
+                            cancel: 'Cancel',
+                            save: 'Save User',
+                            save_simple: 'Save',
+                            delete: 'Delete User',
+                            delete_simple: 'Delete',
+                            active: 'User Enabled',
+                            active_desc: 'Disable to prevent access.',
+                            confirm_delete: 'Are you sure you want to delete this user? This action cannot be undone.',
+                            confirm_delete_title: 'Delete User'
                         }
                     },
                     compliance: {
@@ -466,6 +502,8 @@ export const translations = {
                             label: 'Label (e.g. Home, Office)',
                             address: 'Full Address',
                             city: 'City',
+                            state: 'State',
+                            postal_code: 'Postal Code',
                             country: 'Country',
                             cancel: 'Cancel',
                             save: 'Save Address'
@@ -927,9 +965,45 @@ export const translations = {
                             name: 'Nombre',
                             email: 'Correo',
                             role: 'Rol',
+                            projects: 'Proyectos',
                             status: 'Estado',
                             actions: 'Acciones',
-                            active: 'Activo'
+                            active: 'Activo',
+                            pending: 'Pendiente',
+                            rejected: 'Rechazada',
+                            inactive: 'Inactivo',
+                            guest: 'Invitado'
+                        },
+                        form: {
+                            title_add: 'Agregar Usuario',
+                            title_edit: 'Editar Usuario',
+                            first_name: 'Nombre',
+                            last_name: 'Apellido',
+                            email: 'Correo Electrónico',
+                            role: 'Rol',
+                            role_collaborator: 'Colaborador',
+                            role_admin: 'Administrador',
+                            permissions: {
+                                title: 'Permisos',
+                                desc: 'Configura a qué tiene acceso este usuario.',
+                                projects: 'Proyectos',
+                                requirements: 'Requerimientos',
+                                requests: 'Solicitudes',
+                                process: 'Proceso',
+                                payments: 'Pagos',
+                                support: 'Soporte',
+                                proposals: 'Propuestas',
+                                no_projects: 'No hay proyectos disponibles para asignar.'
+                            },
+                            cancel: 'Cancelar',
+                            save: 'Guardar Usuario',
+                            save_simple: 'Guardar',
+                            delete: 'Eliminar Usuario',
+                            delete_simple: 'Eliminar',
+                            active: 'Usuario Habilitado',
+                            active_desc: 'Deshabilitar para prevenir acceso.',
+                            confirm_delete: '¿Estás seguro de que deseas eliminar este usuario? Esta acción no se puede deshacer.',
+                            confirm_delete_title: 'Eliminar Usuario'
                         }
                     },
                     compliance: {
@@ -966,6 +1040,8 @@ export const translations = {
                             label: 'Etiqueta (ej. Casa, Oficina)',
                             address: 'Dirección completa',
                             city: 'Ciudad',
+                            state: 'Estado',
+                            postal_code: 'Código Postal',
                             country: 'País',
                             cancel: 'Cancelar',
                             save: 'Guardar Dirección'

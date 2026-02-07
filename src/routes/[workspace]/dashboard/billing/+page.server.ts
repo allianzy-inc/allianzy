@@ -1,7 +1,7 @@
 import { db } from '$lib/server/db';
-import { payments, projects, services } from '$lib/server/schema';
+import { payments, projects, services, userCompanies } from '$lib/server/schema';
 import { getSignedUrlForFile } from '$lib/server/storage';
-import { eq, or, desc } from 'drizzle-orm';
+import { eq, or, desc, and, inArray } from 'drizzle-orm';
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 
@@ -10,6 +10,26 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 
     if (!userId || isNaN(userId)) {
         return { payments: [] };
+    }
+
+    // 0. Fetch permissions
+    let allowedProjectIds: number[] = [];
+    if (locals.user?.companyId) {
+        const userCompany = await db.query.userCompanies.findFirst({
+            where: and(
+                eq(userCompanies.userId, userId),
+                eq(userCompanies.companyId, locals.user.companyId)
+            )
+        });
+
+        if (userCompany && userCompany.permissions) {
+            const perms = userCompany.permissions as Record<string, string[]>;
+            for (const [pid, pList] of Object.entries(perms)) {
+                if (Array.isArray(pList) && pList.includes('payments')) {
+                    allowedProjectIds.push(Number(pid));
+                }
+            }
+        }
     }
 
     const rawPayments = await db.select({
@@ -28,7 +48,8 @@ export const load: PageServerLoad = async ({ locals, params }) => {
     .leftJoin(services, eq(projects.serviceId, services.id))
     .where(or(
         eq(projects.clientId, userId),
-        eq(services.clientId, userId)
+        eq(services.clientId, userId),
+        allowedProjectIds.length > 0 ? inArray(projects.id, allowedProjectIds) : undefined
     ))
     .orderBy(desc(payments.dueDate));
 

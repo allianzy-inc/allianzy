@@ -1,1 +1,1 @@
-export { default as component } from "../../../../src/routes/[workspace]/dashboard/+layout.svelte";
+export { default as component } from "../../../../src/routes/[workspace]/admin/finance/+layout.svelte";

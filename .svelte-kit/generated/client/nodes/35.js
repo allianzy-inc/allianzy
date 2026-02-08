@@ -1,0 +1,1 @@
+export { default as component } from "../../../../src/routes/[workspace]/dashboard/support/+page.svelte";

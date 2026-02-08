@@ -1,16 +1,21 @@
 <script lang="ts">
     import { page } from '$app/stores';
     import { onMount } from 'svelte';
-    import { User, LayoutDashboard, Briefcase, Calendar, Ticket, Settings, LogOut, MessageSquare, Mail, Users, Package, Home, Moon, Sun, Monitor, Languages, Check, ChevronRight } from 'lucide-svelte';
+    import { User, LayoutDashboard, Briefcase, Calendar, Ticket, Settings, LogOut, MessageSquare, Mail, Users, Package, Home, Moon, Sun, Monitor, Languages, Check, ChevronRight, BadgeDollarSign } from 'lucide-svelte';
     import { authClient } from '$lib/auth-client';
     import { goto } from '$app/navigation';
     import logoLight from '$lib/assets/brand/allianzy/logo-light.svg';
     import logoDark from '$lib/assets/brand/allianzy/logo-dark.svg';
     import { currentLang, translations } from '$lib/i18n';
 
+    import { financeRole } from '$lib/stores/finance-role.store';
+
     $: t = translations[$currentLang];
     $: workspace = $page.params.workspace;
     $: path = $page.url.pathname;
+    
+    // Mock RBAC visibility
+    $: showFinance = ['admin', 'accountant', 'client_owner'].includes($financeRole);
     
     let theme: 'light' | 'dark' | 'system' = 'system';
     let user: any = null;
@@ -91,6 +96,7 @@
         { href: `/${workspace}/admin/users`, label: 'Usuarios', icon: Users },
         { href: `/${workspace}/admin/services`, label: 'Servicios', icon: Package },
         { href: `/${workspace}/admin/projects`, label: 'Proyectos', icon: Briefcase },
+        ...(showFinance ? [{ href: `/${workspace}/admin/finance`, label: 'Finance', icon: BadgeDollarSign }] : []),
         { href: `/${workspace}/admin/support`, label: 'Soporte', icon: Ticket },
         { href: `/${workspace}/admin/settings`, label: 'Configuraciones', icon: Settings },
     ];

@@ -26,6 +26,28 @@
 	"/[workspace]/admin/cases": [
 		"src/routes/[workspace]/+layout.server.ts"
 	],
+	"/[workspace]/admin/finance": [
+		"src/routes/[workspace]/+layout.server.ts",
+		"src/routes/[workspace]/+layout.server.ts"
+	],
+	"/[workspace]/admin/finance/categories": [
+		"src/routes/[workspace]/+layout.server.ts"
+	],
+	"/[workspace]/admin/finance/forecast": [
+		"src/routes/[workspace]/+layout.server.ts"
+	],
+	"/[workspace]/admin/finance/obligations": [
+		"src/routes/[workspace]/+layout.server.ts"
+	],
+	"/[workspace]/admin/finance/recurring": [
+		"src/routes/[workspace]/+layout.server.ts"
+	],
+	"/[workspace]/admin/finance/transactions": [
+		"src/routes/[workspace]/+layout.server.ts"
+	],
+	"/[workspace]/admin/finance/vendors": [
+		"src/routes/[workspace]/+layout.server.ts"
+	],
 	"/[workspace]/admin/profile": [
 		"src/routes/[workspace]/+layout.server.ts"
 	],

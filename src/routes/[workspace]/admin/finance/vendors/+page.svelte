@@ -1,0 +1,13 @@
+<script lang="ts">
+    import { Users } from 'lucide-svelte';
+</script>
+
+<div class="flex flex-col items-center justify-center h-[60vh] text-center space-y-4">
+    <div class="p-4 bg-indigo-100 dark:bg-indigo-900/30 rounded-full">
+        <Users class="w-12 h-12 text-indigo-600 dark:text-indigo-400" />
+    </div>
+    <h1 class="text-2xl font-bold">Vendors</h1>
+    <p class="text-muted-foreground max-w-md">
+        This module is coming soon. Manage your supplier database, contact details, and payment terms.
+    </p>
+</div>

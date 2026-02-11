@@ -238,9 +238,14 @@ export const actions = {
                 maxAge: 60 * 60 * 24 * 7
             });
 
-            // En producción definir BELTRIX_AGENCY_URL (ej. https://beltrix.agency) para redirigir al sitio externo
+            // Redirigir a Beltrix: en Allianzy no podemos usar /beltrix/intake (hooks redirigen a /). Usar URL externa en producción.
+            const host = (request.headers.get('x-forwarded-host') || request.headers.get('host') || '').split(',')[0].trim();
+            const isLocalhost = host.includes('localhost') || host.includes('127.0.0.1');
+            const isProduction = process.env.NODE_ENV === 'production';
             const beltrixBase = (env.BELTRIX_AGENCY_URL ?? '').replace(/\/$/, '');
-            const url = beltrixBase ? `${beltrixBase}?from=${workspace}` : `/beltrix/intake?from=${workspace}`;
+            const useExternalBeltrix = Boolean(beltrixBase || (workspace === 'allianzy' && (isProduction || !isLocalhost)));
+            const baseUrl = beltrixBase || (useExternalBeltrix ? 'https://beltrix.agency' : '');
+            const url = baseUrl ? `${baseUrl}?from=${workspace}` : `/beltrix/intake?from=${workspace}`;
             throw redirect(303, url);
         }
 

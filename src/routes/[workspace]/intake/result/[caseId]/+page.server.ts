@@ -5,7 +5,7 @@ import { and, eq } from 'drizzle-orm';
 import { error } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
 
-export const load: PageServerLoad = async ({ params, locals, cookies }) => {
+export const load: PageServerLoad = async ({ params, locals, cookies, request }) => {
     const workspace = params.workspace;
     const caseId = Number(params.caseId);
 
@@ -33,7 +33,13 @@ export const load: PageServerLoad = async ({ params, locals, cookies }) => {
 
     const status = intakeCase.status ?? 'draft';
 
-    const beltrixBase = (env.BELTRIX_AGENCY_URL ?? '').replace(/\/$/, '');
+    const host = (request.headers.get('x-forwarded-host') || request.headers.get('host') || '').split(',')[0].trim();
+    const isLocalhost = host.includes('localhost') || host.includes('127.0.0.1');
+    const isProduction = process.env.NODE_ENV === 'production';
+    let beltrixBase = (env.BELTRIX_AGENCY_URL ?? '').replace(/\/$/, '');
+    if (!beltrixBase && workspace === 'allianzy' && (isProduction || !isLocalhost)) {
+        beltrixBase = 'https://beltrix.agency';
+    }
 
     return {
         workspace,

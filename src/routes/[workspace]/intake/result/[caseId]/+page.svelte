@@ -16,7 +16,7 @@
     const beltrixHomeHref = beltrixUrl || '/beltrix';
 </script>
 
-<div class="max-w-3xl mx-auto py-12 px-4 space-y-8">
+<div class="space-y-8">
     <div class="space-y-2">
         <h1 class="text-3xl font-bold">Resultado de la evaluación</h1>
         {#if data.score != null}

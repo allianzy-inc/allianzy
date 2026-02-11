@@ -34,11 +34,14 @@
         </a>
     </div>
 {:else}
-    <div class="max-w-3xl mx-auto py-12 px-4 space-y-8">
+    <div class="space-y-8">
         <div class="space-y-2">
             <h1 class="text-3xl font-bold">Iniciar evaluación</h1>
             <p class="text-muted-foreground">
                 Pre-evaluación rápida para entender si tu desafío encaja con Allianzy. No requiere cuenta.
+            </p>
+            <p class="text-sm text-muted-foreground/90">
+                No solicitamos información sensible. Podés describir el problema a nivel general.
             </p>
         </div>
 
@@ -52,7 +55,7 @@
             <!-- PRE-EVALUACIÓN -->
             <form method="POST" action="?/start" class="space-y-8">
                 {#if form?.error}
-                    <div class="rounded-md bg-red-50 text-red-700 px-4 py-3 text-sm">
+                    <div class="rounded-md bg-red-50 text-red-700 dark:bg-red-950/80 dark:border dark:border-red-800/50 dark:text-red-200 px-4 py-3 text-sm">
                         {form.error}
                     </div>
                 {/if}
@@ -167,7 +170,7 @@
                 </div>
 
                 <div class="space-y-4">
-                    <h2 class="text-xl font-semibold">Personas afectadas directamente por este problema</h2>
+                    <h2 class="text-xl font-semibold">¿Cuántas personas usan o dependen de este proceso/sistema hoy?</h2>
                     <div class="grid md:grid-cols-4 gap-3 text-sm">
                         <label class="inline-flex items-center gap-2">
                             <input type="radio" name="people" value="1_3" required />
@@ -221,7 +224,7 @@
                 <input type="hidden" name="case_id" value={caseId} />
 
                 {#if form?.error}
-                    <div class="rounded-md bg-red-50 text-red-700 px-4 py-3 text-sm">
+                    <div class="rounded-md bg-red-50 text-red-700 dark:bg-red-950/80 dark:border dark:border-red-800/50 dark:text-red-200 px-4 py-3 text-sm">
                         {form.error}
                     </div>
                 {/if}
@@ -248,6 +251,40 @@
                         rows="4"
                         class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                     ></textarea>
+                </div>
+
+                <div class="space-y-3">
+                    <h2 class="text-xl font-semibold">¿En qué área ocurre principalmente el problema?</h2>
+                    <div class="grid md:grid-cols-2 gap-3 text-sm">
+                        <label class="inline-flex items-center gap-2">
+                            <input type="radio" name="problem_area" value="operacion_backoffice" required />
+                            Operación / backoffice
+                        </label>
+                        <label class="inline-flex items-center gap-2">
+                            <input type="radio" name="problem_area" value="ventas_comercial" required />
+                            Ventas / comercial
+                        </label>
+                        <label class="inline-flex items-center gap-2">
+                            <input type="radio" name="problem_area" value="produccion_taller" required />
+                            Producción / taller
+                        </label>
+                        <label class="inline-flex items-center gap-2">
+                            <input type="radio" name="problem_area" value="logistica" required />
+                            Logística
+                        </label>
+                        <label class="inline-flex items-center gap-2">
+                            <input type="radio" name="problem_area" value="finanzas_pagos" required />
+                            Finanzas / pagos
+                        </label>
+                        <label class="inline-flex items-center gap-2">
+                            <input type="radio" name="problem_area" value="soporte_atencion" required />
+                            Soporte / atención al cliente
+                        </label>
+                        <label class="inline-flex items-center gap-2">
+                            <input type="radio" name="problem_area" value="ti_sistemas" required />
+                            TI / sistemas
+                        </label>
+                    </div>
                 </div>
 
                 <div class="space-y-3">
@@ -315,23 +352,23 @@
                 </div>
 
                 <div class="space-y-3">
-                    <h2 class="text-xl font-semibold">¿Quién toma la decisión final?</h2>
-                    <div class="grid md:grid-cols-4 gap-3 text-sm">
+                    <h2 class="text-xl font-semibold">¿Quién valida o autoriza avanzar con el proyecto?</h2>
+                    <div class="grid md:grid-cols-2 gap-3 text-sm">
                         <label class="inline-flex items-center gap-2">
                             <input type="radio" name="final_decisor" value="yo" required />
                             Yo
                         </label>
                         <label class="inline-flex items-center gap-2">
-                            <input type="radio" name="final_decisor" value="direccion" required />
-                            Dirección
+                            <input type="radio" name="final_decisor" value="direccion_gerencia" required />
+                            Dirección / gerencia
                         </label>
                         <label class="inline-flex items-center gap-2">
                             <input type="radio" name="final_decisor" value="socios" required />
                             Socios
                         </label>
                         <label class="inline-flex items-center gap-2">
-                            <input type="radio" name="final_decisor" value="otro" required />
-                            Otro
+                            <input type="radio" name="final_decisor" value="comite_compras_legal" required />
+                            Comité / compras / legal
                         </label>
                     </div>
                 </div>

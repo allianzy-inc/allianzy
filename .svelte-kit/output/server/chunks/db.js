@@ -1,0 +1,398 @@
+import { b as private_env } from "./shared-server.js";
+import { neon } from "@neondatabase/serverless";
+import { drizzle } from "drizzle-orm/neon-http";
+import { pgTable, timestamp, text, serial, integer, jsonb, index, decimal, char, boolean, primaryKey } from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
+const workspaces = pgTable("workspaces", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  slug: text("slug").notNull().unique(),
+  createdAt: timestamp("created_at").defaultNow()
+});
+const users = pgTable("users", {
+  id: serial("id").primaryKey(),
+  email: text("email").notNull().unique(),
+  firstName: text("first_name"),
+  lastName: text("last_name"),
+  role: text("role").default("staff"),
+  // staff, client, provider
+  avatarUrl: text("avatar_url"),
+  phone: text("phone"),
+  addresses: jsonb("addresses"),
+  // Array of { label, address, city, country, state, postalCode }
+  company: text("company"),
+  companyLogo: text("company_logo"),
+  companyLinks: jsonb("company_links"),
+  // Array of { title, url }
+  jobTitle: text("job_title"),
+  identification: jsonb("identification"),
+  // Array of { type: string, value: string }
+  notes: text("notes"),
+  workspaceId: integer("workspace_id").references(() => workspaces.id),
+  createdAt: timestamp("created_at").defaultNow()
+});
+const services = pgTable("services", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  status: text("status").default("Active"),
+  // Active, Pending Payment, Inactive
+  price: text("price"),
+  renewalDate: text("renewal_date"),
+  clientId: integer("client_id").references(() => users.id),
+  // References local User ID
+  workspaceId: integer("workspace_id").references(() => workspaces.id),
+  createdAt: timestamp("created_at").defaultNow()
+});
+const subservices = pgTable("subservices", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  status: text("status").default("Active"),
+  price: text("price"),
+  serviceId: integer("service_id").references(() => services.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow()
+});
+const projects = pgTable("projects", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  status: text("status").default("Pending"),
+  provider: text("provider").default("Allianzy"),
+  // Allianzy, Beltrix, Provider
+  clientId: integer("client_id").references(() => users.id),
+  serviceId: integer("service_id").references(() => services.id),
+  links: jsonb("links"),
+  // Array of { title, url }
+  imageUrl: text("image_url"),
+  startDate: timestamp("start_date"),
+  endDate: timestamp("end_date"),
+  createdAt: timestamp("created_at").defaultNow()
+});
+const cases = pgTable("cases", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  description: text("description"),
+  status: text("status").default("open"),
+  // open, in_progress, closed
+  priority: text("priority").default("medium"),
+  // low, medium, high
+  clientId: integer("client_id").references(() => users.id),
+  // Creator
+  projectId: integer("project_id").references(() => projects.id),
+  assignedTo: integer("assigned_to").references(() => users.id),
+  // Admin/Staff
+  subject: text("subject"),
+  content: text("content").notNull(),
+  files: jsonb("files"),
+  closedAt: timestamp("closed_at"),
+  createdAt: timestamp("created_at").defaultNow()
+});
+const intakeCases = pgTable("intake_cases", {
+  id: serial("id").primaryKey(),
+  // Workspace slug: e.g. 'allianzy', 'beltrix'
+  workspace: text("workspace").notNull(),
+  status: text("status").notNull().default("draft"),
+  // draft, qualifies_allianzy, needs_review, closed_no_fit, redirect_beltrix, pending_contact
+  score: integer("score"),
+  answersJson: jsonb("answers_json").$type().default(null),
+  anonymousToken: text("anonymous_token").notNull(),
+  userId: integer("user_id").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+}, (t) => ({
+  workspaceIdx: index("intake_cases_workspace_idx").on(t.workspace),
+  statusIdx: index("intake_cases_status_idx").on(t.status),
+  tokenIdx: index("intake_cases_token_idx").on(t.anonymousToken)
+}));
+const intakeCaseContacts = pgTable("intake_case_contacts", {
+  id: serial("id").primaryKey(),
+  caseId: integer("case_id").references(() => intakeCases.id, { onDelete: "cascade" }),
+  fullName: text("full_name").notNull(),
+  email: text("email").notNull(),
+  company: text("company").notNull(),
+  roleTitle: text("role_title"),
+  createdAt: timestamp("created_at").defaultNow()
+}, (t) => ({
+  caseIdIdx: index("intake_case_contacts_case_id_idx").on(t.caseId),
+  emailIdx: index("intake_case_contacts_email_idx").on(t.email)
+}));
+const caseComments = pgTable("case_comments", {
+  id: serial("id").primaryKey(),
+  caseId: integer("case_id").references(() => cases.id, { onDelete: "cascade" }),
+  userId: integer("user_id").references(() => users.id),
+  authorName: text("author_name"),
+  subject: text("subject"),
+  content: text("content").notNull(),
+  files: jsonb("files"),
+  createdAt: timestamp("created_at").defaultNow()
+}, (t) => ({
+  caseIdIdx: index("case_comments_case_id_idx").on(t.caseId)
+}));
+const requestComments = pgTable("request_comments", {
+  id: serial("id").primaryKey(),
+  requestId: integer("request_id").references(() => requests.id, { onDelete: "cascade" }),
+  userId: integer("user_id").references(() => users.id),
+  authorName: text("author_name"),
+  subject: text("subject"),
+  content: text("content").notNull(),
+  files: jsonb("files"),
+  createdAt: timestamp("created_at").defaultNow()
+}, (t) => ({
+  requestIdIdx: index("request_comments_request_id_idx").on(t.requestId)
+}));
+const projectMilestones = pgTable("project_milestones", {
+  id: serial("id").primaryKey(),
+  projectId: integer("project_id").references(() => projects.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  order: integer("order").notNull(),
+  status: text("status").default("pending"),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").defaultNow()
+});
+const proposals = pgTable("project_proposals", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  description: text("description"),
+  status: text("status").default("pending"),
+  // pending, approved, rejected
+  documentUrl: text("document_url"),
+  files: jsonb("files"),
+  // Array of { name, url, type }
+  projectId: integer("project_id").references(() => projects.id),
+  createdAt: timestamp("created_at").defaultNow()
+});
+const proposalComments = pgTable("proposal_comments", {
+  id: serial("id").primaryKey(),
+  proposalId: integer("proposal_id").references(() => proposals.id, { onDelete: "cascade" }),
+  userId: integer("user_id").references(() => users.id),
+  authorName: text("author_name"),
+  subject: text("subject"),
+  content: text("content").notNull(),
+  files: jsonb("files"),
+  createdAt: timestamp("created_at").defaultNow()
+}, (t) => ({
+  proposalIdIdx: index("proposal_comments_proposal_id_idx").on(t.proposalId)
+}));
+const payments = pgTable("payments", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  // e.g., "Initial Deposit", "Milestone 2"
+  amount: text("amount").notNull(),
+  status: text("status").default("pending"),
+  // pending, paid, overdue
+  documentUrl: text("document_url"),
+  dueDate: timestamp("due_date"),
+  paidAt: timestamp("paid_at"),
+  projectId: integer("project_id").references(() => projects.id),
+  // Keeping for backward compatibility/migration, but moving to join table
+  // New fields requested
+  amountOriginal: decimal("amount_original", { precision: 14, scale: 2 }),
+  currencyOriginal: char("currency_original", { length: 3 }),
+  exchangeRate: decimal("exchange_rate", { precision: 14, scale: 6 }),
+  amountUsd: decimal("amount_usd", { precision: 14, scale: 2 }),
+  paymentMethod: text("payment_method"),
+  providerPaymentId: text("provider_payment_id"),
+  createdAt: timestamp("created_at").defaultNow()
+});
+const requests = pgTable("requests", {
+  id: serial("id").primaryKey(),
+  projectId: integer("project_id").references(() => projects.id),
+  clientId: integer("client_id").references(() => users.id),
+  title: text("title").notNull(),
+  description: text("description"),
+  status: text("status").default("pending"),
+  files: jsonb("files"),
+  createdAt: timestamp("created_at").defaultNow()
+});
+const requirements = pgTable("requirements", {
+  id: serial("id").primaryKey(),
+  projectId: integer("project_id").references(() => projects.id),
+  title: text("title").notNull(),
+  description: text("description"),
+  status: text("status").default("pending"),
+  files: jsonb("files"),
+  createdAt: timestamp("created_at").defaultNow()
+});
+const requirementComments = pgTable("requirement_comments", {
+  id: serial("id").primaryKey(),
+  requirementId: integer("requirement_id").references(() => requirements.id, { onDelete: "cascade" }),
+  userId: integer("user_id").references(() => users.id),
+  authorName: text("author_name"),
+  subject: text("subject"),
+  content: text("content").notNull(),
+  files: jsonb("files"),
+  createdAt: timestamp("created_at").defaultNow()
+}, (t) => ({
+  requirementIdIdx: index("requirement_comments_requirement_id_idx").on(t.requirementId)
+}));
+const companies = pgTable("companies", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  logo: text("logo"),
+  phone: text("phone"),
+  email: text("email"),
+  website: text("website"),
+  region: text("region"),
+  timezone: text("timezone"),
+  address: jsonb("address"),
+  // { street, city, state, postalCode, country, officeName }
+  addresses: jsonb("addresses"),
+  // Array of { label, address, city, country, state, postalCode }
+  links: jsonb("links"),
+  // Array of { title, url }
+  documents: jsonb("documents"),
+  // Array of { type: string, value: string }
+  registrationDetails: jsonb("registration_details"),
+  // { acn, abn, ndisRegistration }
+  workspaceId: integer("workspace_id").references(() => workspaces.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+const userCompanies = pgTable("user_companies", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }),
+  companyId: integer("company_id").references(() => companies.id, { onDelete: "cascade" }),
+  role: text("role").default("member"),
+  // admin, member, owner
+  status: text("status").default("active"),
+  // active, inactive
+  permissions: jsonb("permissions"),
+  // { projectId: [permissions] }
+  isPrimary: boolean("is_primary").default(false),
+  createdAt: timestamp("created_at").defaultNow()
+});
+const projectPayments = pgTable("project_payments", {
+  projectId: integer("project_id").references(() => projects.id, { onDelete: "cascade" }).notNull(),
+  paymentId: integer("payment_id").references(() => payments.id, { onDelete: "cascade" }).notNull()
+}, (t) => ({
+  pk: primaryKey({ columns: [t.projectId, t.paymentId] })
+}));
+const notifications = pgTable("notifications", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  title: text("title").notNull(),
+  message: text("message"),
+  type: text("type").default("info"),
+  // info, success, warning, error
+  link: text("link"),
+  metadata: jsonb("metadata"),
+  // Extra data for interactive notifications
+  read: boolean("read").default(false),
+  archived: boolean("archived").default(false),
+  createdAt: timestamp("created_at").defaultNow()
+}, (t) => ({
+  userIdIdx: index("notifications_user_id_idx").on(t.userId)
+}));
+const usersRelations = relations(users, ({ many }) => ({
+  userCompanies: many(userCompanies),
+  notifications: many(notifications)
+}));
+const companiesRelations = relations(companies, ({ many }) => ({
+  userCompanies: many(userCompanies)
+}));
+const userCompaniesRelations = relations(userCompanies, ({ one }) => ({
+  user: one(users, {
+    fields: [userCompanies.userId],
+    references: [users.id]
+  }),
+  company: one(companies, {
+    fields: [userCompanies.companyId],
+    references: [companies.id]
+  })
+}));
+const paymentsRelations = relations(payments, ({ many }) => ({
+  projectPayments: many(projectPayments)
+}));
+const projectsRelations = relations(projects, ({ many }) => ({
+  projectPayments: many(projectPayments)
+}));
+const projectPaymentsRelations = relations(projectPayments, ({ one }) => ({
+  project: one(projects, {
+    fields: [projectPayments.projectId],
+    references: [projects.id]
+  }),
+  payment: one(payments, {
+    fields: [projectPayments.paymentId],
+    references: [payments.id]
+  })
+}));
+const notificationsRelations = relations(notifications, ({ one }) => ({
+  user: one(users, {
+    fields: [notifications.userId],
+    references: [users.id]
+  })
+}));
+const intakeCasesRelations = relations(intakeCases, ({ many }) => ({
+  contacts: many(intakeCaseContacts)
+}));
+const intakeCaseContactsRelations = relations(intakeCaseContacts, ({ one }) => ({
+  intakeCase: one(intakeCases, {
+    fields: [intakeCaseContacts.caseId],
+    references: [intakeCases.id]
+  })
+}));
+const schema = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+  __proto__: null,
+  caseComments,
+  cases,
+  companies,
+  companiesRelations,
+  intakeCaseContacts,
+  intakeCaseContactsRelations,
+  intakeCases,
+  intakeCasesRelations,
+  notifications,
+  notificationsRelations,
+  payments,
+  paymentsRelations,
+  projectMilestones,
+  projectPayments,
+  projectPaymentsRelations,
+  projects,
+  projectsRelations,
+  proposalComments,
+  proposals,
+  requestComments,
+  requests,
+  requirementComments,
+  requirements,
+  services,
+  subservices,
+  userCompanies,
+  userCompaniesRelations,
+  users,
+  usersRelations,
+  workspaces
+}, Symbol.toStringTag, { value: "Module" }));
+const connectionString = private_env.DATABASE_URL;
+if (!connectionString) {
+  console.warn("DATABASE_URL is not set. Database connection will not be available.");
+}
+const sql = neon(connectionString || "postgresql://placeholder");
+const db = drizzle(sql, { schema });
+export {
+  userCompanies as a,
+  projectMilestones as b,
+  cases as c,
+  db as d,
+  proposals as e,
+  payments as f,
+  projectPayments as g,
+  requests as h,
+  intakeCases as i,
+  proposalComments as j,
+  requirementComments as k,
+  requestComments as l,
+  caseComments as m,
+  notifications as n,
+  subservices as o,
+  projects as p,
+  companies as q,
+  requirements as r,
+  services as s,
+  intakeCaseContacts as t,
+  users as u,
+  workspaces as w
+};

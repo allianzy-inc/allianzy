@@ -1,0 +1,1 @@
+export { default as component } from "../../../../src/routes/[workspace]/admin/finance/transactions/+page.svelte";

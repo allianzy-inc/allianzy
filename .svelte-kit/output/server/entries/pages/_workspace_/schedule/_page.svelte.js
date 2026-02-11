@@ -1,0 +1,7 @@
+import "clsx";
+function _page($$renderer) {
+  $$renderer.push(`<div class="space-y-6"><h2 class="text-2xl font-bold tracking-tight">Schedule a Meeting</h2> <div class="bg-card border rounded-lg p-8 flex items-center justify-center min-h-[600px]"><div class="text-center space-y-4 w-full"><p class="text-muted-foreground">Select a time slot below</p> <div class="w-full h-[500px] bg-gray-50 rounded border border-dashed flex flex-col items-center justify-center gap-4"><span class="text-gray-400 font-medium">Calendly Widget Placeholder</span> <button class="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:opacity-90">Book Demo</button></div></div></div></div>`);
+}
+export {
+  _page as default
+};

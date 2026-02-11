@@ -1,0 +1,59 @@
+import { Z as store_get, $ as unsubscribe_stores, a6 as bind_props } from "../../../../../../chunks/index2.js";
+import { p as page } from "../../../../../../chunks/stores.js";
+import { e as escape_html } from "../../../../../../chunks/escaping.js";
+import { a as attr } from "../../../../../../chunks/attributes.js";
+function _page($$renderer, $$props) {
+  $$renderer.component(($$renderer2) => {
+    var $$store_subs;
+    let data = $$props["data"];
+    const workspace = store_get($$store_subs ??= {}, "$page", page).params.workspace;
+    const casePath = `/${workspace}/intake/result/${data.caseId}`;
+    const registerUrl = `/${workspace}/auth/login?mode=register&redirectTo=${encodeURIComponent(casePath)}`;
+    const contactUrl = `/${workspace}/intake/contact/${data.caseId}`;
+    const isAllianzy = workspace === "allianzy";
+    const beltrixUrl = data.beltrixAgencyUrl ?? "";
+    const beltrixIntakeHref = beltrixUrl ? `${beltrixUrl}?from=allianzy` : "/beltrix/intake";
+    const beltrixHomeHref = beltrixUrl || "/beltrix";
+    $$renderer2.push(`<div class="space-y-8"><div class="space-y-2"><h1 class="text-3xl font-bold">Resultado de la evaluación</h1> `);
+    if (data.score != null) {
+      $$renderer2.push("<!--[-->");
+      $$renderer2.push(`<p class="text-muted-foreground text-sm">Score interno: ${escape_html(data.score)}</p>`);
+    } else {
+      $$renderer2.push("<!--[!-->");
+    }
+    $$renderer2.push(`<!--]--></div> `);
+    if (data.status === "redirect_beltrix") {
+      $$renderer2.push("<!--[-->");
+      $$renderer2.push(`<div class="space-y-4"><p class="text-lg">Por el tipo de necesidad que marcaste, este caso encaja mejor con <strong>Beltrix Agency</strong> (marketing, diseño y web).</p> <p class="text-muted-foreground">Podés continuar el proceso directamente desde Beltrix para trabajar sobre la parte creativa
+                y operativa de tu proyecto.</p> <a${attr("href", beltrixIntakeHref)} class="inline-flex items-center justify-center px-6 py-3 rounded-full bg-primary text-primary-foreground font-semibold hover:opacity-90 transition-colors">Ir a Beltrix</a></div>`);
+    } else {
+      $$renderer2.push("<!--[!-->");
+      if (data.status === "closed_no_fit") {
+        $$renderer2.push("<!--[-->");
+        $$renderer2.push(`<div class="space-y-4"><p class="text-lg font-medium">En este momento, el desafío que describiste no parece requerir el tipo de intervención
+                estructural que hace Allianzy.</p> <p class="text-muted-foreground">Esto no significa que no haya una solución, sino que probablemente sea más eficiente abordarlo
+                desde servicios operativos o de marketing tradicionales.</p> <a${attr("href", beltrixHomeHref)} class="inline-flex items-center justify-center px-6 py-3 rounded-full bg-primary text-primary-foreground font-semibold hover:opacity-90 transition-colors">Ver alternativas en Beltrix</a></div>`);
+      } else {
+        $$renderer2.push("<!--[!-->");
+        $$renderer2.push(`<div class="space-y-4"><p class="text-lg font-medium">Tu caso <strong>${escape_html(data.status === "qualifies_allianzy" ? "califica para Allianzy" : "requiere revisión técnica")}</strong>.</p> <p class="text-muted-foreground">A partir de la información que compartiste, tiene sentido avanzar con una conversación técnica
+                para entender el alcance real y decidir el siguiente paso.</p></div> <div class="grid md:grid-cols-2 gap-6 mt-6"><div class="border rounded-2xl p-6 space-y-3 bg-card"><h2 class="text-xl font-semibold">Agendar llamada técnica</h2> <p class="text-sm text-muted-foreground">Recomendado si querés revisar el caso directamente con nuestro equipo.</p> <p class="text-xs text-muted-foreground">Si no tenés cuenta todavía, te vamos a pedir que inicies sesión primero.</p> <a${attr("href", data.hasSession ? `/${workspace}/dashboard/contact` : registerUrl)} class="inline-flex items-center justify-center px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-colors mt-2">Agendar llamada técnica</a></div> <div class="border rounded-2xl p-6 space-y-3 bg-card/80"><h2 class="text-xl font-semibold">Solicitar contacto (sin cuenta)</h2> <p class="text-sm text-muted-foreground">Si preferís no crear una cuenta en esta instancia, podés dejar tus datos y
+                    continuar el proceso por email.</p> <a${attr("href", contactUrl)} class="inline-flex items-center justify-center px-5 py-2.5 rounded-full bg-secondary text-secondary-foreground text-sm font-semibold hover:opacity-90 transition-colors mt-2">Solicitar contacto</a></div></div>`);
+      }
+      $$renderer2.push(`<!--]-->`);
+    }
+    $$renderer2.push(`<!--]--> `);
+    if (isAllianzy) {
+      $$renderer2.push("<!--[-->");
+      $$renderer2.push(`<p class="text-xs text-muted-foreground mt-8">Esta evaluación no es una propuesta formal ni una aceptación definitiva de proyecto. Sirve como
+            filtro estructural para priorizar los casos donde Allianzy puede aportar el mayor impacto.</p>`);
+    } else {
+      $$renderer2.push("<!--[!-->");
+    }
+    $$renderer2.push(`<!--]--></div>`);
+    if ($$store_subs) unsubscribe_stores($$store_subs);
+    bind_props($$props, { data });
+  });
+}
+export {
+  _page as default
+};

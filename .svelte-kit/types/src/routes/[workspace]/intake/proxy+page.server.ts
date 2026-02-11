@@ -39,7 +39,22 @@ type CurrentStack =
     | 'sistema_propio'
     | 'sin_proceso_formal';
 
-type FinalDecisor = 'yo' | 'direccion' | 'socios' | 'otro';
+type FinalDecisor =
+    | 'yo'
+    | 'direccion_gerencia'
+    | 'socios'
+    | 'comite_compras_legal'
+    | 'direccion' // legacy
+    | 'otro'; // legacy
+
+type ProblemArea =
+    | 'operacion_backoffice'
+    | 'ventas_comercial'
+    | 'produccion_taller'
+    | 'logistica'
+    | 'finanzas_pagos'
+    | 'soporte_atencion'
+    | 'ti_sistemas';
 
 export const load = async ({ params, url, locals }: Parameters<PageServerLoad>[0]) => {
     const workspace = params.workspace;
@@ -89,6 +104,7 @@ function computeScore(input: {
     urgency: Urgency;
     priorAttempt: PriorAttempt;
     currentStack: CurrentStack;
+    finalDecisor: FinalDecisor;
 }): number {
     let score = 0;
 
@@ -120,7 +136,7 @@ function computeScore(input: {
             break;
     }
 
-    // People
+    // People: 1_3=>0, 4_10=>+1, 10_50=>+2, 50_plus=>+3
     switch (input.people) {
         case '50_plus':
             score += 3;
@@ -176,6 +192,20 @@ function computeScore(input: {
             break;
         case 'sin_proceso_formal':
             score += 0;
+            break;
+    }
+
+    // Decisor: yo/direccion_gerencia/socios=>+2, comite_compras_legal=>+1; legacy direccion=>+2, otro=>+1
+    switch (input.finalDecisor) {
+        case 'yo':
+        case 'direccion_gerencia':
+        case 'direccion':
+        case 'socios':
+            score += 2;
+            break;
+        case 'comite_compras_legal':
+        case 'otro':
+            score += 1;
             break;
     }
 
@@ -296,10 +326,28 @@ export const actions = {
         const stack = formData.get('current_stack') as CurrentStack | null;
         const expected = String(formData.get('expected_result') || '').slice(0, 2000);
         const decisor = formData.get('final_decisor') as FinalDecisor | null;
+        const problemArea = formData.get('problem_area') as ProblemArea | null;
 
-        if (!attempts || !stack || !decisor) {
+        const validDecisors: FinalDecisor[] = ['yo', 'direccion_gerencia', 'socios', 'comite_compras_legal'];
+        const validAreas: ProblemArea[] = [
+            'operacion_backoffice',
+            'ventas_comercial',
+            'produccion_taller',
+            'logistica',
+            'finanzas_pagos',
+            'soporte_atencion',
+            'ti_sistemas'
+        ];
+
+        if (!attempts || !stack || !decisor || !validDecisors.includes(decisor)) {
             return fail(400, {
                 error: 'Completa todos los campos obligatorios.',
+                values: Object.fromEntries(formData)
+            });
+        }
+        if (!problemArea || !validAreas.includes(problemArea)) {
+            return fail(400, {
+                error: 'Seleccioná el área donde ocurre principalmente el problema.',
                 values: Object.fromEntries(formData)
             });
         }
@@ -326,7 +374,7 @@ export const actions = {
         const pre = (answers as any).preEvaluation ?? {};
         const helpType = pre.helpType as HelpType | undefined;
         const impact = pre.impact as ImpactType | undefined;
-        const people = pre.people as PeopleRange | undefined;
+        const people = (pre.people ?? pre.personas) as PeopleRange | undefined;
         const urgency = pre.urgency as Urgency | undefined;
 
         if (!helpType || !impact || !people || !urgency) {
@@ -339,7 +387,8 @@ export const actions = {
             people,
             urgency,
             priorAttempt: attempts,
-            currentStack: stack
+            currentStack: stack,
+            finalDecisor: decisor
         });
         const status = computeStatus(score, helpType);
 
@@ -349,6 +398,7 @@ export const actions = {
             guidedEvaluation: {
                 context,
                 problem,
+                problemArea,
                 priorAttempt: attempts,
                 currentStack: stack,
                 expectedResult: expected,

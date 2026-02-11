@@ -5,7 +5,7 @@
     export let form: ActionData;
 </script>
 
-<div class="max-w-xl mx-auto py-12 px-4 space-y-8">
+<div class="space-y-8">
     <div class="space-y-2">
         <h1 class="text-2xl font-bold">Solicitar contacto técnico</h1>
         <p class="text-sm text-muted-foreground">
@@ -14,19 +14,19 @@
     </div>
 
     {#if form?.success}
-        <div class="rounded-md bg-emerald-50 text-emerald-800 px-4 py-3 text-sm space-y-2">
+        <div class="rounded-md bg-emerald-50 text-emerald-800 dark:bg-emerald-950/80 dark:border dark:border-emerald-800/50 dark:text-emerald-200 px-4 py-3 text-sm space-y-2">
             <p>
                 Hemos recibido tu solicitud. Uno de nuestros asesores técnicos se contactará contigo vía email.
             </p>
             {#if form.emailWarning}
-                <p class="text-xs text-emerald-900">
+                <p class="text-xs text-emerald-900 dark:text-emerald-300">
                     {form.emailWarning}
                 </p>
             {/if}
         </div>
     {:else}
         {#if form?.error}
-            <div class="rounded-md bg-red-50 text-red-700 px-4 py-3 text-sm">
+            <div class="rounded-md bg-red-50 text-red-700 dark:bg-red-950/80 dark:border dark:border-red-800/50 dark:text-red-200 px-4 py-3 text-sm">
                 {form.error}
             </div>
         {/if}

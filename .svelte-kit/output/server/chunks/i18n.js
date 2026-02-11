@@ -1,0 +1,1075 @@
+import { w as writable } from "./index.js";
+const currentLang = writable("es");
+const translations = {
+  en: {
+    nav: {
+      home: "Home",
+      capabilities: "Capabilities",
+      services: "Services",
+      faq: "FAQ",
+      login: "Login",
+      register: "Start Now",
+      start_eval: "Start Evaluation",
+      dashboard: "Dashboard"
+    },
+    hero: {
+      badge: {
+        new: "NEW",
+        text: "The evolution of strategic consulting"
+      },
+      title: "Where Strategy becomes System.",
+      subtitle: "We design systems, processes, and platforms for organizations that need to scale with control.",
+      supporting: "Engineering, automation, and technical consulting to transform strategic decisions into real operational structures.",
+      cta: "Start Evaluation",
+      cta_secondary: "See How We Work"
+    },
+    problem: {
+      title: "When strategy lacks a system, operations fragment.",
+      items: [
+        "Processes that depend on people and constant explanations",
+        "Informal requests, out-of-scope changes, and lack of traceability",
+        "Teams fighting fires instead of executing with focus",
+        "Strategic decisions that don't trickle down to operations"
+      ],
+      closure_1: "The problem isn't growth.",
+      closure_2: "The problem is growing without a structure to sustain it."
+    },
+    capabilities: {
+      badge: "Capabilities",
+      title: "Applied Engineering Capabilities",
+      items: {
+        custom: {
+          title: "Custom Designed Systems",
+          desc: "Technical and process architecture aligned with the business, not generic solutions."
+        },
+        automation: {
+          title: "Automation & Integrations",
+          desc: "We connect tools, data, and flows to eliminate manual tasks and operational friction."
+        },
+        platform: {
+          title: "Platform & Operational Control",
+          desc: "A single system for requests, tickets, deliverables, payments, and complete traceability."
+        },
+        consulting: {
+          title: "Real Technical Consulting",
+          desc: "Diagnosis, criteria, and decisions. We don't sell hours: we design structural solutions."
+        }
+      }
+    },
+    why_allianzy: {
+      title: "Not an agency. Applied engineering for business.",
+      traditional: {
+        title: "Traditional Approaches",
+        items: ["Isolated deliverables", "Dependence on key people", "Informal support", "Vague scopes"]
+      },
+      allianzy: {
+        title: "Allianzy",
+        items: ["Systems with clear rules", "Processes designed to scale", "Real separation between support and extra work", "Control, traceability, and strategic focus"]
+      },
+      quote: "Allianzy doesn't sell tasks. We design and operate systems."
+    },
+    services: {
+      title: "Our Services",
+      principle: "Less is more. Clear blocks of high strategic value.",
+      items: [
+        { title: "Technical & Process Consulting", desc: "Deep diagnosis, architecture definition, and implementation roadmap." },
+        { title: "System & Platform Design", desc: "Internal platforms, dashboards, client and vendor portals." },
+        { title: "Automation & Integrations", desc: "APIs, data flows, system synchronization, and elimination of repetitive tasks." },
+        { title: "Infrastructure & Maintenance", desc: "Structural support, continuous evolution, monitoring, and system improvement." },
+        { title: "Operational Scaling", desc: "Service separation, vendor control, and friction-less growth." },
+        { title: "Strategic Diagnosis & Assessment", desc: "Technical and operational assessment to understand the current system and clearly decide the next step." }
+      ],
+      exclusion: "We do not do: web design, social media, marketing. That is not Allianzy.",
+      // Keeping legacy keys for compatibility if needed elsewhere
+      beltix: {
+        title: "Beltix Agency",
+        tag: "Creative",
+        desc: "Creative marketing and design solutions.",
+        link: "Go to Beltix",
+        features: ["Branding", "UI/UX Design", "Marketing"]
+      },
+      allianzy: {
+        title: "Allianzy Consulting",
+        tag: "Enterprise",
+        desc: "Top-tier technical consultancy and strategy.",
+        link: "Go to Allianzy",
+        features: ["Technical Strategy", "Consulting", "Staff Augmentation"]
+      }
+    },
+    process: {
+      title: "A clear process from the first contact.",
+      steps: [
+        {
+          title: "Quick pre-evaluation (< 2 mins)",
+          desc: "A brief form to understand your basic needs and verify if we can help with your current challenge.",
+          image: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&q=80&w=1000"
+        },
+        {
+          title: "Guided problem evaluation",
+          desc: "We dive deep into specific challenges to identify the root cause, not just visible symptoms.",
+          image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=1000"
+        },
+        {
+          title: "Technical qualification call",
+          desc: "Direct conversation with our senior engineers to validate technical feasibility and strategic alignment.",
+          image: "https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&fit=crop&q=80&w=1000"
+        },
+        {
+          title: "Structured proposal",
+          desc: "Detailed work plan with scope, timeline, clear deliverables, and fixed budget. No surprises.",
+          image: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&q=80&w=1000"
+        },
+        {
+          title: "Implementation & Operation",
+          desc: "System execution and launch with continuous support to ensure adoption and success.",
+          image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=1000"
+        }
+      ],
+      disclaimer: "Not all projects qualify. And that's part of the method."
+    },
+    reviews: {
+      title: "Social Proof",
+      items: [
+        {
+          quote: "The experience was very good, the work was excellent and customer service was timely and fast. All requests were attended to, and appropriate advice was provided to achieve a good result.",
+          author: "Manager",
+          company: "Hotel Safari Club",
+          logo: "/clients/safari.webp"
+        },
+        {
+          quote: "My experience with Allianzy was magnificent! They were always attentive and willing to handle any situation, and I am especially satisfied with the development request. I will continue to stay in touch with them for future projects because they are the kind of company one enjoys working with.",
+          author: "General Director",
+          company: "GG Insurances",
+          logo: "/clients/gg.webp"
+        },
+        {
+          quote: "Customer service was excellent. They were always in contact and took into consideration all the changes I wanted to make.",
+          author: "Department Head",
+          company: "Roan",
+          logo: "/clients/roan.webp"
+        }
+      ]
+    },
+    faq: {
+      title: "FAQ",
+      items: [
+        { q: "Does Allianzy do websites or marketing?", a: "No. For operational services there is a separate unit. Allianzy focuses on systems and technical consulting." },
+        { q: "Do you work with small companies?", a: "Only when the problem requires a real structural approach." },
+        { q: "Do you sell hours?", a: "No. We sell projects, systems, and solutions with defined scope." },
+        { q: "How are changes or support requested?", a: "Everything is managed from the platform, via tickets and formal requests." },
+        { q: "Can I start with something small?", a: "Yes, as long as it makes strategic sense." }
+      ]
+    },
+    cta_final: {
+      title: "From strategy to operation.",
+      subtitle: "If your organization is already thinking about strategy, it's time to turn it into a system.",
+      button: "Start Evaluation"
+    },
+    // Generic Footer
+    footer: {
+      rights: "All rights reserved.",
+      menu: {
+        title: "Menu",
+        home: "Home",
+        capabilities: "Capabilities",
+        services: "Services",
+        faq: "FAQ"
+      },
+      desc: "Engineering applied to business.",
+      privacy: "Privacy Policy",
+      terms: "Terms of Service"
+    },
+    // Beltrix & Dashboard kept as is
+    beltrix: {
+      nav: {
+        login: "Client Login",
+        start: "Start Project"
+      },
+      hero: {
+        title: "UNLEASH<br>CREATIVE",
+        subtitle: "We craft digital experiences that defy expectations. Bold strategies for brands that dare to be different.",
+        enter: "Enter Dashboard"
+      },
+      ticker: {
+        strategy: "Strategy",
+        design: "Design",
+        dev: "Development",
+        branding: "Branding",
+        marketing: "Marketing",
+        content: "Content"
+      },
+      services: {
+        title: "Our Services",
+        social: {
+          title: "Social Media Management",
+          desc: "Professional, consistent, and strategic presence on Meta, focused on organic growth and community.",
+          cta: "Start Project"
+        },
+        ads: {
+          title: "Digital Advertising",
+          desc: "Paid campaigns on Meta Ads, Google Ads, and LinkedIn Ads focused on measurable ROI.",
+          cta: "Start Project"
+        },
+        design: {
+          title: "Social Media Design",
+          desc: "Visual design for social media profiles and content, ensuring consistency and brand identity.",
+          cta: "Start Project"
+        },
+        web: {
+          title: "Professional Website",
+          desc: "Design and development of clear, fast, and conversion-optimized websites.",
+          cta: "Start Project"
+        },
+        brand: {
+          title: "Visual Branding",
+          desc: "Strong and consistent visual identity for brands looking to stand out.",
+          cta: "Start Project"
+        },
+        consulting: {
+          title: "Digital Consulting",
+          desc: "Strategic guidance for brands and individuals who need clarity on how to start.",
+          cta: "Start Project"
+        }
+      },
+      process: {
+        title: "Our Continuous Optimization System",
+        subtitle: "We design and operate systems that improve over time.",
+        steps: {
+          eval: {
+            title: "Initial Evaluation",
+            items: ["We understand the context", "Identify impact, risk, and viability", "Define if the problem qualifies"]
+          },
+          diag: {
+            title: "Diagnosis",
+            items: ["Processes", "Data", "Infrastructure", "Real constraints"]
+          },
+          arch: {
+            title: "Architecture & Design",
+            items: ["Technical architecture", "Flows", "Grounded decisions", "Clear trade-offs"]
+          },
+          scale: {
+            title: "Scaling / Evolution",
+            items: ["Product", "Platform", "New business stage", "Knowledge transfer"]
+          },
+          measure: {
+            title: "Measurement",
+            items: ["Real metrics", "Performance", "Usage", "Costs / time / errors"]
+          },
+          opt: {
+            title: "Optimization",
+            desc: "Adjustments. Return to Diagnosis."
+          }
+        }
+      },
+      testimonials: {
+        title: "What Clients Say",
+        items: [
+          {
+            quote: "Beltrix transformed our brand identity completely. The results were immediate and impressive.",
+            author: "Sarah Johnson",
+            role: "CEO, TechFlow"
+          },
+          {
+            quote: "Their strategic approach to social media doubled our engagement in just two months.",
+            author: "Michael Chen",
+            role: "Marketing Director, Innovate"
+          },
+          {
+            quote: "Professional, creative, and always on time. The best agency partner we've worked with.",
+            author: "Emma Davis",
+            role: "Founder, StyleHub"
+          }
+        ]
+      },
+      faq: {
+        title: "Frequently Asked Questions",
+        items: [
+          {
+            q: "How do we start a project?",
+            a: "Simply click 'Start Project' or contact us directly. We'll schedule a discovery call to understand your needs."
+          },
+          {
+            q: "What is your typical timeline?",
+            a: "Timelines vary by project scope. Branding typically takes 2-4 weeks, while web development can take 4-8 weeks."
+          },
+          {
+            q: "Do you offer ongoing support?",
+            a: "Yes, we offer monthly retainer packages for social media management, maintenance, and continuous improvement."
+          }
+        ]
+      }
+    },
+    dashboard: {
+      menu: {
+        overview: "Overview",
+        projects: "Projects",
+        support: "Support",
+        settings: "Settings",
+        contact: "Contact",
+        billing: "Billing",
+        manage_stripe: "Manage in Stripe",
+        admin_panel: "Admin Panel"
+      },
+      footer: {
+        help_support: "Help",
+        rights: "All rights reserved.",
+        made_with_love: "Made with love"
+      },
+      header: {
+        notifications: {
+          title: "Notifications",
+          empty: "You have no notifications"
+        },
+        profile: {
+          account: "My Account",
+          theme: {
+            title: "Theme",
+            light: "Light",
+            dark: "Dark",
+            system: "System"
+          },
+          language: {
+            title: "Language",
+            en: "English",
+            es: "Spanish"
+          },
+          logout: "Logout"
+        }
+      },
+      page: {
+        projects: {
+          title: "Projects",
+          subtitle: "Manage and track your ongoing projects."
+        },
+        billing: {
+          title: "Billing",
+          subtitle: "Manage your payments and invoices."
+        },
+        support: {
+          title: "Support",
+          subtitle: "Get help and track your support requests."
+        },
+        settings: {
+          title: "Settings",
+          subtitle: "Manage your account and preferences.",
+          tabs: {
+            organization: "Business",
+            users: "Users & Permissions",
+            compliance: "Compliance"
+          },
+          organization: {
+            details: {
+              title: "Business Details",
+              logo: {
+                label: "Company Logo",
+                desc: "Upload your company logo. Recommended size 400x400px.",
+                delete_confirm: {
+                  title: "Are you sure?",
+                  desc: "This action will remove the current company logo.",
+                  cancel: "Cancel",
+                  delete: "Delete"
+                }
+              },
+              name: "Company Name",
+              email: "Email Address",
+              phone: "Phone Number",
+              description: "Description"
+            },
+            addresses: {
+              title: "Addresses",
+              add_button: "Add Address",
+              form: {
+                label: "Label (e.g. HQ)",
+                address: "Address",
+                city: "City",
+                state: "State",
+                postal_code: "Postal Code",
+                country: "Country",
+                cancel: "Cancel",
+                save: "Save"
+              }
+            },
+            links: {
+              title: "Important Links",
+              add_button: "Add Link",
+              form: {
+                title: "Title",
+                url: "URL",
+                cancel: "Cancel",
+                save: "Save"
+              }
+            },
+            documents: {
+              title: "Documents & IDs",
+              add_button: "Add Document",
+              form: {
+                type: "Type (e.g. ABN, Tax ID)",
+                value: "Value/ID",
+                cancel: "Cancel",
+                save: "Save"
+              }
+            }
+          },
+          users: {
+            title: "Users & Permissions",
+            subtitle: "Manage users and their roles within the organization.",
+            add_button: "Add User",
+            table: {
+              name: "Name",
+              email: "Email",
+              role: "Role",
+              projects: "Projects",
+              status: "Status",
+              actions: "Actions",
+              active: "Active",
+              pending: "Pending",
+              rejected: "Rejected",
+              inactive: "Inactive",
+              guest: "Guest"
+            },
+            form: {
+              title_add: "Add User",
+              title_edit: "Edit User",
+              first_name: "First Name",
+              last_name: "Last Name",
+              email: "Email",
+              role: "Role",
+              role_collaborator: "Collaborator",
+              role_admin: "Admin",
+              permissions: {
+                title: "Permissions",
+                desc: "Configure what this user can access.",
+                projects: "Projects",
+                requirements: "Requirements",
+                requests: "Requests",
+                process: "Process",
+                payments: "Payments",
+                support: "Support",
+                proposals: "Proposals",
+                no_projects: "No projects available to assign."
+              },
+              cancel: "Cancel",
+              save: "Save User",
+              save_simple: "Save",
+              delete: "Delete User",
+              delete_simple: "Delete",
+              active: "User Enabled",
+              active_desc: "Disable to prevent access.",
+              confirm_delete: "Are you sure you want to delete this user? This action cannot be undone.",
+              confirm_delete_title: "Delete User"
+            }
+          },
+          compliance: {
+            title: "Compliance",
+            coming_soon: "Coming Soon",
+            desc: "This section is currently under development. Check back later for updates."
+          }
+        },
+        // This part was malformed in previous read (nested title/subtitle directly under settings object or something). 
+        // Based on previous read, it seemed 'title': 'My Account' was at the same level as 'settings'. 
+        // I'll try to reconstruct carefully based on the pattern.
+        // Looking at lines 339-340 in previous read, it seems like there was a missing key or it was part of 'profile' page but indentation was off.
+        // Assuming there is a 'profile' section.
+        profile: {
+          title: "My Account",
+          subtitle: "Manage your personal information.",
+          personal_info: {
+            title: "Personal Information",
+            avatar: {
+              label: "Profile Photo",
+              desc: "Your photo will be shown in your profile and comments.",
+              delete_confirm: {
+                title: "Are you sure?",
+                desc: "This action will remove your current profile photo.",
+                cancel: "Cancel",
+                delete: "Delete"
+              },
+              delete_tooltip: "Remove photo"
+            },
+            name: "First Name",
+            lastname: "Last Name",
+            email: "Email",
+            phone: "Phone"
+          },
+          addresses: {
+            title: "Addresses",
+            add_button: "Add Address",
+            form: {
+              label: "Label (e.g. Home, Office)",
+              address: "Full Address",
+              city: "City",
+              state: "State",
+              postal_code: "Postal Code",
+              country: "Country",
+              cancel: "Cancel",
+              save: "Save Address"
+            }
+          },
+          documents: {
+            title: "Identity Documents",
+            add_button: "Add Document",
+            form: {
+              type: "Type (e.g. ID, Tax ID)",
+              value: "Document Number",
+              cancel: "Cancel",
+              save: "Save Document"
+            }
+          },
+          links: {
+            title: "Interest Links",
+            add_button: "Add Link",
+            form: {
+              title: "Title (e.g. LinkedIn)",
+              url: "URL",
+              cancel: "Cancel",
+              save: "Save Link"
+            }
+          },
+          saved: "Saved"
+        }
+      }
+    }
+  },
+  es: {
+    nav: {
+      home: "Inicio",
+      capabilities: "Capacidades",
+      services: "Servicios",
+      faq: "FAQ",
+      login: "Acceso",
+      start_eval: "Iniciar evaluación",
+      dashboard: "Dashboard"
+    },
+    hero: {
+      badge: {
+        new: "NUEVO",
+        text: "La evolución de la consultoría estratégica"
+      },
+      title: "Donde la estrategia se convierte en sistema.",
+      subtitle: "Convertimos decisiones estratégicas en sistemas operativos diseñados para escalar con control.",
+      supporting: "Ingeniería, automatización y consultoría técnica para transformar decisiones estratégicas en estructuras operativas reales.",
+      cta: "Iniciar evaluación",
+      cta_secondary: "Ver cómo trabajamos"
+    },
+    problem: {
+      title: "Cuando la estrategia no tiene sistema, la operación se fragmenta.",
+      items: [
+        "Procesos que dependen de personas y explicaciones constantes",
+        "Pedidos informales, cambios fuera de alcance y falta de trazabilidad",
+        "Decisiones estratégicas que no se traducen en ejecución operativa"
+      ],
+      closure_1: "El problema no es crecer.",
+      closure_2: "El problema es crecer sin una estructura que lo sostenga."
+    },
+    capabilities: {
+      badge: "Capacidades",
+      title: "Capacidades clave",
+      items: {
+        custom: {
+          title: "Sistemas diseñados a medida",
+          desc: "Arquitectura técnica y de procesos alineada al negocio, no soluciones genéricas."
+        },
+        automation: {
+          title: "Automatización e integraciones",
+          desc: "Conectamos herramientas, datos y flujos para eliminar tareas manuales y fricción operativa."
+        },
+        platform: {
+          title: "Plataforma y control operativo",
+          desc: "Un único sistema para pedidos, tickets, entregables, pagos y trazabilidad completa."
+        },
+        consulting: {
+          title: "Consultoría técnica real",
+          desc: "Diagnóstico, criterio y decisiones. No vendemos horas: diseñamos soluciones estructurales."
+        }
+      }
+    },
+    why_allianzy: {
+      title: "No somos una agencia. Somos ingeniería aplicada al negocio.",
+      traditional: {
+        title: "Enfoques tradicionales",
+        items: ["Entregables aislados", "Dependencia de personas clave", "Soporte informal", "Alcances difusos"]
+      },
+      allianzy: {
+        title: "Allianzy",
+        items: ["Sistemas con reglas claras", "Procesos diseñados para escalar", "Separación real entre soporte y trabajo adicional", "Control, trazabilidad y foco estratégico"]
+      },
+      quote: "Allianzy no vende tareas. Diseña y opera sistemas."
+    },
+    services: {
+      title: "Nuestros Servicios",
+      principle: "Menos es más. Bloques claros, de alto valor estratégico.",
+      items: [
+        { title: "Consultoría técnica y de procesos", desc: "Diagnóstico profundo, definición de arquitectura y roadmap de implementación." },
+        { title: "Diseño de sistemas y plataformas", desc: "Plataformas internas, dashboards, portales de clientes y proveedores." },
+        { title: "Automatización e integraciones", desc: "APIs, flujos de datos, sincronización de sistemas y eliminación de tareas repetitivas." },
+        { title: "Infraestructura y mantenimiento", desc: "Soporte estructural, evolución continua, monitoreo y mejora del sistema." },
+        { title: "Escalamiento operativo", desc: "Separación de servicios, control de proveedores y crecimiento sin fricción." },
+        { title: "Diagnóstico y evaluación estratégica", desc: "Evaluación técnica y operativa para comprender el sistema actual y decidir con claridad el siguiente paso." }
+      ],
+      exclusion: "No incluir: diseño web, redes sociales, marketing. Eso no es Allianzy.",
+      beltix: {
+        title: "Beltix Agency",
+        tag: "Creativo",
+        desc: "Soluciones creativas de marketing y diseño.",
+        link: "Ir a Beltix",
+        features: ["Branding", "Diseño UI/UX", "Marketing"]
+      },
+      allianzy: {
+        title: "Allianzy Consulting",
+        tag: "Empresarial",
+        desc: "Consultoría técnica y estratégica de alto nivel.",
+        link: "Ir a Allianzy",
+        features: ["Estrategia Técnica", "Consultoría", "Staff Augmentation"]
+      }
+    },
+    process: {
+      title: "Un proceso claro desde el primer contacto.",
+      steps: [
+        {
+          title: "Pre-evaluación rápida (menos de 2 minutos)",
+          desc: "Un formulario breve para entender tus necesidades básicas y verificar si podemos ayudarte con tu desafío actual.",
+          image: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&q=80&w=1000"
+        },
+        {
+          title: "Evaluación guiada del problema",
+          desc: "Profundizamos en los desafíos específicos para identificar la raíz del problema, no solo los síntomas visibles.",
+          image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=1000"
+        },
+        {
+          title: "Llamada técnica de calificación",
+          desc: "Conversación directa con nuestros ingenieros senior para validar la viabilidad técnica y alineación estratégica.",
+          image: "https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&fit=crop&q=80&w=1000"
+        },
+        {
+          title: "Propuesta estructurada",
+          desc: "Plan de trabajo detallado con alcance, tiempos, entregables claros y presupuesto fijo. Sin sorpresas.",
+          image: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&q=80&w=1000"
+        },
+        {
+          title: "Implementación y operación",
+          desc: "Ejecución del sistema y puesta en marcha con soporte continuo para asegurar la adopción y el éxito.",
+          image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=1000"
+        }
+      ],
+      disclaimer: "No todos los proyectos califican. Y eso es parte del método."
+    },
+    reviews: {
+      title: "Social Proof",
+      items: [
+        {
+          quote: "La experiencia fue muy buena, el trabajo fue excelente y la atención al cliente, oportuna y rápida. Se atendieron todas las solicitudes y se brindó el asesoramiento correspondiente para obtener un buen resultado en el trabajo.",
+          author: "Gerente",
+          company: "Hotel Safari Club",
+          logo: "/clients/safari.webp"
+        },
+        {
+          quote: "¡Mi experiencia con Allianzy fue magnífica! Siempre estuvieron atentos y dispuestos a manejar cualquier situación, y estoy especialmente satisfecho con la solicitud de desarrollo. Seguiré en contacto con ellos para futuros proyectos porque son el tipo de empresa con la que uno disfruta trabajar.",
+          author: "Director General",
+          company: "GG Insurances",
+          logo: "/clients/gg.webp"
+        },
+        {
+          quote: "La atención al cliente fue excelente. Siempre estuvieron en contacto y tomaron en consideración todos los cambios que deseaba realizar.",
+          author: "Jefa de Departamento",
+          company: "Roan",
+          logo: "/clients/roan.webp"
+        }
+      ]
+    },
+    faq: {
+      title: "FAQ",
+      items: [
+        {
+          q: "¿Qué tipo de empresas trabajan con Allianzy?",
+          a: "Trabajamos con organizaciones que ya operan con cierta complejidad y necesitan transformar su estrategia en sistemas reales. No hacemos trabajos aislados ni soluciones improvisadas."
+        },
+        {
+          q: "¿Allianzy hace marketing, diseño o sitios web?",
+          a: "No. Allianzy se enfoca en ingeniería, sistemas, automatización y consultoría técnica. Los servicios operativos como marketing o diseño se gestionan desde una unidad separada, con su propio proceso."
+        },
+        {
+          q: "¿Venden horas o paquetes cerrados?",
+          a: "No vendemos horas. Trabajamos con proyectos y sistemas definidos, con alcance claro, objetivos concretos y trazabilidad operativa."
+        },
+        {
+          q: "¿Cómo es el proceso antes de una reunión?",
+          a: "Antes de cualquier llamada realizamos una evaluación estructurada del problema. La reunión es técnica, no comercial, y sirve para determinar si el proyecto califica para Allianzy."
+        },
+        {
+          q: "¿Puedo empezar con algo pequeño?",
+          a: "Sí, siempre que tenga sentido estratégico. El tamaño no es lo más importante; lo es que el problema requiera un enfoque estructural."
+        },
+        {
+          q: "¿Cómo se gestionan cambios, soporte o nuevos pedidos?",
+          a: "Todo se gestiona desde la plataforma, mediante tickets y solicitudes formales, asegurando control, trazabilidad y una separación clara entre soporte y trabajo adicional."
+        }
+      ]
+    },
+    cta_final: {
+      title: "De la estrategia a la operación.",
+      subtitle: "Si tu organización ya piensa en estrategia, es momento de convertirla en sistema.",
+      button: "Iniciar evaluación"
+    },
+    footer: {
+      rights: "Todos los derechos reservados.",
+      menu: {
+        title: "Menú",
+        home: "Inicio",
+        capabilities: "Capacidades",
+        services: "Servicios",
+        faq: "FAQ"
+      },
+      desc: "Ingeniería aplicada al negocio.",
+      privacy: "Política de Privacidad",
+      terms: "Términos de Servicio"
+    },
+    beltrix: {
+      nav: {
+        login: "Acceso Clientes",
+        start: "Iniciar Proyecto"
+      },
+      hero: {
+        title: "DESATA TU<br>CREATIVIDAD",
+        subtitle: "Creamos experiencias digitales que desafían las expectativas. Estrategias audaces para marcas que se atreven a ser diferentes.",
+        enter: "Entrar al Dashboard"
+      },
+      ticker: {
+        strategy: "Estrategia",
+        design: "Diseño",
+        dev: "Desarrollo",
+        branding: "Branding",
+        marketing: "Marketing",
+        content: "Contenido"
+      },
+      services: {
+        title: "Nuestros Servicios",
+        social: {
+          title: "Gestión de Redes Sociales",
+          desc: "Presencia profesional, consistente y estratégica en Meta, enfocada en crecimiento orgánico y comunidad.",
+          cta: "Iniciar Proyecto"
+        },
+        ads: {
+          title: "Publicidad Digital",
+          desc: "Campañas pagas en Meta Ads, Google Ads y LinkedIn Ads enfocadas en ROI medible.",
+          cta: "Iniciar Proyecto"
+        },
+        design: {
+          title: "Diseño para Redes",
+          desc: "Diseño visual para perfiles y contenido de redes sociales, asegurando consistencia e identidad de marca.",
+          cta: "Iniciar Proyecto"
+        },
+        web: {
+          title: "Sitios Web Profesionales",
+          desc: "Diseño y desarrollo de sitios web claros, rápidos y optimizados para la conversión.",
+          cta: "Iniciar Proyecto"
+        },
+        brand: {
+          title: "Branding Visual",
+          desc: "Identidad visual fuerte y consistente para marcas que buscan destacarse.",
+          cta: "Iniciar Proyecto"
+        },
+        consulting: {
+          title: "Consultoría Digital",
+          desc: "Guía estratégica para marcas e individuos que necesitan claridad sobre cómo empezar.",
+          cta: "Iniciar Proyecto"
+        }
+      },
+      process: {
+        title: "Nuestro Sistema de Optimización Continua",
+        subtitle: "Diseñamos y operamos sistemas que mejoran con el tiempo.",
+        steps: {
+          eval: {
+            title: "Evaluación Inicial",
+            items: ["Entendemos el contexto", "Identificamos impacto, riesgo y viabilidad", "Definimos si el problema califica"]
+          },
+          diag: {
+            title: "Diagnóstico",
+            items: ["Procesos", "Datos", "Infraestructura", "Restricciones reales"]
+          },
+          arch: {
+            title: "Arquitectura & Diseño",
+            items: ["Arquitectura técnica", "Flujos", "Decisiones fundamentadas", "Trade-offs claros"]
+          },
+          scale: {
+            title: "Escalamiento / Evolución",
+            items: ["Producto", "Plataforma", "Nueva etapa del negocio", "Transferencia de conocimiento"]
+          },
+          measure: {
+            title: "Medición",
+            items: ["Métricas reales", "Performance", "Uso", "Costos / tiempos / errores"]
+          },
+          opt: {
+            title: "Optimización",
+            desc: "Ajustes. Volvemos a Diagnóstico."
+          }
+        }
+      },
+      testimonials: {
+        title: "Lo Que Dicen Nuestros Clientes",
+        items: [
+          {
+            quote: "Beltrix transformó nuestra identidad de marca por completo. Los resultados fueron inmediatos e impresionantes.",
+            author: "Sarah Johnson",
+            role: "CEO, TechFlow"
+          },
+          {
+            quote: "Su enfoque estratégico en redes sociales duplicó nuestro engagement en solo dos meses.",
+            author: "Michael Chen",
+            role: "Director de Marketing, Innovate"
+          },
+          {
+            quote: "Profesionales, creativos y siempre a tiempo. El mejor socio de agencia con el que hemos trabajado.",
+            author: "Emma Davis",
+            role: "Fundadora, StyleHub"
+          }
+        ]
+      },
+      faq: {
+        title: "Preguntas Frecuentes",
+        items: [
+          {
+            q: "¿Cómo iniciamos un proyecto?",
+            a: "Simplemente haz clic en 'Iniciar Proyecto' o contáctanos directamente. Agendaremos una llamada de descubrimiento para entender tus necesidades."
+          },
+          {
+            q: "¿Cuál es el tiempo típico de entrega?",
+            a: "Los tiempos varían según el alcance. El branding típicamente toma 2-4 semanas, mientras que el desarrollo web puede tomar 4-8 semanas."
+          },
+          {
+            q: "¿Ofrecen soporte continuo?",
+            a: "Sí, ofrecemos paquetes mensuales para gestión de redes sociales, mantenimiento y mejora continua."
+          }
+        ]
+      }
+    },
+    dashboard: {
+      menu: {
+        overview: "Inicio",
+        projects: "Proyectos",
+        support: "Soporte",
+        settings: "Configuraciones",
+        contact: "Contactar",
+        billing: "Facturación",
+        manage_stripe: "Administrar en Stripe",
+        admin_panel: "Panel de Admin"
+      },
+      footer: {
+        help_support: "Ayuda",
+        rights: "Todos los derechos reservados.",
+        made_with_love: "Hecho con amor"
+      },
+      header: {
+        notifications: {
+          title: "Notificaciones",
+          empty: "No tienes notificaciones"
+        },
+        profile: {
+          account: "Mi cuenta",
+          theme: {
+            title: "Tema",
+            light: "Claro",
+            dark: "Oscuro",
+            system: "Sistema"
+          },
+          language: {
+            title: "Idioma",
+            en: "English",
+            es: "Español"
+          },
+          logout: "Cerrar Sesión"
+        }
+      },
+      page: {
+        projects: {
+          title: "Proyectos",
+          subtitle: "Gestiona y sigue tus proyectos en curso."
+        },
+        billing: {
+          title: "Facturación",
+          subtitle: "Gestiona tus pagos y facturas."
+        },
+        support: {
+          title: "Soporte",
+          subtitle: "Obtén ayuda y sigue tus solicitudes de soporte."
+        },
+        settings: {
+          title: "Configuraciones",
+          subtitle: "Gestiona tu cuenta y preferencias.",
+          tabs: {
+            organization: "Negocio",
+            users: "Usuarios y Permisos",
+            compliance: "Cumplimiento"
+          },
+          organization: {
+            details: {
+              title: "Detalles del Negocio",
+              logo: {
+                label: "Logo de la Empresa",
+                desc: "Sube el logo de tu empresa. Tamaño recomendado 400x400px.",
+                delete_confirm: {
+                  title: "¿Estás seguro?",
+                  desc: "Esta acción eliminará el logo actual de la empresa.",
+                  cancel: "Cancelar",
+                  delete: "Eliminar"
+                }
+              },
+              name: "Nombre de la Empresa",
+              email: "Correo Electrónico",
+              phone: "Número de Teléfono",
+              description: "Descripción"
+            },
+            addresses: {
+              title: "Direcciones",
+              add_button: "Agregar Dirección",
+              form: {
+                label: "Etiqueta (ej. Sede Central)",
+                address: "Dirección",
+                city: "Ciudad",
+                state: "Estado",
+                postal_code: "Código Postal",
+                country: "País",
+                cancel: "Cancelar",
+                save: "Guardar"
+              }
+            },
+            links: {
+              title: "Enlaces Importantes",
+              add_button: "Agregar Enlace",
+              form: {
+                title: "Título",
+                url: "URL",
+                cancel: "Cancelar",
+                save: "Guardar"
+              }
+            },
+            documents: {
+              title: "Documentos e IDs",
+              add_button: "Agregar Documento",
+              form: {
+                type: "Tipo (ej. RUC, CIF)",
+                value: "Valor/ID",
+                cancel: "Cancelar",
+                save: "Guardar"
+              }
+            }
+          },
+          users: {
+            title: "Usuarios y Permisos",
+            subtitle: "Gestiona usuarios y sus roles dentro de la organización.",
+            add_button: "Agregar Usuario",
+            table: {
+              name: "Nombre",
+              email: "Correo",
+              role: "Rol",
+              projects: "Proyectos",
+              status: "Estado",
+              actions: "Acciones",
+              active: "Activo",
+              pending: "Pendiente",
+              rejected: "Rechazada",
+              inactive: "Inactivo",
+              guest: "Invitado"
+            },
+            form: {
+              title_add: "Agregar Usuario",
+              title_edit: "Editar Usuario",
+              first_name: "Nombre",
+              last_name: "Apellido",
+              email: "Correo Electrónico",
+              role: "Rol",
+              role_collaborator: "Colaborador",
+              role_admin: "Administrador",
+              permissions: {
+                title: "Permisos",
+                desc: "Configura a qué tiene acceso este usuario.",
+                projects: "Proyectos",
+                requirements: "Requerimientos",
+                requests: "Solicitudes",
+                process: "Proceso",
+                payments: "Pagos",
+                support: "Soporte",
+                proposals: "Propuestas",
+                no_projects: "No hay proyectos disponibles para asignar."
+              },
+              cancel: "Cancelar",
+              save: "Guardar Usuario",
+              save_simple: "Guardar",
+              delete: "Eliminar Usuario",
+              delete_simple: "Eliminar",
+              active: "Usuario Habilitado",
+              active_desc: "Deshabilitar para prevenir acceso.",
+              confirm_delete: "¿Estás seguro de que deseas eliminar este usuario? Esta acción no se puede deshacer.",
+              confirm_delete_title: "Eliminar Usuario"
+            }
+          },
+          compliance: {
+            title: "Cumplimiento",
+            coming_soon: "Próximamente",
+            desc: "Esta sección está actualmente en desarrollo. Vuelve más tarde para ver actualizaciones."
+          }
+        },
+        profile: {
+          title: "Mi Cuenta",
+          subtitle: "Gestiona tu información personal.",
+          personal_info: {
+            title: "Información Personal",
+            avatar: {
+              label: "Foto de Perfil",
+              desc: "Tu foto se mostrará en tu perfil y comentarios.",
+              delete_confirm: {
+                title: "¿Estás seguro?",
+                desc: "Esta acción eliminará tu foto de perfil actual.",
+                cancel: "Cancelar",
+                delete: "Eliminar"
+              },
+              delete_tooltip: "Eliminar foto"
+            },
+            name: "Nombre",
+            lastname: "Apellido",
+            email: "Email",
+            phone: "Teléfono"
+          },
+          addresses: {
+            title: "Direcciones",
+            add_button: "Agregar Dirección",
+            form: {
+              label: "Etiqueta (ej. Casa, Oficina)",
+              address: "Dirección completa",
+              city: "Ciudad",
+              state: "Estado",
+              postal_code: "Código Postal",
+              country: "País",
+              cancel: "Cancelar",
+              save: "Guardar Dirección"
+            }
+          },
+          documents: {
+            title: "Documentos de Identidad",
+            add_button: "Agregar Documento",
+            form: {
+              type: "Tipo (ej. DNI, RUC)",
+              value: "Número de Documento",
+              cancel: "Cancelar",
+              save: "Guardar Documento"
+            }
+          },
+          links: {
+            title: "Enlaces de Interés",
+            add_button: "Agregar Enlace",
+            form: {
+              title: "Título (ej. LinkedIn)",
+              url: "URL",
+              cancel: "Cancelar",
+              save: "Guardar Enlace"
+            }
+          },
+          saved: "Guardado"
+        }
+      }
+    }
+  }
+};
+export {
+  currentLang as c,
+  translations as t
+};

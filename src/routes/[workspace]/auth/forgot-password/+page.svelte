@@ -1,0 +1,190 @@
+<script lang="ts">
+    import { page } from '$app/stores';
+    import { authClient } from '$lib/auth-client';
+    import { goto } from '$app/navigation';
+    import { Mail, ArrowLeft } from 'lucide-svelte';
+    import logoLight from '$lib/assets/brand/allianzy/logo-light.svg';
+    import logoDark from '$lib/assets/brand/allianzy/logo-dark.svg';
+    import { browser } from '$app/environment';
+    import { currentLang } from '$lib/i18n';
+
+    const workspace = $page.params.workspace;
+    let email = $page.url.searchParams.get('email') || '';
+    let isLoading = false;
+    let error = '';
+    let success = '';
+
+    $: lang = $currentLang;
+
+    function goBackToLogin() {
+        const loginUrl = `/${workspace}/auth/login${email ? `?email=${encodeURIComponent(email)}` : ''}`;
+        goto(loginUrl);
+    }
+
+    async function handleSubmit() {
+        isLoading = true;
+        error = '';
+        success = '';
+
+        try {
+            const payload: { email: string; redirectTo?: string } = { email };
+
+            // Nota: redirectTo debe estar permitido en la configuración de Better Auth (allowed redirect URLs).
+            // Para evitar el error 403 "Invalid redirectURL" en entornos donde aún no está configurado,
+            // solo enviamos redirectTo si tienes una URL explícita y permitida.
+            if (browser) {
+                // Ajusta esta URL si en tu servidor de auth ya tienes configurado un redirect permitido.
+                // Por ejemplo, podrías usar tu dominio productivo:
+                // payload.redirectTo = 'https://tu-dominio.com/allianzy/auth/reset-password';
+            }
+
+            const { error: resetError } = await authClient.requestPasswordReset(payload);
+
+            if (resetError) throw resetError;
+
+            success =
+                lang === 'es'
+                    ? 'Si ese correo existe en nuestro sistema, recibirás un email desde auth@mail.myneon.app con el enlace para restablecer tu contraseña.'
+                    : "If that email exists in our system, you'll receive an email from auth@mail.myneon.app with a link to reset your password.";
+        } catch (e: any) {
+            console.error('Request password reset error:', e);
+
+            if (e?.body?.message) {
+                error = e.body.message;
+            } else if (e?.message) {
+                error = e.message;
+            } else if (e?.code) {
+                error = e.code;
+            } else if (typeof e === 'string') {
+                error = e;
+            } else {
+                error =
+                    lang === 'es'
+                        ? 'No pudimos iniciar el proceso de restablecimiento. Verifica el correo o inténtalo más tarde.'
+                        : 'We could not start the password reset process. Please check the email or try again later.';
+            }
+
+            if (e?.status) {
+                error += ` (Status: ${e.status})`;
+            }
+        } finally {
+            isLoading = false;
+        }
+    }
+</script>
+
+<div
+    class="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-gray-50 dark:bg-zinc-950 {workspace === 'allianzy' ? 'font-bricolage' : (workspace === 'beltrix' ? 'font-merriweather' : 'font-sans')}"
+>
+    <!-- Abstract Background -->
+    <div class="absolute inset-0 w-full h-full overflow-hidden pointer-events-none">
+        <div
+            class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-blue-500/20 blur-[120px] animate-pulse"
+        ></div>
+        <div
+            class="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-purple-500/20 blur-[120px] animate-pulse"
+            style="animation-delay: 1.5s;"
+        ></div>
+        <div
+            class="absolute top-[40%] left-[60%] w-[30%] h-[30%] rounded-full bg-pink-500/20 blur-[120px] animate-pulse"
+            style="animation-delay: 3s;"
+        ></div>
+    </div>
+
+    <!-- Glass Card -->
+    <div
+        class="relative w-full max-w-md p-8 backdrop-blur-2xl bg-white/70 dark:bg-zinc-900/60 border border-white/20 dark:border-white/5 rounded-3xl shadow-2xl z-10 mx-4 transition-all duration-300"
+    >
+        <!-- Logo & Header -->
+        <div class="flex flex-col items-center mb-8 text-center">
+            {#if workspace === 'allianzy'}
+                <a href="/" class="mb-6 transition-opacity hover:opacity-80 block">
+                    <img src={logoLight} alt="Allianzy" class="h-10 dark:hidden" />
+                    <img src={logoDark} alt="Allianzy" class="h-10 hidden dark:block" />
+                </a>
+            {:else}
+                <a
+                    href="/{workspace}"
+                    class="block mb-4 transition-opacity hover:opacity-80"
+                >
+                    <h1 class="text-3xl font-bold tracking-tight text-foreground">Beltrix Agency</h1>
+                </a>
+            {/if}
+
+            <h2 class="text-2xl font-bold text-foreground tracking-tight">
+                {lang === 'es' ? '¿Olvidaste tu contraseña?' : 'Forgot your password?'}
+            </h2>
+            <p class="text-sm text-muted-foreground mt-2">
+                {lang === 'es'
+                    ? 'Ingresa el correo asociado a tu cuenta y te enviaremos un enlace para restablecerla.'
+                    : "Enter the email associated with your account and we'll send you a reset link."}
+            </p>
+        </div>
+
+        {#if error}
+            <div
+                class="mb-6 p-3 text-sm text-red-600 bg-red-50 dark:bg-red-900/20 dark:text-red-400 rounded-lg border border-red-100 dark:border-red-900/30 text-center animate-in fade-in slide-in-from-top-2"
+            >
+                {error}
+            </div>
+        {/if}
+
+        {#if success}
+            <div
+                class="mb-6 p-3 text-sm text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 dark:text-emerald-400 rounded-lg border border-emerald-100 dark:border-emerald-900/30 text-center animate-in fade-in slide-in-from-top-2"
+            >
+                {success}
+            </div>
+        {/if}
+
+        <form on:submit|preventDefault={handleSubmit} class="space-y-5">
+            <div class="space-y-2">
+                    <label
+                        class="text-xs font-medium uppercase tracking-wider text-muted-foreground ml-1"
+                    >
+                        {lang === 'es' ? 'Correo electrónico' : 'Email Address'}
+                    </label>
+                <div class="relative group">
+                    <Mail
+                        class="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors"
+                    />
+                    <input
+                        type="email"
+                        bind:value={email}
+                        required
+                        class="flex h-11 w-full rounded-xl border border-input bg-white/50 dark:bg-black/20 px-10 py-2 text-sm ring-offset-background placeholder:text-muted-foreground/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:border-primary transition-all shadow-sm"
+                        placeholder={lang === 'es' ? 'correo@ejemplo.com' : 'name@example.com'}
+                    />
+                </div>
+            </div>
+
+            <button
+                type="submit"
+                disabled={isLoading}
+                class="w-full h-11 mt-4 bg-primary text-primary-foreground rounded-xl font-semibold hover:opacity-90 transition-all active:scale-[0.98] shadow-lg shadow-primary/20 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+                {#if isLoading}
+                    <div
+                        class="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin"
+                    ></div>
+                    {lang === 'es' ? 'Enviando enlace...' : 'Sending reset link...'}
+                {:else}
+                    {lang === 'es' ? 'Enviar enlace de restablecimiento' : 'Send reset link'}
+                    <span class="text-lg">→</span>
+                {/if}
+            </button>
+        </form>
+
+        <div class="mt-8 pt-6 border-t border-border/50">
+            <button
+                type="button"
+                on:click={goBackToLogin}
+                class="flex items-center text-sm font-medium text-muted-foreground hover:text-foreground transition-colors mx-auto"
+            >
+                <ArrowLeft class="w-4 h-4 mr-1" />
+                {lang === 'es' ? 'Volver al acceso' : 'Back to login'}
+            </button>
+        </div>
+    </div>
+</div>
+

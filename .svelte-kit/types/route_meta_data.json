@@ -77,7 +77,13 @@
 		"src/routes/[workspace]/admin/users/[id]/+page.server.ts",
 		"src/routes/[workspace]/+layout.server.ts"
 	],
+	"/[workspace]/auth/forgot-password": [
+		"src/routes/[workspace]/+layout.server.ts"
+	],
 	"/[workspace]/auth/login": [
+		"src/routes/[workspace]/+layout.server.ts"
+	],
+	"/[workspace]/auth/reset-password": [
 		"src/routes/[workspace]/+layout.server.ts"
 	],
 	"/[workspace]/config": [

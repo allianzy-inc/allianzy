@@ -43,7 +43,9 @@ export const nodes = [
 	() => import('./nodes/37'),
 	() => import('./nodes/38'),
 	() => import('./nodes/39'),
-	() => import('./nodes/40')
+	() => import('./nodes/40'),
+	() => import('./nodes/41'),
+	() => import('./nodes/42')
 ];
 
 export const server_loads = [2,5,6];
@@ -68,21 +70,23 @@ export const dictionary = {
 		"/[workspace]/admin/support": [23,[2,3]],
 		"/[workspace]/admin/users": [~24,[2,3]],
 		"/[workspace]/admin/users/[id]": [~25,[2,3]],
-		"/[workspace]/auth/login": [26,[2]],
-		"/[workspace]/config": [27,[2]],
-		"/[workspace]/dashboard": [~28,[2,5]],
-		"/[workspace]/dashboard/billing": [~29,[2,5]],
-		"/[workspace]/dashboard/contact": [30,[2,5]],
-		"/[workspace]/dashboard/profile": [~31,[2,5]],
-		"/[workspace]/dashboard/projects": [~32,[2,5]],
-		"/[workspace]/dashboard/projects/[id]": [~33,[2,5,6]],
-		"/[workspace]/dashboard/settings": [~34,[2,5]],
-		"/[workspace]/dashboard/support": [~35,[2,5]],
-		"/[workspace]/intake": [36,[2]],
-		"/[workspace]/portal": [37,[2]],
-		"/[workspace]/provider": [38,[2]],
-		"/[workspace]/schedule": [39,[2]],
-		"/[workspace]/tickets": [40,[2]]
+		"/[workspace]/auth/forgot-password": [26,[2]],
+		"/[workspace]/auth/login": [27,[2]],
+		"/[workspace]/auth/reset-password": [28,[2]],
+		"/[workspace]/config": [29,[2]],
+		"/[workspace]/dashboard": [~30,[2,5]],
+		"/[workspace]/dashboard/billing": [~31,[2,5]],
+		"/[workspace]/dashboard/contact": [32,[2,5]],
+		"/[workspace]/dashboard/profile": [~33,[2,5]],
+		"/[workspace]/dashboard/projects": [~34,[2,5]],
+		"/[workspace]/dashboard/projects/[id]": [~35,[2,5,6]],
+		"/[workspace]/dashboard/settings": [~36,[2,5]],
+		"/[workspace]/dashboard/support": [~37,[2,5]],
+		"/[workspace]/intake": [38,[2]],
+		"/[workspace]/portal": [39,[2]],
+		"/[workspace]/provider": [40,[2]],
+		"/[workspace]/schedule": [41,[2]],
+		"/[workspace]/tickets": [42,[2]]
 	};
 
 export const hooks = {

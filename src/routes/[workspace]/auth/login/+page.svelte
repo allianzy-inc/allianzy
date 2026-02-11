@@ -5,6 +5,7 @@
     import { Eye, EyeOff, Mail, Lock, User } from 'lucide-svelte';
     import logoLight from '$lib/assets/brand/allianzy/logo-light.svg';
     import logoDark from '$lib/assets/brand/allianzy/logo-dark.svg';
+    import { currentLang } from '$lib/i18n';
     
     const workspace = $page.params.workspace;
     let email = $page.url.searchParams.get('email') || '';
@@ -14,6 +15,11 @@
     let isLoading = false;
     let error = '';
     let showPassword = false;
+
+    $: lang = $currentLang;
+
+    let forgotPasswordUrl = '';
+    $: forgotPasswordUrl = `/${workspace}/auth/forgot-password${email ? `?email=${encodeURIComponent(email)}` : ''}`;
 
     function togglePassword() {
         showPassword = !showPassword;
@@ -111,10 +117,22 @@
             {/if}
              
              <h2 class="text-2xl font-bold text-foreground tracking-tight">
-                {isRegister ? 'Create Account' : 'Welcome Back'}
+                {#if isRegister}
+                    {lang === 'es' ? 'Crear cuenta' : 'Create Account'}
+                {:else}
+                    {lang === 'es' ? 'Bienvenido de nuevo' : 'Welcome Back'}
+                {/if}
              </h2>
              <p class="text-sm text-muted-foreground mt-2">
-                {isRegister ? 'Enter your details to get started.' : 'Enter your credentials to access your account.'}
+                {#if isRegister}
+                    {lang === 'es'
+                        ? 'Ingresa tus datos para comenzar.'
+                        : 'Enter your details to get started.'}
+                {:else}
+                    {lang === 'es'
+                        ? 'Ingresa tus credenciales para acceder a tu cuenta.'
+                        : 'Enter your credentials to access your account.'}
+                {/if}
              </p>
         </div>
 
@@ -127,7 +145,9 @@
         <form on:submit|preventDefault={handleSubmit} class="space-y-5">
             {#if isRegister}
                 <div class="space-y-2">
-                    <label class="text-xs font-medium uppercase tracking-wider text-muted-foreground ml-1">Full Name</label>
+                    <label class="text-xs font-medium uppercase tracking-wider text-muted-foreground ml-1">
+                        {lang === 'es' ? 'Nombre completo' : 'Full Name'}
+                    </label>
                     <div class="relative group">
                         <User class="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                         <input 
@@ -135,14 +155,16 @@
                             bind:value={name}
                             required
                             class="flex h-11 w-full rounded-xl border border-input bg-white/50 dark:bg-black/20 px-10 py-2 text-sm ring-offset-background placeholder:text-muted-foreground/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:border-primary transition-all shadow-sm" 
-                            placeholder="John Doe" 
+                            placeholder={lang === 'es' ? 'Juan Pérez' : 'John Doe'}
                         />
                     </div>
                 </div>
             {/if}
 
             <div class="space-y-2">
-                <label class="text-xs font-medium uppercase tracking-wider text-muted-foreground ml-1">Email Address</label>
+                <label class="text-xs font-medium uppercase tracking-wider text-muted-foreground ml-1">
+                    {lang === 'es' ? 'Correo electrónico' : 'Email Address'}
+                </label>
                 <div class="relative group">
                     <Mail class="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                     <input 
@@ -157,7 +179,9 @@
             
             <div class="space-y-2">
                 <div class="flex items-center justify-between ml-1">
-                    <label class="text-xs font-medium uppercase tracking-wider text-muted-foreground">Password</label>
+                    <label class="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                        {lang === 'es' ? 'Contraseña' : 'Password'}
+                    </label>
                 </div>
                 <div class="relative group">
                     <Lock class="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
@@ -182,7 +206,12 @@
                 </div>
                 {#if !isRegister}
                     <div class="flex justify-end mt-1">
-                        <a href="#" class="text-xs font-medium text-primary hover:text-primary/80 transition-colors">Forgot password?</a>
+                        <a
+                            href={forgotPasswordUrl}
+                            class="text-xs font-medium text-primary hover:text-primary/80 transition-colors"
+                        >
+                            {lang === 'es' ? '¿Olvidaste tu contraseña?' : 'Forgot password?'}
+                        </a>
                     </div>
                 {/if}
             </div>
@@ -194,9 +223,14 @@
             >
                 {#if isLoading}
                     <div class="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                    Processing...
+                    {lang === 'es' ? 'Procesando...' : 'Processing...'}
                 {:else}
-                    {isRegister ? 'Create Account' : 'Sign In'} <span class="text-lg">→</span>
+                    {#if isRegister}
+                        {lang === 'es' ? 'Crear cuenta' : 'Create Account'}
+                    {:else}
+                        {lang === 'es' ? 'Iniciar sesión' : 'Sign In'}
+                    {/if}
+                    <span class="text-lg">→</span>
                 {/if}
             </button>
         </form>
@@ -204,13 +238,21 @@
         <div class="mt-8 pt-6 border-t border-border/50">
             <div class="text-center text-sm">
                 <span class="text-muted-foreground">
-                    {isRegister ? 'Already have an account?' : "Don't have an account?"}
+                    {#if isRegister}
+                        {lang === 'es' ? '¿Ya tienes una cuenta?' : 'Already have an account?'}
+                    {:else}
+                        {lang === 'es' ? '¿No tienes una cuenta?' : "Don't have an account?"}
+                    {/if}
                 </span>
                 <button 
                     on:click={toggleMode}
                     class="ml-1 font-semibold text-primary hover:underline focus:outline-none transition-colors"
                 >
-                    {isRegister ? 'Sign in' : 'Sign up'}
+                    {#if isRegister}
+                        {lang === 'es' ? 'Iniciar sesión' : 'Sign in'}
+                    {:else}
+                        {lang === 'es' ? 'Registrarse' : 'Sign up'}
+                    {/if}
                 </button>
             </div>
         </div>

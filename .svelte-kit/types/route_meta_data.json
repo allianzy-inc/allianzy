@@ -24,6 +24,7 @@
 		"src/routes/[workspace]/+layout.server.ts"
 	],
 	"/[workspace]/admin/cases": [
+		"src/routes/[workspace]/admin/cases/+page.server.ts",
 		"src/routes/[workspace]/+layout.server.ts"
 	],
 	"/[workspace]/admin/finance": [
@@ -135,6 +136,16 @@
 		"src/routes/[workspace]/+layout.server.ts"
 	],
 	"/[workspace]/intake": [
+		"src/routes/[workspace]/intake/+page.server.ts",
+		"src/routes/[workspace]/+layout.server.ts",
+		"src/routes/[workspace]/+layout.server.ts"
+	],
+	"/[workspace]/intake/contact/[caseId]": [
+		"src/routes/[workspace]/intake/contact/[caseId]/+page.server.ts",
+		"src/routes/[workspace]/+layout.server.ts"
+	],
+	"/[workspace]/intake/result/[caseId]": [
+		"src/routes/[workspace]/intake/result/[caseId]/+page.server.ts",
 		"src/routes/[workspace]/+layout.server.ts"
 	],
 	"/[workspace]/portal": [

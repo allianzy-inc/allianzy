@@ -82,6 +82,37 @@ export const cases = pgTable('cases', {
     createdAt: timestamp('created_at').defaultNow(),
 });
 
+// Intake / Pre-evaluation funnel
+export const intakeCases = pgTable('intake_cases', {
+    id: serial('id').primaryKey(),
+    // Workspace slug: e.g. 'allianzy', 'beltrix'
+    workspace: text('workspace').notNull(),
+    status: text('status').notNull().default('draft'), // draft, qualifies_allianzy, needs_review, closed_no_fit, redirect_beltrix, pending_contact
+    score: integer('score'),
+    answersJson: jsonb('answers_json').$type<Record<string, any> | null>().default(null),
+    anonymousToken: text('anonymous_token').notNull(),
+    userId: integer('user_id').references(() => users.id),
+    createdAt: timestamp('created_at').defaultNow(),
+    updatedAt: timestamp('updated_at').defaultNow(),
+}, (t) => ({
+    workspaceIdx: index('intake_cases_workspace_idx').on(t.workspace),
+    statusIdx: index('intake_cases_status_idx').on(t.status),
+    tokenIdx: index('intake_cases_token_idx').on(t.anonymousToken),
+}));
+
+export const intakeCaseContacts = pgTable('intake_case_contacts', {
+    id: serial('id').primaryKey(),
+    caseId: integer('case_id').references(() => intakeCases.id, { onDelete: 'cascade' }),
+    fullName: text('full_name').notNull(),
+    email: text('email').notNull(),
+    company: text('company').notNull(),
+    roleTitle: text('role_title'),
+    createdAt: timestamp('created_at').defaultNow(),
+}, (t) => ({
+    caseIdIdx: index('intake_case_contacts_case_id_idx').on(t.caseId),
+    emailIdx: index('intake_case_contacts_email_idx').on(t.email),
+}));
+
 export const caseComments = pgTable('case_comments', {
     id: serial('id').primaryKey(),
     caseId: integer('case_id').references(() => cases.id, { onDelete: 'cascade' }),
@@ -294,5 +325,16 @@ export const notificationsRelations = relations(notifications, ({ one }) => ({
     user: one(users, {
         fields: [notifications.userId],
         references: [users.id],
+    }),
+}));
+
+export const intakeCasesRelations = relations(intakeCases, ({ many }) => ({
+    contacts: many(intakeCaseContacts),
+}));
+
+export const intakeCaseContactsRelations = relations(intakeCaseContacts, ({ one }) => ({
+    intakeCase: one(intakeCases, {
+        fields: [intakeCaseContacts.caseId],
+        references: [intakeCases.id],
     }),
 }));

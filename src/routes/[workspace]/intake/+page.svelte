@@ -1,107 +1,351 @@
 <script lang="ts">
+    import { page } from '$app/stores';
     import { fade } from 'svelte/transition';
+    import type { PageData, ActionData } from './$types';
 
-    let step = 1;
-    
-    function next() {
-        if (step < 3) step++;
-    }
-    
-    function prev() {
-        if (step > 1) step--;
-    }
-    
-    function submit() {
-        alert('Intake submitted!');
-    }
+    export let data: PageData;
+    export let form: ActionData;
+
+    const workspace = $page.params.workspace;
+
+    $: step = data.step ?? 1;
+    $: caseId = data.caseId ?? data.existingCase?.id;
+
+    const isAllianzy = workspace === 'allianzy';
+    const isBeltrix = workspace === 'beltrix';
 </script>
 
-<div class="max-w-2xl mx-auto py-12 px-4">
-    <div class="mb-8">
-        <h1 class="text-3xl font-bold">Project Intake</h1>
-        <p class="text-muted-foreground">Tell us about your needs.</p>
-        
-        <!-- Progress Bar -->
-        <div class="mt-4 flex gap-2">
-            {#each [1, 2, 3] as s}
-                <div class="h-2 flex-1 rounded-full transition-colors {s <= step ? 'bg-primary' : 'bg-gray-200'}"></div>
-            {/each}
-        </div>
+{#if isBeltrix}
+    <!-- Simple placeholder for Beltrix intake -->
+    <div class="max-w-2xl mx-auto py-12 px-4 space-y-6">
+        <h1 class="text-3xl font-bold">Intake Beltrix</h1>
+        <p class="text-muted-foreground">
+            Este flujo está orientado a proyectos de marketing, diseño y sitios web operados por Beltrix Agency.
+        </p>
+        <p class="text-muted-foreground">
+            Por ahora, si querés avanzar con un proyecto Beltrix podés escribirnos desde la página principal o
+            usar el formulario de contacto.
+        </p>
+        <a
+            href="/beltrix#services"
+            class="inline-flex items-center justify-center px-6 py-3 rounded-full bg-primary text-primary-foreground font-semibold hover:opacity-90 transition-colors"
+        >
+            Ver servicios Beltrix
+        </a>
     </div>
-    
-    <div class="bg-card border rounded-lg p-8 shadow-sm min-h-[400px]">
+{:else}
+    <div class="max-w-3xl mx-auto py-12 px-4 space-y-8">
+        <div class="space-y-2">
+            <h1 class="text-3xl font-bold">Iniciar evaluación</h1>
+            <p class="text-muted-foreground">
+                Pre-evaluación rápida para entender si tu desafío encaja con Allianzy. No requiere cuenta.
+            </p>
+        </div>
+
+        <!-- Progress -->
+        <div class="flex items-center gap-2">
+            <div class="flex-1 h-1.5 rounded-full {step === 1 ? 'bg-primary' : 'bg-primary/60'}"></div>
+            <div class="flex-1 h-1.5 rounded-full {step === 2 ? 'bg-primary' : 'bg-muted'}"></div>
+        </div>
+
         {#if step === 1}
-            <div in:fade class="space-y-4">
-                <h2 class="text-xl font-semibold">Contact Information</h2>
-                <div class="grid gap-2">
-                    <label class="text-sm font-medium">Full Name</label>
-                    <input type="text" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" placeholder="John Doe">
-                </div>
-                 <div class="grid gap-2">
-                    <label class="text-sm font-medium">Email</label>
-                    <input type="email" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" placeholder="john@example.com">
-                </div>
-            </div>
-        {:else if step === 2}
-             <div in:fade class="space-y-4">
-                <h2 class="text-xl font-semibold">Project Details</h2>
-                <div class="grid gap-2">
-                    <label class="text-sm font-medium">Project Name</label>
-                    <input type="text" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" placeholder="Project Alpha">
-                </div>
-                 <div class="grid gap-2">
-                    <label class="text-sm font-medium">Description</label>
-                    <textarea class="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" placeholder="Describe your project..."></textarea>
-                </div>
-                 <div class="grid gap-2">
-                    <label class="text-sm font-medium">Attachments</label>
-                    <div class="flex items-center justify-center w-full">
-                        <label for="dropzone-file" class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-muted/30 hover:bg-muted/50 transition-colors border-muted-foreground/25">
-                            <div class="flex flex-col items-center justify-center pt-5 pb-6">
-                                <p class="text-sm text-muted-foreground"><span class="font-semibold">Click to upload</span> or drag and drop</p>
-                                <p class="text-xs text-muted-foreground mt-1">SVG, PNG, JPG or GIF (MAX. 800x400px)</p>
+            <!-- PRE-EVALUACIÓN -->
+            <form method="POST" action="?/start" class="space-y-8">
+                {#if form?.error}
+                    <div class="rounded-md bg-red-50 text-red-700 px-4 py-3 text-sm">
+                        {form.error}
+                    </div>
+                {/if}
+
+                <div class="space-y-4">
+                    <h2 class="text-xl font-semibold">
+                        ¿Qué tipo de ayuda estás buscando principalmente?
+                    </h2>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <label class="border rounded-xl p-4 cursor-pointer hover:border-primary transition-colors flex gap-3">
+                            <input
+                                type="radio"
+                                name="help_type"
+                                value="sistemas_plataforma"
+                                class="mt-1"
+                                required
+                            />
+                            <div>
+                                <div class="font-medium">Sistemas / Plataforma</div>
+                                <p class="text-sm text-muted-foreground">
+                                    Diseñar o consolidar una plataforma interna para operar.
+                                </p>
                             </div>
-                            <input id="dropzone-file" type="file" class="hidden" />
+                        </label>
+                        <label class="border rounded-xl p-4 cursor-pointer hover:border-primary transition-colors flex gap-3">
+                            <input
+                                type="radio"
+                                name="help_type"
+                                value="automatizacion_integraciones"
+                                class="mt-1"
+                                required
+                            />
+                            <div>
+                                <div class="font-medium">Automatización e integraciones</div>
+                                <p class="text-sm text-muted-foreground">
+                                    Conectar sistemas, APIs y flujos de datos para reducir trabajo manual.
+                                </p>
+                            </div>
+                        </label>
+                        <label class="border rounded-xl p-4 cursor-pointer hover:border-primary transition-colors flex gap-3">
+                            <input
+                                type="radio"
+                                name="help_type"
+                                value="escalabilidad_control"
+                                class="mt-1"
+                                required
+                            />
+                            <div>
+                                <div class="font-medium">Escalabilidad y control</div>
+                                <p class="text-sm text-muted-foreground">
+                                    Pasar de operación reactiva a operación con reglas, métricas y procesos claros.
+                                </p>
+                            </div>
+                        </label>
+                        <label class="border rounded-xl p-4 cursor-pointer hover:border-primary transition-colors flex gap-3">
+                            <input
+                                type="radio"
+                                name="help_type"
+                                value="diagnostico_estrategico"
+                                class="mt-1"
+                                required
+                            />
+                            <div>
+                                <div class="font-medium">Diagnóstico estratégico</div>
+                                <p class="text-sm text-muted-foreground">
+                                    Entender dónde está el cuello de botella técnico/operativo antes de diseñar una solución.
+                                </p>
+                            </div>
+                        </label>
+                        <label class="border rounded-xl p-4 cursor-pointer hover:border-primary transition-colors flex gap-3 md:col-span-2">
+                            <input
+                                type="radio"
+                                name="help_type"
+                                value="marketing_diseno_web"
+                                class="mt-1"
+                                required
+                            />
+                            <div>
+                                <div class="font-medium">Marketing / diseño / web</div>
+                                <p class="text-sm text-muted-foreground">
+                                    Publicidad, redes sociales, diseño web o gráfico, piezas creativas. Estos casos suelen derivarse a Beltrix Agency.
+                                </p>
+                            </div>
                         </label>
                     </div>
                 </div>
-            </div>
-        {:else}
-             <div in:fade class="space-y-4">
-                <h2 class="text-xl font-semibold">Review</h2>
-                <p class="text-muted-foreground">Please review your information before submitting.</p>
-                
-                <div class="bg-muted p-4 rounded text-sm space-y-2">
-                    <p><strong>Name:</strong> John Doe</p>
-                    <p><strong>Email:</strong> john@example.com</p>
-                    <p><strong>Project:</strong> Project Alpha</p>
+
+                <div class="space-y-4">
+                    <h2 class="text-xl font-semibold">¿Cuál es el impacto actual principal?</h2>
+                    <div class="grid md:grid-cols-2 gap-3">
+                        <label class="inline-flex items-center gap-2 text-sm">
+                            <input type="radio" name="impact" value="perdida_tiempo" required />
+                            Pérdida de tiempo operativo
+                        </label>
+                        <label class="inline-flex items-center gap-2 text-sm">
+                            <input type="radio" name="impact" value="costos" required />
+                            Costos elevados o descontrolados
+                        </label>
+                        <label class="inline-flex items-center gap-2 text-sm">
+                            <input type="radio" name="impact" value="falta_control" required />
+                            Falta de control / visibilidad
+                        </label>
+                        <label class="inline-flex items-center gap-2 text-sm">
+                            <input type="radio" name="impact" value="riesgo" required />
+                            Riesgo operativo / errores críticos
+                        </label>
+                        <label class="inline-flex items-center gap-2 text-sm md:col-span-2">
+                            <input type="radio" name="impact" value="crecimiento_bloqueado" required />
+                            Crecimiento bloqueado (no se puede escalar más con la estructura actual)
+                        </label>
+                    </div>
                 </div>
-            </div>
-        {/if}
-    </div>
-    
-    <div class="mt-6 flex justify-between">
-        <button 
-            on:click={prev} 
-            disabled={step === 1}
-            class="px-4 py-2 border rounded-md disabled:opacity-50 hover:bg-muted transition-colors"
-        >
-            Back
-        </button>
-        {#if step < 3}
-            <button 
-                on:click={next}
-                class="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:opacity-90 transition-opacity"
-            >
-                Next
-            </button>
+
+                <div class="space-y-4">
+                    <h2 class="text-xl font-semibold">Personas afectadas directamente por este problema</h2>
+                    <div class="grid md:grid-cols-4 gap-3 text-sm">
+                        <label class="inline-flex items-center gap-2">
+                            <input type="radio" name="people" value="1_3" required />
+                            1–3
+                        </label>
+                        <label class="inline-flex items-center gap-2">
+                            <input type="radio" name="people" value="4_10" required />
+                            4–10
+                        </label>
+                        <label class="inline-flex items-center gap-2">
+                            <input type="radio" name="people" value="10_50" required />
+                            10–50
+                        </label>
+                        <label class="inline-flex items-center gap-2">
+                            <input type="radio" name="people" value="50_plus" required />
+                            50+
+                        </label>
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <h2 class="text-xl font-semibold">Urgencia percibida</h2>
+                    <div class="grid md:grid-cols-3 gap-3 text-sm">
+                        <label class="inline-flex items-center gap-2">
+                            <input type="radio" name="urgency" value="exploratorio" required />
+                            Exploratorio (entender opciones)
+                        </label>
+                        <label class="inline-flex items-center gap-2">
+                            <input type="radio" name="urgency" value="proximos_3_meses" required />
+                            Resolver en los próximos 3 meses
+                        </label>
+                        <label class="inline-flex items-center gap-2">
+                            <input type="radio" name="urgency" value="inmediato" required />
+                            Necesitamos movernos ahora
+                        </label>
+                    </div>
+                </div>
+
+                <div class="flex justify-end">
+                    <button
+                        type="submit"
+                        class="px-6 py-2 rounded-full bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-colors"
+                    >
+                        Siguiente
+                    </button>
+                </div>
+            </form>
         {:else}
-             <button 
-                on:click={submit}
-                class="px-4 py-2 bg-green-600 text-white rounded-md hover:opacity-90 transition-opacity"
-            >
-                Submit Intake
-            </button>
+            <!-- EVALUACIÓN GUIADA -->
+            <form method="POST" action="?/complete" class="space-y-8">
+                <input type="hidden" name="case_id" value={caseId} />
+
+                {#if form?.error}
+                    <div class="rounded-md bg-red-50 text-red-700 px-4 py-3 text-sm">
+                        {form.error}
+                    </div>
+                {/if}
+
+                <div class="space-y-2">
+                    <h2 class="text-xl font-semibold">Contexto de la empresa</h2>
+                    <p class="text-sm text-muted-foreground">
+                        Contanos brevemente a qué se dedica la organización y en qué etapa se encuentra.
+                    </p>
+                    <textarea
+                        name="context"
+                        rows="3"
+                        class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    ></textarea>
+                </div>
+
+                <div class="space-y-2">
+                    <h2 class="text-xl font-semibold">Descripción del problema actual</h2>
+                    <p class="text-sm text-muted-foreground">
+                        ¿Qué está pasando hoy que te llevó a buscar una solución?
+                    </p>
+                    <textarea
+                        name="problem"
+                        rows="4"
+                        class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    ></textarea>
+                </div>
+
+                <div class="space-y-3">
+                    <h2 class="text-xl font-semibold">¿Qué intentaron previamente?</h2>
+                    <div class="grid md:grid-cols-2 gap-3 text-sm">
+                        <label class="inline-flex items-center gap-2">
+                            <input type="radio" name="prior_attempt" value="nada" required />
+                            Nada concreto todavía
+                        </label>
+                        <label class="inline-flex items-center gap-2">
+                            <input type="radio" name="prior_attempt" value="ajustes_internos" required />
+                            Ajustes internos / hojas de cálculo
+                        </label>
+                        <label class="inline-flex items-center gap-2">
+                            <input type="radio" name="prior_attempt" value="software_externo" required />
+                            Software externo genérico (SaaS)
+                        </label>
+                        <label class="inline-flex items-center gap-2">
+                            <input type="radio" name="prior_attempt" value="desarrollo_a_medida" required />
+                            Desarrollo a medida previo
+                        </label>
+                        <label class="inline-flex items-center gap-2 md:col-span-2">
+                            <input type="radio" name="prior_attempt" value="consultoria_previa" required />
+                            Consultoría previa (externa/interna)
+                        </label>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <h2 class="text-xl font-semibold">Stack / proceso actual</h2>
+                    <div class="grid md:grid-cols-2 gap-3 text-sm">
+                        <label class="inline-flex items-center gap-2">
+                            <input type="radio" name="current_stack" value="whatsapp_email" required />
+                            WhatsApp / email como canal principal
+                        </label>
+                        <label class="inline-flex items-center gap-2">
+                            <input type="radio" name="current_stack" value="sheets_excel" required />
+                            Hojas de cálculo (Sheets / Excel)
+                        </label>
+                        <label class="inline-flex items-center gap-2">
+                            <input type="radio" name="current_stack" value="software_generico" required />
+                            Software genérico (CRM, ERP, etc.)
+                        </label>
+                        <label class="inline-flex items-center gap-2">
+                            <input type="radio" name="current_stack" value="sistema_propio" required />
+                            Sistema propio / desarrollo a medida
+                        </label>
+                        <label class="inline-flex items-center gap-2 md:col-span-2">
+                            <input type="radio" name="current_stack" value="sin_proceso_formal" required />
+                            No hay un proceso formal definido
+                        </label>
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <h2 class="text-xl font-semibold">Resultado esperado</h2>
+                    <p class="text-sm text-muted-foreground">
+                        Si el proyecto fuera exitoso, ¿qué cambiaría en el día a día?
+                    </p>
+                    <textarea
+                        name="expected_result"
+                        rows="3"
+                        class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    ></textarea>
+                </div>
+
+                <div class="space-y-3">
+                    <h2 class="text-xl font-semibold">¿Quién toma la decisión final?</h2>
+                    <div class="grid md:grid-cols-4 gap-3 text-sm">
+                        <label class="inline-flex items-center gap-2">
+                            <input type="radio" name="final_decisor" value="yo" required />
+                            Yo
+                        </label>
+                        <label class="inline-flex items-center gap-2">
+                            <input type="radio" name="final_decisor" value="direccion" required />
+                            Dirección
+                        </label>
+                        <label class="inline-flex items-center gap-2">
+                            <input type="radio" name="final_decisor" value="socios" required />
+                            Socios
+                        </label>
+                        <label class="inline-flex items-center gap-2">
+                            <input type="radio" name="final_decisor" value="otro" required />
+                            Otro
+                        </label>
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-3">
+                    <button
+                        type="submit"
+                        class="px-6 py-2 rounded-full bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-colors"
+                    >
+                        Ver resultado
+                    </button>
+                </div>
+            </form>
         {/if}
     </div>
-</div>
+{/if}
+

@@ -17,12 +17,43 @@
     let showPassword = false;
 
     $: lang = $currentLang;
+    const redirectTo = $page.url.searchParams.get('redirectTo') || '';
 
     let forgotPasswordUrl = '';
     $: forgotPasswordUrl = `/${workspace}/auth/forgot-password${email ? `?email=${encodeURIComponent(email)}` : ''}`;
 
     function togglePassword() {
         showPassword = !showPassword;
+    }
+
+    function formatLoginError(e: any): string {
+        let message: string | undefined;
+
+        if (e?.body?.message) {
+            message = e.body.message;
+        } else if (e?.message) {
+            message = e.message;
+        } else if (e?.code) {
+            message = e.code;
+        } else if (typeof e === 'string') {
+            message = e;
+        }
+
+        // Mensajes amigables y traducidos para casos conocidos
+        if (message && message.includes('Invalid email or password')) {
+            return lang === 'es'
+                ? 'Correo electrónico o contraseña inválidos.'
+                : 'Invalid email or password.';
+        }
+
+        if (!message) {
+            return lang === 'es'
+                ? 'No se pudo iniciar sesión. Verifica tus credenciales o inténtalo más tarde.'
+                : 'Authentication failed. Please check your credentials or try again later.';
+        }
+
+        // Para cualquier otro mensaje, lo mostramos tal cual, sin códigos técnicos.
+        return message;
     }
 
     async function handleSubmit() {
@@ -39,10 +70,12 @@
                 if (signUpError) throw signUpError;
             }
             
-            const { data, error: signInError } = await authClient.signIn.email({
-                email,
-                password,
-            });
+            const { data, error: signInError } = await authClient.signIn.email(
+                {
+                    email,
+                    password,
+                }
+            );
 
             if (signInError) throw signInError;
 
@@ -61,26 +94,12 @@
                 console.error('Failed to sync user to local DB', syncError);
             }
 
-            const targetRoute = `/${workspace}/dashboard`;
+            const targetRoute = redirectTo || `/${workspace}/dashboard`;
             await goto(targetRoute, { replaceState: true, invalidateAll: true });
         } catch (e: any) {
             console.error('Login error:', e);
             
-            if (e?.body?.message) {
-                error = e.body.message;
-            } else if (e?.message) {
-                error = e.message;
-            } else if (e?.code) {
-                error = e.code;
-            } else if (typeof e === 'string') {
-                error = e;
-            } else {
-                error = 'Authentication failed. Please check your credentials or try again later.';
-            }
-            
-            if (e?.status) {
-                error += ` (Status: ${e.status})`;
-            }
+            error = formatLoginError(e);
         } finally {
             isLoading = false;
         }

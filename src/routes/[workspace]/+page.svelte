@@ -297,7 +297,7 @@
                             <a href="/allianzy/auth/login" class="px-5 py-2.5 rounded-full bg-transparent text-foreground border border-input text-sm font-semibold hover:bg-accent hover:text-accent-foreground transition-all">
                                 {t.nav.login}
                             </a>
-                            <a href="/allianzy/auth/register" class="px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-semibold hover:shadow-lg hover:shadow-primary/20 hover:-translate-y-0.5 transition-all">
+                            <a href="/allianzy/intake" class="px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-semibold hover:shadow-lg hover:shadow-primary/20 hover:-translate-y-0.5 transition-all">
                                 {t.nav.start_eval}
                             </a>
                         </div>
@@ -342,7 +342,7 @@
                             <a href="/allianzy/auth/login" class="mt-4 block w-full text-center py-3 rounded-lg bg-transparent border border-input text-foreground font-semibold">
                                 {t.nav.login}
                             </a>
-                            <a href="/allianzy/auth/register" class="mt-2 block w-full text-center py-3 rounded-lg bg-primary text-primary-foreground font-semibold">
+                            <a href="/allianzy/intake" class="mt-2 block w-full text-center py-3 rounded-lg bg-primary text-primary-foreground font-semibold">
                                 {t.nav.start_eval}
                             </a>
                         {/if}

@@ -1,4 +1,4 @@
-# Allianzy & Beltix SaaS Platform
+# Allianzy Inc & Beltix SaaS Platform
 
 A multi-tenant SaaS dashboard UI built with SvelteKit and Shadcn UI.
 

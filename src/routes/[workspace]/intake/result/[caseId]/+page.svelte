@@ -11,6 +11,9 @@
     const contactUrl = `/${workspace}/intake/contact/${data.caseId}`;
 
     const isAllianzy = workspace === 'allianzy';
+    const beltrixUrl = data.beltrixAgencyUrl ?? '';
+    const beltrixIntakeHref = beltrixUrl ? `${beltrixUrl}?from=allianzy` : '/beltrix/intake';
+    const beltrixHomeHref = beltrixUrl || '/beltrix';
 </script>
 
 <div class="max-w-3xl mx-auto py-12 px-4 space-y-8">
@@ -34,7 +37,7 @@
                 y operativa de tu proyecto.
             </p>
             <a
-                href="/beltrix/intake"
+                href={beltrixIntakeHref}
                 class="inline-flex items-center justify-center px-6 py-3 rounded-full bg-primary text-primary-foreground font-semibold hover:opacity-90 transition-colors"
             >
                 Ir a Beltrix
@@ -51,7 +54,7 @@
                 desde servicios operativos o de marketing tradicionales.
             </p>
             <a
-                href="/beltrix"
+                href={beltrixHomeHref}
                 class="inline-flex items-center justify-center px-6 py-3 rounded-full bg-primary text-primary-foreground font-semibold hover:opacity-90 transition-colors"
             >
                 Ver alternativas en Beltrix

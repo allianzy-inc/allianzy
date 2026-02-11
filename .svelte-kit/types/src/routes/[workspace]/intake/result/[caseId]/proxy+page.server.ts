@@ -4,6 +4,7 @@ import { db } from '$lib/server/db';
 import { intakeCases } from '$lib/server/schema';
 import { and, eq } from 'drizzle-orm';
 import { error } from '@sveltejs/kit';
+import { env } from '$env/dynamic/private';
 
 export const load = async ({ params, locals, cookies }: Parameters<PageServerLoad>[0]) => {
     const workspace = params.workspace;
@@ -33,13 +34,16 @@ export const load = async ({ params, locals, cookies }: Parameters<PageServerLoa
 
     const status = intakeCase.status ?? 'draft';
 
+    const beltrixBase = (env.BELTRIX_AGENCY_URL ?? '').replace(/\/$/, '');
+
     return {
         workspace,
         caseId: intakeCase.id,
         status,
         score: intakeCase.score,
         answers: intakeCase.answersJson,
-        hasSession: Boolean(locals.user)
+        hasSession: Boolean(locals.user),
+        beltrixAgencyUrl: beltrixBase || null
     };
 };
 

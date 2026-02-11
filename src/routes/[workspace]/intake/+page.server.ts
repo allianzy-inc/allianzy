@@ -4,6 +4,7 @@ import { intakeCases } from '$lib/server/schema';
 import { and, eq } from 'drizzle-orm';
 import { error, fail, redirect } from '@sveltejs/kit';
 import { randomUUID } from 'crypto';
+import { env } from '$env/dynamic/private';
 
 type HelpType =
     | 'sistemas_plataforma'
@@ -236,7 +237,10 @@ export const actions: Actions = {
                 maxAge: 60 * 60 * 24 * 7
             });
 
-            throw redirect(303, `/beltrix/intake?from=${workspace}`);
+            // En producción definir BELTRIX_AGENCY_URL (ej. https://beltrix.agency) para redirigir al sitio externo
+            const beltrixBase = (env.BELTRIX_AGENCY_URL ?? '').replace(/\/$/, '');
+            const url = beltrixBase ? `${beltrixBase}?from=${workspace}` : `/beltrix/intake?from=${workspace}`;
+            throw redirect(303, url);
         }
 
         const anonymousToken = cookies.get('intake_token') ?? randomUUID();

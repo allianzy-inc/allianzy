@@ -10,6 +10,9 @@
 
     $: step = data.step ?? 1;
     $: caseId = data.caseId ?? data.existingCase?.id;
+    $: prefillPre = data.prefillPre ?? null;
+    $: prefillGuided = data.prefillGuided ?? null;
+    $: isEditingPre = Boolean(caseId && prefillPre);
 
     const isAllianzy = workspace === 'allianzy';
     const isBeltrix = workspace === 'beltrix';
@@ -53,7 +56,10 @@
 
         {#if step === 1}
             <!-- PRE-EVALUACIÓN -->
-            <form method="POST" action="?/start" class="space-y-8">
+            <form method="POST" action={isEditingPre ? '?/updatePre' : '?/start'} class="space-y-8">
+                {#if isEditingPre}
+                    <input type="hidden" name="case_id" value={caseId} />
+                {/if}
                 {#if form?.error}
                     <div class="rounded-md bg-red-50 text-red-700 dark:bg-red-950/80 dark:border dark:border-red-800/50 dark:text-red-200 px-4 py-3 text-sm">
                         {form.error}
@@ -72,6 +78,7 @@
                                 value="sistemas_plataforma"
                                 class="mt-1"
                                 required
+                                checked={prefillPre?.help_type === 'sistemas_plataforma'}
                             />
                             <div>
                                 <div class="font-medium">Sistemas / Plataforma</div>
@@ -87,6 +94,7 @@
                                 value="automatizacion_integraciones"
                                 class="mt-1"
                                 required
+                                checked={prefillPre?.help_type === 'automatizacion_integraciones'}
                             />
                             <div>
                                 <div class="font-medium">Automatización e integraciones</div>
@@ -102,6 +110,7 @@
                                 value="escalabilidad_control"
                                 class="mt-1"
                                 required
+                                checked={prefillPre?.help_type === 'escalabilidad_control'}
                             />
                             <div>
                                 <div class="font-medium">Escalabilidad y control</div>
@@ -117,6 +126,7 @@
                                 value="diagnostico_estrategico"
                                 class="mt-1"
                                 required
+                                checked={prefillPre?.help_type === 'diagnostico_estrategico'}
                             />
                             <div>
                                 <div class="font-medium">Diagnóstico estratégico</div>
@@ -132,6 +142,7 @@
                                 value="marketing_diseno_web"
                                 class="mt-1"
                                 required
+                                checked={prefillPre?.help_type === 'marketing_diseno_web'}
                             />
                             <div>
                                 <div class="font-medium">Marketing / diseño / web</div>
@@ -147,23 +158,23 @@
                     <h2 class="text-xl font-semibold">¿Cuál es el impacto actual principal?</h2>
                     <div class="grid md:grid-cols-2 gap-3">
                         <label class="inline-flex items-center gap-2 text-sm">
-                            <input type="radio" name="impact" value="perdida_tiempo" required />
+                            <input type="radio" name="impact" value="perdida_tiempo" required checked={prefillPre?.impact === 'perdida_tiempo'} />
                             Pérdida de tiempo operativo
                         </label>
                         <label class="inline-flex items-center gap-2 text-sm">
-                            <input type="radio" name="impact" value="costos" required />
+                            <input type="radio" name="impact" value="costos" required checked={prefillPre?.impact === 'costos'} />
                             Costos elevados o descontrolados
                         </label>
                         <label class="inline-flex items-center gap-2 text-sm">
-                            <input type="radio" name="impact" value="falta_control" required />
+                            <input type="radio" name="impact" value="falta_control" required checked={prefillPre?.impact === 'falta_control'} />
                             Falta de control / visibilidad
                         </label>
                         <label class="inline-flex items-center gap-2 text-sm">
-                            <input type="radio" name="impact" value="riesgo" required />
+                            <input type="radio" name="impact" value="riesgo" required checked={prefillPre?.impact === 'riesgo'} />
                             Riesgo operativo / errores críticos
                         </label>
                         <label class="inline-flex items-center gap-2 text-sm md:col-span-2">
-                            <input type="radio" name="impact" value="crecimiento_bloqueado" required />
+                            <input type="radio" name="impact" value="crecimiento_bloqueado" required checked={prefillPre?.impact === 'crecimiento_bloqueado'} />
                             Crecimiento bloqueado (no se puede escalar más con la estructura actual)
                         </label>
                     </div>
@@ -173,19 +184,19 @@
                     <h2 class="text-xl font-semibold">¿Cuántas personas usan o dependen de este proceso/sistema hoy?</h2>
                     <div class="grid md:grid-cols-4 gap-3 text-sm">
                         <label class="inline-flex items-center gap-2">
-                            <input type="radio" name="people" value="1_3" required />
+                            <input type="radio" name="people" value="1_3" required checked={prefillPre?.people === '1_3'} />
                             1–3
                         </label>
                         <label class="inline-flex items-center gap-2">
-                            <input type="radio" name="people" value="4_10" required />
+                            <input type="radio" name="people" value="4_10" required checked={prefillPre?.people === '4_10'} />
                             4–10
                         </label>
                         <label class="inline-flex items-center gap-2">
-                            <input type="radio" name="people" value="10_50" required />
+                            <input type="radio" name="people" value="10_50" required checked={prefillPre?.people === '10_50'} />
                             10–50
                         </label>
                         <label class="inline-flex items-center gap-2">
-                            <input type="radio" name="people" value="50_plus" required />
+                            <input type="radio" name="people" value="50_plus" required checked={prefillPre?.people === '50_plus'} />
                             50+
                         </label>
                     </div>
@@ -195,31 +206,49 @@
                     <h2 class="text-xl font-semibold">Urgencia percibida</h2>
                     <div class="grid md:grid-cols-3 gap-3 text-sm">
                         <label class="inline-flex items-center gap-2">
-                            <input type="radio" name="urgency" value="exploratorio" required />
+                            <input type="radio" name="urgency" value="exploratorio" required checked={prefillPre?.urgency === 'exploratorio'} />
                             Exploratorio (entender opciones)
                         </label>
                         <label class="inline-flex items-center gap-2">
-                            <input type="radio" name="urgency" value="proximos_3_meses" required />
+                            <input type="radio" name="urgency" value="proximos_3_meses" required checked={prefillPre?.urgency === 'proximos_3_meses'} />
                             Resolver en los próximos 3 meses
                         </label>
                         <label class="inline-flex items-center gap-2">
-                            <input type="radio" name="urgency" value="inmediato" required />
+                            <input type="radio" name="urgency" value="inmediato" required checked={prefillPre?.urgency === 'inmediato'} />
                             Necesitamos movernos ahora
                         </label>
                     </div>
                 </div>
 
-                <div class="flex justify-end">
+                <div class="flex justify-between items-center">
+                    {#if isEditingPre}
+                        <a
+                            href="/{workspace}/intake?caseId={caseId}"
+                            class="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                            ← Volver a la evaluación guiada
+                        </a>
+                    {:else}
+                        <span></span>
+                    {/if}
                     <button
                         type="submit"
                         class="px-6 py-2 rounded-full bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-colors"
                     >
-                        Siguiente
+                        {isEditingPre ? 'Guardar y continuar' : 'Siguiente'}
                     </button>
                 </div>
             </form>
         {:else}
             <!-- EVALUACIÓN GUIADA -->
+            <div class="mb-4">
+                <a
+                    href="/{workspace}/intake?caseId={caseId}&edit=pre"
+                    class="text-sm text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1"
+                >
+                    ← Volver a la pre-evaluación
+                </a>
+            </div>
             <form method="POST" action="?/complete" class="space-y-8">
                 <input type="hidden" name="case_id" value={caseId} />
 
@@ -238,7 +267,7 @@
                         name="context"
                         rows="3"
                         class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                    ></textarea>
+                    >{prefillGuided?.context ?? ''}</textarea>
                 </div>
 
                 <div class="space-y-2">
@@ -250,38 +279,38 @@
                         name="problem"
                         rows="4"
                         class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                    ></textarea>
+                    >{prefillGuided?.problem ?? ''}</textarea>
                 </div>
 
                 <div class="space-y-3">
                     <h2 class="text-xl font-semibold">¿En qué área ocurre principalmente el problema?</h2>
                     <div class="grid md:grid-cols-2 gap-3 text-sm">
                         <label class="inline-flex items-center gap-2">
-                            <input type="radio" name="problem_area" value="operacion_backoffice" required />
+                            <input type="radio" name="problem_area" value="operacion_backoffice" required checked={prefillGuided?.problemArea === 'operacion_backoffice'} />
                             Operación / backoffice
                         </label>
                         <label class="inline-flex items-center gap-2">
-                            <input type="radio" name="problem_area" value="ventas_comercial" required />
+                            <input type="radio" name="problem_area" value="ventas_comercial" required checked={prefillGuided?.problemArea === 'ventas_comercial'} />
                             Ventas / comercial
                         </label>
                         <label class="inline-flex items-center gap-2">
-                            <input type="radio" name="problem_area" value="produccion_taller" required />
+                            <input type="radio" name="problem_area" value="produccion_taller" required checked={prefillGuided?.problemArea === 'produccion_taller'} />
                             Producción / taller
                         </label>
                         <label class="inline-flex items-center gap-2">
-                            <input type="radio" name="problem_area" value="logistica" required />
+                            <input type="radio" name="problem_area" value="logistica" required checked={prefillGuided?.problemArea === 'logistica'} />
                             Logística
                         </label>
                         <label class="inline-flex items-center gap-2">
-                            <input type="radio" name="problem_area" value="finanzas_pagos" required />
+                            <input type="radio" name="problem_area" value="finanzas_pagos" required checked={prefillGuided?.problemArea === 'finanzas_pagos'} />
                             Finanzas / pagos
                         </label>
                         <label class="inline-flex items-center gap-2">
-                            <input type="radio" name="problem_area" value="soporte_atencion" required />
+                            <input type="radio" name="problem_area" value="soporte_atencion" required checked={prefillGuided?.problemArea === 'soporte_atencion'} />
                             Soporte / atención al cliente
                         </label>
                         <label class="inline-flex items-center gap-2">
-                            <input type="radio" name="problem_area" value="ti_sistemas" required />
+                            <input type="radio" name="problem_area" value="ti_sistemas" required checked={prefillGuided?.problemArea === 'ti_sistemas'} />
                             TI / sistemas
                         </label>
                     </div>
@@ -291,23 +320,23 @@
                     <h2 class="text-xl font-semibold">¿Qué intentaron previamente?</h2>
                     <div class="grid md:grid-cols-2 gap-3 text-sm">
                         <label class="inline-flex items-center gap-2">
-                            <input type="radio" name="prior_attempt" value="nada" required />
+                            <input type="radio" name="prior_attempt" value="nada" required checked={prefillGuided?.priorAttempt === 'nada'} />
                             Nada concreto todavía
                         </label>
                         <label class="inline-flex items-center gap-2">
-                            <input type="radio" name="prior_attempt" value="ajustes_internos" required />
+                            <input type="radio" name="prior_attempt" value="ajustes_internos" required checked={prefillGuided?.priorAttempt === 'ajustes_internos'} />
                             Ajustes internos / hojas de cálculo
                         </label>
                         <label class="inline-flex items-center gap-2">
-                            <input type="radio" name="prior_attempt" value="software_externo" required />
+                            <input type="radio" name="prior_attempt" value="software_externo" required checked={prefillGuided?.priorAttempt === 'software_externo'} />
                             Software externo genérico (SaaS)
                         </label>
                         <label class="inline-flex items-center gap-2">
-                            <input type="radio" name="prior_attempt" value="desarrollo_a_medida" required />
+                            <input type="radio" name="prior_attempt" value="desarrollo_a_medida" required checked={prefillGuided?.priorAttempt === 'desarrollo_a_medida'} />
                             Desarrollo a medida previo
                         </label>
                         <label class="inline-flex items-center gap-2 md:col-span-2">
-                            <input type="radio" name="prior_attempt" value="consultoria_previa" required />
+                            <input type="radio" name="prior_attempt" value="consultoria_previa" required checked={prefillGuided?.priorAttempt === 'consultoria_previa'} />
                             Consultoría previa (externa/interna)
                         </label>
                     </div>
@@ -317,23 +346,23 @@
                     <h2 class="text-xl font-semibold">Stack / proceso actual</h2>
                     <div class="grid md:grid-cols-2 gap-3 text-sm">
                         <label class="inline-flex items-center gap-2">
-                            <input type="radio" name="current_stack" value="whatsapp_email" required />
+                            <input type="radio" name="current_stack" value="whatsapp_email" required checked={prefillGuided?.currentStack === 'whatsapp_email'} />
                             WhatsApp / email como canal principal
                         </label>
                         <label class="inline-flex items-center gap-2">
-                            <input type="radio" name="current_stack" value="sheets_excel" required />
+                            <input type="radio" name="current_stack" value="sheets_excel" required checked={prefillGuided?.currentStack === 'sheets_excel'} />
                             Hojas de cálculo (Sheets / Excel)
                         </label>
                         <label class="inline-flex items-center gap-2">
-                            <input type="radio" name="current_stack" value="software_generico" required />
+                            <input type="radio" name="current_stack" value="software_generico" required checked={prefillGuided?.currentStack === 'software_generico'} />
                             Software genérico (CRM, ERP, etc.)
                         </label>
                         <label class="inline-flex items-center gap-2">
-                            <input type="radio" name="current_stack" value="sistema_propio" required />
+                            <input type="radio" name="current_stack" value="sistema_propio" required checked={prefillGuided?.currentStack === 'sistema_propio'} />
                             Sistema propio / desarrollo a medida
                         </label>
                         <label class="inline-flex items-center gap-2 md:col-span-2">
-                            <input type="radio" name="current_stack" value="sin_proceso_formal" required />
+                            <input type="radio" name="current_stack" value="sin_proceso_formal" required checked={prefillGuided?.currentStack === 'sin_proceso_formal'} />
                             No hay un proceso formal definido
                         </label>
                     </div>
@@ -348,32 +377,38 @@
                         name="expected_result"
                         rows="3"
                         class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                    ></textarea>
+                    >{prefillGuided?.expectedResult ?? ''}</textarea>
                 </div>
 
                 <div class="space-y-3">
                     <h2 class="text-xl font-semibold">¿Quién valida o autoriza avanzar con el proyecto?</h2>
                     <div class="grid md:grid-cols-2 gap-3 text-sm">
                         <label class="inline-flex items-center gap-2">
-                            <input type="radio" name="final_decisor" value="yo" required />
+                            <input type="radio" name="final_decisor" value="yo" required checked={prefillGuided?.finalDecisor === 'yo'} />
                             Yo
                         </label>
                         <label class="inline-flex items-center gap-2">
-                            <input type="radio" name="final_decisor" value="direccion_gerencia" required />
+                            <input type="radio" name="final_decisor" value="direccion_gerencia" required checked={prefillGuided?.finalDecisor === 'direccion_gerencia' || prefillGuided?.finalDecisor === 'direccion'} />
                             Dirección / gerencia
                         </label>
                         <label class="inline-flex items-center gap-2">
-                            <input type="radio" name="final_decisor" value="socios" required />
+                            <input type="radio" name="final_decisor" value="socios" required checked={prefillGuided?.finalDecisor === 'socios'} />
                             Socios
                         </label>
                         <label class="inline-flex items-center gap-2">
-                            <input type="radio" name="final_decisor" value="comite_compras_legal" required />
+                            <input type="radio" name="final_decisor" value="comite_compras_legal" required checked={prefillGuided?.finalDecisor === 'comite_compras_legal'} />
                             Comité / compras / legal
                         </label>
                     </div>
                 </div>
 
-                <div class="flex justify-end gap-3">
+                <div class="flex justify-between items-center gap-3">
+                    <a
+                        href="/{workspace}/intake?caseId={caseId}&edit=pre"
+                        class="text-sm text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1"
+                    >
+                        ← Volver a la pre-evaluación
+                    </a>
                     <button
                         type="submit"
                         class="px-6 py-2 rounded-full bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-colors"

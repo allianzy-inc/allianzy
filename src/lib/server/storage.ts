@@ -1,5 +1,4 @@
 import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { env } from '$env/dynamic/private';
 import { createHmac } from 'crypto';
 
@@ -58,7 +57,10 @@ export async function deleteFile(fileUrl: string): Promise<void> {
 }
 
 export function getSignedUrlForFile(url: string | null, workspace: string = 'allianzy'): string | null {
-  if (!url) return null;
+  if (url == null || typeof url !== 'string') return null;
+  const urlStr = url.trim();
+  if (!urlStr) return null;
+  url = urlStr;
 
   // Check if it's already a proxy URL and extract the original B2 URL
   // This handles cases where the DB might have saved a proxy URL instead of the B2 URL

@@ -2,7 +2,7 @@
 import { redirect } from '@sveltejs/kit';
 import type { LayoutServerLoad } from './$types';
 import { db } from '$lib/server/db';
-import { userCompanies, companies, notifications } from '$lib/server/schema';
+import { userCompanies, companies, notifications, projects } from '$lib/server/schema';
 import { eq, desc } from 'drizzle-orm';
 import { getSignedUrlForFile } from '$lib/server/storage';
 
@@ -58,9 +58,20 @@ export const load: LayoutServerLoad = async ({ locals, url, params }) => {
         // If the user has no companies, the dropdown will be empty or hidden.
     }
 
+    const userId = parseInt(locals.user.id);
+    const hasAnyCompany = mappedCompanies.length > 0;
+    const hasAnyProject = (
+        await db.select({ id: projects.id })
+            .from(projects)
+            .where(eq(projects.clientId, userId))
+            .limit(1)
+    ).length > 0;
+
     return {
         user: locals.user,
         companies: mappedCompanies,
-        notifications: userNotifications
+        notifications: userNotifications,
+        hasAnyCompany,
+        hasAnyProject
     };
 };

@@ -89,6 +89,29 @@ export const handle: Handle = async ({ event, resolve }) => {
                 });
             }
 
+            let companyId = primaryCompanyLink?.companyId ?? undefined;
+            let companyName = primaryCompanyLink?.company?.name;
+
+            // Dashboard: respetar empresa seleccionada por el usuario (cookie)
+            const selectedCompanyCookie = event.cookies.get('selected_company_id');
+            if (selectedCompanyCookie) {
+                const requestedId = parseInt(selectedCompanyCookie, 10);
+                if (!isNaN(requestedId)) {
+                    const link = await db.query.userCompanies.findFirst({
+                        where: and(
+                            eq(userCompanies.userId, localUser.id),
+                            eq(userCompanies.companyId, requestedId),
+                            eq(userCompanies.status, 'active')
+                        ),
+                        with: { company: true }
+                    });
+                    if (link?.company) {
+                        companyId = link.companyId ?? undefined;
+                        companyName = link.company.name;
+                    }
+                }
+            }
+
             event.locals.user = {
                 id: localUser.id.toString(),
                 email: localUser.email,
@@ -96,8 +119,8 @@ export const handle: Handle = async ({ event, resolve }) => {
                 lastName: localUser.lastName || '',
                 role: localUser.role || 'client',
                 image: avatarUrl || '',
-                companyId: primaryCompanyLink?.companyId || undefined,
-                companyName: primaryCompanyLink?.company?.name
+                companyId,
+                companyName
             };
         }
     }

@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { db } from '$lib/server/db';
-import { projects, services, users, cases, requests, requirements, proposals, payments } from '$lib/server/schema';
-import { eq, sql, and, or } from 'drizzle-orm';
+import { projects, services, users, cases, requests, requirements, proposals, payments, userCompanies, companies } from '$lib/server/schema';
+import { eq, sql, and, or, inArray, desc } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import type { PageServerLoad, Actions } from './$types';
 import { fail, redirect } from '@sveltejs/kit';
@@ -9,7 +9,7 @@ import { fail, redirect } from '@sveltejs/kit';
 export const load = async ({ locals, params }: Parameters<PageServerLoad>[0]) => {
     try {
         // Fetch Clients
-        const clients = await db.select({
+        const clientsRaw = await db.select({
             id: users.id,
             firstName: users.firstName,
             lastName: users.lastName,
@@ -18,6 +18,38 @@ export const load = async ({ locals, params }: Parameters<PageServerLoad>[0]) =>
         })
         .from(users)
         .where(eq(users.role, 'client'));
+
+        const clientIds = clientsRaw.map((c) => c.id).filter((id): id is number => id != null);
+        const companyByUserId = new Map<number, string>();
+        const companiesByClientId: Record<number, { id: number; name: string }[]> = {};
+        if (clientIds.length > 0) {
+            const links = await db
+                .select({
+                    userId: userCompanies.userId,
+                    companyId: companies.id,
+                    companyName: companies.name,
+                    isPrimary: userCompanies.isPrimary
+                })
+                .from(userCompanies)
+                .innerJoin(companies, eq(userCompanies.companyId, companies.id))
+                .where(inArray(userCompanies.userId, clientIds))
+                .orderBy(desc(userCompanies.isPrimary));
+            for (const row of links) {
+                if (row.userId != null && row.companyId != null && row.companyName) {
+                    if (!companyByUserId.has(row.userId)) {
+                        companyByUserId.set(row.userId, row.companyName);
+                    }
+                    if (!companiesByClientId[row.userId]) companiesByClientId[row.userId] = [];
+                    if (!companiesByClientId[row.userId].some((c) => c.id === row.companyId)) {
+                        companiesByClientId[row.userId].push({ id: row.companyId, name: row.companyName });
+                    }
+                }
+            }
+        }
+        const clients = clientsRaw.map((c) => ({
+            ...c,
+            companyDisplay: companyByUserId.get(c.id!) ?? c.company ?? 'Sin empresa'
+        }));
 
         // Fetch Services
         // We fetch all services. The UI can filter if needed, but for now just list them.
@@ -28,12 +60,12 @@ export const load = async ({ locals, params }: Parameters<PageServerLoad>[0]) =>
         }).from(services)
         .where(eq(services.status, 'Active'));
 
-        // Fetch Projects
-        // Alias for legacy user link via service
+        // Fetch Projects — admin ve todos los proyectos (sin filtrar por empresa)
         const serviceUsers = alias(users, 'service_users');
-
-        const allProjects = await db.select({
+        const allProjectsRaw = await db.select({
             id: projects.id,
+            clientId: projects.clientId,
+            companyId: projects.companyId,
             name: projects.name,
             description: projects.description,
             status: projects.status,
@@ -41,7 +73,6 @@ export const load = async ({ locals, params }: Parameters<PageServerLoad>[0]) =>
             endDate: projects.endDate,
             provider: projects.provider,
             serviceName: services.name,
-            // Coalesce client details from project link (preferred) or service link (legacy)
             clientName: sql<string>`
                 CASE 
                     WHEN ${users.id} IS NOT NULL THEN TRIM(BOTH ' ' FROM COALESCE(${users.firstName}, '') || ' ' || COALESCE(${users.lastName}, ''))
@@ -56,17 +87,52 @@ export const load = async ({ locals, params }: Parameters<PageServerLoad>[0]) =>
         .leftJoin(users, eq(projects.clientId, users.id))
         .leftJoin(serviceUsers, eq(services.clientId, serviceUsers.id));
 
+        // Empresa del proyecto (a la que pertenece): preferir project.companyId sobre la primera empresa del cliente
+        const projectCompanyIds = [...new Set(allProjectsRaw.map((p) => p.companyId).filter((id): id is number => id != null))];
+        const companyNameById = new Map<number, string>();
+        if (projectCompanyIds.length > 0) {
+            const companyRows = await db.select({ id: companies.id, name: companies.name }).from(companies).where(inArray(companies.id, projectCompanyIds));
+            for (const row of companyRows) {
+                if (row.id != null && row.name) companyNameById.set(row.id, row.name);
+            }
+        }
+        const projectClientIds = [...new Set(allProjectsRaw.map((p) => p.clientId).filter((id): id is number => id != null))];
+        const projectCompanyByUserId = new Map<number, string>();
+        if (projectClientIds.length > 0) {
+            const projectLinks = await db
+                .select({
+                    userId: userCompanies.userId,
+                    companyName: companies.name,
+                    isPrimary: userCompanies.isPrimary
+                })
+                .from(userCompanies)
+                .innerJoin(companies, eq(userCompanies.companyId, companies.id))
+                .where(inArray(userCompanies.userId, projectClientIds))
+                .orderBy(desc(userCompanies.isPrimary));
+            for (const row of projectLinks) {
+                if (row.userId != null && row.companyName && !projectCompanyByUserId.has(row.userId)) {
+                    projectCompanyByUserId.set(row.userId, row.companyName);
+                }
+            }
+        }
+        const allProjects = allProjectsRaw.map((p) => ({
+            ...p,
+            clientCompanyDisplay: (p.companyId != null ? companyNameById.get(p.companyId) : null) ?? (p.clientId != null ? projectCompanyByUserId.get(p.clientId) : null) ?? p.clientCompany ?? ''
+        }));
+
         return {
             projects: allProjects,
             clients,
-            services: allServices
+            services: allServices,
+            companiesByClientId
         };
     } catch (error) {
         console.error('Error fetching projects:', error);
         return {
             projects: [],
             clients: [],
-            services: []
+            services: [],
+            companiesByClientId: {}
         };
     }
 };
@@ -77,6 +143,8 @@ export const actions = {
         const name = formData.get('name') as string;
         const description = formData.get('description') as string;
         const clientId = formData.get('clientId') ? parseInt(formData.get('clientId') as string) : null;
+        const companyIdRaw = formData.get('companyId');
+        const companyId = companyIdRaw && String(companyIdRaw).trim() !== '' ? parseInt(String(companyIdRaw)) : null;
         const serviceId = formData.get('serviceId') ? parseInt(formData.get('serviceId') as string) : null;
         const provider = formData.get('provider') as string || 'Allianzy';
         const status = formData.get('status') as string || 'Pending';
@@ -92,6 +160,7 @@ export const actions = {
                 name,
                 description,
                 clientId,
+                companyId: companyId ?? null,
                 serviceId,
                 provider,
                 status,
@@ -116,6 +185,8 @@ export const actions = {
         const name = formData.get('name') as string;
         const description = formData.get('description') as string;
         const clientId = formData.get('clientId') ? parseInt(formData.get('clientId') as string) : null;
+        const companyIdRaw = formData.get('companyId');
+        const companyId = companyIdRaw !== null && companyIdRaw !== undefined && String(companyIdRaw).trim() !== '' ? parseInt(String(companyIdRaw)) : null;
         const serviceId = formData.get('serviceId') ? parseInt(formData.get('serviceId') as string) : null;
         const provider = formData.get('provider') as string;
         const status = formData.get('status') as string;
@@ -132,6 +203,7 @@ export const actions = {
                     name,
                     description,
                     clientId,
+                    companyId: companyId ?? null,
                     serviceId,
                     provider,
                     status,

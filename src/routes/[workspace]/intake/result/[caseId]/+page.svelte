@@ -18,6 +18,12 @@
 
 <div class="space-y-8">
     <div class="space-y-2">
+        <a
+            href="/{workspace}/intake?caseId={data.caseId}"
+            class="text-sm text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1"
+        >
+            ← Volver a editar la evaluación
+        </a>
         <h1 class="text-3xl font-bold">Resultado de la evaluación</h1>
         {#if data.score != null}
             <p class="text-muted-foreground text-sm">

@@ -2,7 +2,7 @@
 import { db } from '$lib/server/db';
 import { payments, projects, services, userCompanies } from '$lib/server/schema';
 import { getSignedUrlForFile } from '$lib/server/storage';
-import { eq, or, desc, and, inArray } from 'drizzle-orm';
+import { eq, or, desc, and, inArray, isNull } from 'drizzle-orm';
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 
@@ -33,6 +33,18 @@ export const load = async ({ locals, params }: Parameters<PageServerLoad>[0]) =>
         }
     }
 
+    const companyId = locals.user?.companyId ?? null;
+    const sameCompanyFilter = companyId ? or(eq(projects.companyId, companyId), isNull(projects.companyId)) : undefined;
+    const visibilityConditions: any[] = [
+        companyId ? and(eq(projects.clientId, userId), sameCompanyFilter) : eq(projects.clientId, userId),
+        companyId ? and(eq(services.clientId, userId), sameCompanyFilter) : eq(services.clientId, userId)
+    ];
+    if (allowedProjectIds.length > 0) {
+        visibilityConditions.push(
+            companyId ? and(inArray(projects.id, allowedProjectIds), sameCompanyFilter) : inArray(projects.id, allowedProjectIds)
+        );
+    }
+
     const rawPayments = await db.select({
         id: payments.id,
         title: payments.title,
@@ -47,11 +59,7 @@ export const load = async ({ locals, params }: Parameters<PageServerLoad>[0]) =>
     .from(payments)
     .innerJoin(projects, eq(payments.projectId, projects.id))
     .leftJoin(services, eq(projects.serviceId, services.id))
-    .where(or(
-        eq(projects.clientId, userId),
-        eq(services.clientId, userId),
-        allowedProjectIds.length > 0 ? inArray(projects.id, allowedProjectIds) : undefined
-    ))
+    .where(or(...visibilityConditions))
     .orderBy(desc(payments.dueDate));
 
     const userPayments = await Promise.all(rawPayments.map(async (p) => ({

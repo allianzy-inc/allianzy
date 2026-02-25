@@ -316,7 +316,7 @@ export const translations = {
             },
             footer: {
                 help_support: 'Help',
-                rights: 'All rights reserved.',
+                rights: '© Allianzy Inc. All rights reserved.',
                 made_with_love: 'Made with love'
             },
             header: {
@@ -326,6 +326,8 @@ export const translations = {
                 },
                 profile: {
                     account: 'My Account',
+                    admin_panel: 'Admin Panel',
+                    client_panel: 'Client Panel',
                     theme: {
                         title: 'Theme',
                         light: 'Light',
@@ -859,7 +861,7 @@ export const translations = {
             },
             footer: {
                 help_support: 'Ayuda',
-                rights: 'Todos los derechos reservados.',
+                rights: '© Allianzy Inc. Todos los derechos reservados.',
                 made_with_love: 'Hecho con amor'
             },
             header: {
@@ -869,6 +871,8 @@ export const translations = {
                 },
                 profile: {
                     account: 'Mi cuenta',
+                    admin_panel: 'Panel de Admin',
+                    client_panel: 'Panel de Cliente',
                     theme: {
                         title: 'Tema',
                         light: 'Claro',

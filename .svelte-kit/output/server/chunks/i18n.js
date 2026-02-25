@@ -312,7 +312,7 @@ const translations = {
       },
       footer: {
         help_support: "Help",
-        rights: "All rights reserved.",
+        rights: "© Allianzy Inc. All rights reserved.",
         made_with_love: "Made with love"
       },
       header: {
@@ -855,7 +855,7 @@ const translations = {
       },
       footer: {
         help_support: "Ayuda",
-        rights: "Todos los derechos reservados.",
+        rights: "© Allianzy Inc. Todos los derechos reservados.",
         made_with_love: "Hecho con amor"
       },
       header: {

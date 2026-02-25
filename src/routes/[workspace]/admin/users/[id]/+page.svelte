@@ -2,7 +2,7 @@
     import { enhance } from '$app/forms';
     import { page } from '$app/stores';
     import { 
-        User, Mail, Phone, MapPin, Building, Briefcase, 
+        User, Mail, Phone, MapPin, Briefcase, 
         CreditCard, Folder, MessageSquare, Save, Plus, Trash2, ArrowLeft, Link 
     } from 'lucide-svelte';
     import type { PageData } from './$types';
@@ -13,13 +13,35 @@
     $: projects = data.projects;
     $: payments = data.payments;
     $: cases = data.cases;
+    $: userCompaniesList = data.userCompaniesList ?? [];
 
     let activeTab = 'general';
+    let formPersonal = {
+        firstName: '',
+        lastName: '',
+        email: '',
+        phone: '',
+        role: 'client',
+        avatarUrl: ''
+    };
+    let formNotes = '';
+    let lastSyncedUserId = 0;
     let identification: { type: string, value: string }[] = [];
     let addresses: { label: string, address: string, city: string, country: string }[] = [];
     let companyLinks: { title: string, url: string }[] = [];
 
-    $: if (user) {
+    $: userIdNum = user ? Number(user.id) : 0;
+    $: if (user && userIdNum && userIdNum !== lastSyncedUserId) {
+        lastSyncedUserId = userIdNum;
+        formPersonal = {
+            firstName: user.firstName ?? '',
+            lastName: user.lastName ?? '',
+            email: user.email ?? '',
+            phone: user.phone ?? '',
+            role: user.role ?? 'client',
+            avatarUrl: user.avatarUrl ?? ''
+        };
+        formNotes = user.notes ?? '';
         identification = (user.identification as { type: string, value: string }[]) || [];
         addresses = (user.addresses as { label: string, address: string, city: string, country: string }[]) || [];
         companyLinks = (user.companyLinks as { title: string, url: string }[]) || [];
@@ -91,6 +113,13 @@
             </button>
             <button 
                 class="px-4 py-2 border-b-2 font-medium text-sm transition-colors
+                {activeTab === 'companies' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}"
+                on:click={() => activeTab = 'companies'}
+            >
+                Empresas ({userCompaniesList.length})
+            </button>
+            <button 
+                class="px-4 py-2 border-b-2 font-medium text-sm transition-colors
                 {activeTab === 'projects' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}"
                 on:click={() => activeTab = 'projects'}
             >
@@ -116,7 +145,29 @@
     <!-- Content -->
     <div class="mt-6">
         {#if activeTab === 'general'}
-            <form action="?/updateUser" method="POST" use:enhance class="space-y-8 max-w-4xl">
+            <form
+                action="?/updateUser"
+                method="POST"
+                use:enhance={({ result }) => {
+                    if (result.type === 'success' && result.data?.user) {
+                        const u = result.data.user as { id?: number; firstName?: string | null; lastName?: string | null; email?: string | null; phone?: string | null; role?: string | null; avatarUrl?: string | null; notes?: string | null; addresses?: unknown; companyLinks?: unknown; identification?: unknown };
+                        if (u.id) lastSyncedUserId = Number(u.id);
+                        formPersonal = {
+                            firstName: u.firstName ?? '',
+                            lastName: u.lastName ?? '',
+                            email: u.email ?? '',
+                            phone: u.phone ?? '',
+                            role: u.role ?? 'client',
+                            avatarUrl: u.avatarUrl ?? ''
+                        };
+                        formNotes = u.notes ?? '';
+                        identification = (u.identification as { type: string; value: string }[]) || [];
+                        addresses = (u.addresses as { label: string; address: string; city: string; country: string }[]) || [];
+                        companyLinks = (u.companyLinks as { title: string; url: string }[]) || [];
+                    }
+                }}
+                class="space-y-8 max-w-4xl"
+            >
                 <!-- Personal Info -->
                 <div class="space-y-4">
                     <h3 class="text-lg font-semibold flex items-center gap-2">
@@ -125,23 +176,23 @@
                     <div class="grid grid-cols-2 gap-4">
                         <div class="space-y-2">
                             <label class="text-sm font-medium">Nombre</label>
-                            <input type="text" name="firstName" value={user.firstName || ''} class="w-full p-2 border rounded-md" />
+                            <input type="text" name="firstName" bind:value={formPersonal.firstName} class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground" />
                         </div>
                         <div class="space-y-2">
                             <label class="text-sm font-medium">Apellido</label>
-                            <input type="text" name="lastName" value={user.lastName || ''} class="w-full p-2 border rounded-md" />
+                            <input type="text" name="lastName" bind:value={formPersonal.lastName} class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground" />
                         </div>
                         <div class="space-y-2">
                             <label class="text-sm font-medium">Email</label>
-                            <input type="email" name="email" value={user.email} class="w-full p-2 border rounded-md" />
+                            <input type="email" name="email" bind:value={formPersonal.email} class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground" />
                         </div>
                         <div class="space-y-2">
                             <label class="text-sm font-medium">Teléfono</label>
-                            <input type="text" name="phone" value={user.phone || ''} class="w-full p-2 border rounded-md" placeholder="+1234567890" />
+                            <input type="text" name="phone" bind:value={formPersonal.phone} class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground" placeholder="+1234567890" />
                         </div>
                         <div class="space-y-2">
                             <label class="text-sm font-medium">Rol</label>
-                            <select name="role" value={user.role} class="w-full p-2 border rounded-md">
+                            <select name="role" bind:value={formPersonal.role} class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground">
                                 <option value="staff">Staff</option>
                                 <option value="client">Cliente</option>
                                 <option value="provider">Proveedor</option>
@@ -150,7 +201,7 @@
                         </div>
                         <div class="space-y-2 col-span-2">
                             <label class="text-sm font-medium">Avatar URL</label>
-                            <input type="text" name="avatarUrl" value={user.avatarUrl || ''} class="w-full p-2 border rounded-md" placeholder="https://..." />
+                            <input type="text" name="avatarUrl" bind:value={formPersonal.avatarUrl} class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground" placeholder="https://..." />
                         </div>
                     </div>
                 </div>
@@ -179,7 +230,7 @@
                                         <input 
                                             type="text" 
                                             bind:value={addr.label} 
-                                            class="w-full p-2 border rounded-md" 
+                                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground" 
                                             placeholder="Etiqueta"
                                         />
                                     </div>
@@ -188,7 +239,7 @@
                                         <input 
                                             type="text" 
                                             bind:value={addr.address} 
-                                            class="w-full p-2 border rounded-md" 
+                                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground" 
                                             placeholder="Calle 123"
                                         />
                                     </div>
@@ -197,7 +248,7 @@
                                         <input 
                                             type="text" 
                                             bind:value={addr.city} 
-                                            class="w-full p-2 border rounded-md" 
+                                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground" 
                                             placeholder="Ciudad"
                                         />
                                     </div>
@@ -206,7 +257,7 @@
                                         <input 
                                             type="text" 
                                             bind:value={addr.country} 
-                                            class="w-full p-2 border rounded-md" 
+                                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground" 
                                             placeholder="País"
                                         />
                                     </div>
@@ -224,24 +275,8 @@
                     </div>
                 </div>
 
-                <!-- Company -->
-                <div class="space-y-4">
-                    <h3 class="text-lg font-semibold flex items-center gap-2">
-                        <Building class="w-5 h-5" /> Empresa
-                    </h3>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="space-y-2">
-                            <label class="text-sm font-medium">Nombre de la Empresa</label>
-                            <input type="text" name="company" value={user.company || ''} class="w-full p-2 border rounded-md" />
-                        </div>
-                        <div class="space-y-2">
-                            <label class="text-sm font-medium">Cargo / Rol</label>
-                            <input type="text" name="jobTitle" value={user.jobTitle || ''} class="w-full p-2 border rounded-md" />
-                        </div>
-                    </div>
-
-                    <!-- Company Links -->
-                    <div class="space-y-2 pt-2">
+                <!-- Enlaces de Interés (perfil usuario) -->
+                <div class="space-y-2 pt-2">
                         <label class="text-sm font-medium flex items-center gap-2">
                             <Link class="w-4 h-4" /> Enlaces de Interés
                         </label>
@@ -255,7 +290,7 @@
                                         <input 
                                             type="text" 
                                             bind:value={link.title} 
-                                            class="w-full p-2 border rounded-md" 
+                                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground" 
                                             placeholder="Web, LinkedIn..."
                                         />
                                     </div>
@@ -264,14 +299,14 @@
                                         <input 
                                             type="text" 
                                             bind:value={link.url} 
-                                            class="w-full p-2 border rounded-md" 
+                                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground" 
                                             placeholder="https://..."
                                         />
                                     </div>
                                     <button 
                                         type="button" 
                                         on:click={() => removeCompanyLink(i)}
-                                        class="p-2 text-red-500 hover:bg-red-50 rounded-md mb-[1px]"
+                                        class="p-2 text-destructive hover:bg-destructive/10 rounded-md mb-[1px]"
                                     >
                                         <Trash2 class="w-5 h-5" />
                                     </button>
@@ -286,7 +321,6 @@
                                 <Plus class="w-4 h-4" /> Agregar Enlace
                             </button>
                         </div>
-                    </div>
                 </div>
 
                 <!-- Identification Documents -->
@@ -304,7 +338,7 @@
                                     <input 
                                         type="text" 
                                         bind:value={doc.type} 
-                                        class="w-full p-2 border rounded-md" 
+                                        class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground" 
                                         placeholder="Tipo de documento"
                                     />
                                 </div>
@@ -313,14 +347,14 @@
                                     <input 
                                         type="text" 
                                         bind:value={doc.value} 
-                                        class="w-full p-2 border rounded-md" 
+                                        class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground" 
                                         placeholder="Número de documento"
                                     />
                                 </div>
                                 <button 
                                     type="button" 
                                     on:click={() => removeDocument(i)}
-                                    class="p-2 text-red-500 hover:bg-red-50 rounded-md mb-[1px]"
+                                    class="p-2 text-destructive hover:bg-destructive/10 rounded-md mb-[1px]"
                                 >
                                     <Trash2 class="w-5 h-5" />
                                 </button>
@@ -344,9 +378,9 @@
                     </h3>
                     <textarea 
                         name="notes" 
-                        value={user.notes || ''} 
+                        bind:value={formNotes}
                         rows="4" 
-                        class="w-full p-2 border rounded-md"
+                        class="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground resize-none"
                         placeholder="Notas internas sobre el cliente..."
                     ></textarea>
                 </div>
@@ -358,6 +392,54 @@
                     </button>
                 </div>
             </form>
+
+        {:else if activeTab === 'companies'}
+            <div class="space-y-4 max-w-4xl">
+                <p class="text-sm text-muted-foreground">
+                    Empresas en las que este usuario figura como dueño, administrador o miembro.
+                </p>
+                <div class="rounded-md border bg-card">
+                    <table class="w-full text-sm text-left">
+                        <thead class="text-muted-foreground bg-muted/50 font-medium">
+                            <tr>
+                                <th class="p-4">Empresa</th>
+                                <th class="p-4">Rol en la empresa</th>
+                                <th class="p-4">Estado</th>
+                                <th class="p-4">Principal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {#if userCompaniesList.length === 0}
+                                <tr>
+                                    <td colspan="4" class="p-8 text-center text-muted-foreground">
+                                        No está asociado a ninguna empresa.
+                                    </td>
+                                </tr>
+                            {:else}
+                                {#each userCompaniesList as uc}
+                                    <tr class="border-t hover:bg-muted/50 transition-colors">
+                                        <td class="p-4 font-medium">
+                                            <a href="/{$page.params.workspace}/admin/companies?detail={uc.companyId}" class="hover:underline text-primary">
+                                                {uc.companyName}
+                                            </a>
+                                        </td>
+                                        <td class="p-4">
+                                            <span class="capitalize px-2 py-1 rounded-full text-xs font-medium
+                                                {uc.role === 'owner' ? 'bg-amber-100 text-amber-700' :
+                                                 uc.role === 'admin' ? 'bg-purple-100 text-purple-700' :
+                                                 'bg-slate-100 text-slate-700'}">
+                                                {uc.role === 'owner' ? 'Dueño' : uc.role === 'admin' ? 'Administrador' : 'Miembro'}
+                                            </span>
+                                        </td>
+                                        <td class="p-4 capitalize">{uc.status === 'active' ? 'Activo' : uc.status}</td>
+                                        <td class="p-4">{uc.isPrimary ? 'Sí' : '—'}</td>
+                                    </tr>
+                                {/each}
+                            {/if}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
 
         {:else if activeTab === 'projects'}
             <div class="rounded-md border bg-card">

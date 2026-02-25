@@ -1,4 +1,4 @@
-import { d as db, j as proposalComments, e as proposals, p as projects, n as notifications, k as requirementComments, r as requirements, l as requestComments, h as requests, c as cases, m as caseComments, f as payments, g as projectPayments, b as projectMilestones, u as users, s as services } from "../../../../../../chunks/db.js";
+import { d as db, k as proposalComments, e as proposals, p as projects, n as notifications, l as requirementComments, r as requirements, m as requestComments, h as requests, c as cases, o as caseComments, f as payments, g as projectPayments, b as projectMilestones, u as users, s as services } from "../../../../../../chunks/db.js";
 import { u as uploadFile, d as deleteFile, a as getSignedUrlForFile } from "../../../../../../chunks/storage.js";
 import { eq, sql, desc, asc, getTableColumns } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";

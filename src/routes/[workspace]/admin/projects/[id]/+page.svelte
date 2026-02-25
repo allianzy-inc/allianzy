@@ -381,15 +381,35 @@
     // Edit Project Modal Logic
     let isEditProjectModalOpen = false;
     let selectedClientId: number | null = null;
+    let selectedCompanyId: number | null = null;
     let projectLinks: { title: string; url: string; note?: string }[] = [];
     let removeProjectImage = false;
     let previewImageUrl: string | null = null;
+    let projectImageUrlInput = '';
+    let isSubmittingEditProject = false;
 
     function openEditProjectModal() {
         selectedClientId = project.clientId;
-        projectLinks = project.links ? [...project.links] : [];
+        selectedCompanyId = project.companyId ?? null;
+        let raw = project.links;
+        if (typeof raw === 'string') {
+            try {
+                raw = JSON.parse(raw);
+            } catch {
+                raw = [];
+            }
+        }
+        projectLinks = Array.isArray(raw)
+            ? raw.map((l: any) => ({
+                title: String(l?.title ?? ''),
+                url: String(l?.url ?? ''),
+                note: String(l?.note ?? '')
+            }))
+            : [];
         removeProjectImage = false;
         previewImageUrl = null;
+        const current = project.imageUrl || '';
+        projectImageUrlInput = (current.startsWith('http://') || current.startsWith('https://')) ? current : '';
         isEditProjectModalOpen = true;
     }
 
@@ -416,8 +436,17 @@
         if (input) input.value = '';
     }
 
+    function clearImageUrlInput() {
+        projectImageUrlInput = '';
+    }
+
     function closeEditProjectModal() {
         isEditProjectModalOpen = false;
+    }
+
+    $: companiesForSelectedClient = selectedClientId != null ? (data.companiesByClientId?.[selectedClientId] ?? []) : [];
+    $: if (selectedClientId != null && selectedCompanyId != null && !companiesForSelectedClient.some((c) => c.id === selectedCompanyId)) {
+        selectedCompanyId = null;
     }
 
     $: availableServices = data.allServices;
@@ -439,8 +468,8 @@
             <p class="text-muted-foreground flex items-center gap-2 text-sm">
                 <span class="inline-flex items-center gap-1">
                     <User class="w-3 h-3" /> {project.clientName}
-                    {#if project.clientCompany}
-                        <span class="text-muted-foreground font-semibold">| {project.clientCompany}</span>
+                    {#if project.clientCompanyDisplay}
+                        <span class="text-muted-foreground font-semibold">| {project.clientCompanyDisplay}</span>
                     {/if}
                 </span>
                 <span>•</span>
@@ -993,10 +1022,10 @@
                             <p class="text-muted-foreground text-xs">Nombre</p>
                             <p class="font-medium">{project.clientName}</p>
                         </div>
-                        {#if project.clientCompany}
+                        {#if project.clientCompanyDisplay}
                         <div>
                             <p class="text-muted-foreground text-xs">Empresa</p>
-                            <p class="font-medium">{project.clientCompany}</p>
+                            <p class="font-medium">{project.clientCompanyDisplay}</p>
                         </div>
                         {/if}
                         <div>
@@ -2285,11 +2314,16 @@
                 method="POST" 
                 enctype="multipart/form-data"
                 use:enhance={() => {
+                    isSubmittingEditProject = true;
                     return async ({ result, update }) => {
-                        if (result.type === 'success') {
-                            closeEditProjectModal();
+                        try {
+                            if (result.type === 'success') {
+                                closeEditProjectModal();
+                            }
+                            await update();
+                        } finally {
+                            isSubmittingEditProject = false;
                         }
-                        await update();
                     };
                 }}
                 class="space-y-4 overflow-y-auto pr-2"
@@ -2374,6 +2408,24 @@
                 </div>
 
                 <div class="space-y-2">
+                    <label for="edit-company" class="text-sm font-medium">Empresa</label>
+                    <select 
+                        name="companyId"
+                        id="edit-company"
+                        class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        bind:value={selectedCompanyId}
+                    >
+                        <option value="">Sin empresa</option>
+                        {#each companiesForSelectedClient as company}
+                            <option value={company.id}>{company.name}</option>
+                        {/each}
+                    </select>
+                    {#if selectedClientId != null && companiesForSelectedClient.length === 0}
+                        <p class="text-xs text-muted-foreground">Este cliente no tiene empresas asociadas.</p>
+                    {/if}
+                </div>
+
+                <div class="space-y-2">
                     <label for="edit-service" class="text-sm font-medium">Servicio (Suscripción)</label>
                     <select 
                         name="serviceId" 
@@ -2392,6 +2444,17 @@
                 </div>
 
                 <div class="space-y-2">
+                    <label for="edit-description" class="text-sm font-medium">Descripción</label>
+                    <textarea 
+                        name="description" 
+                        id="edit-description"
+                        rows="3"
+                        placeholder="Detalles del proyecto..."
+                        class="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
+                    >{project.description || ''}</textarea>
+                </div>
+
+                <div class="space-y-2">
                     <label for="edit-image" class="text-sm font-medium">Imagen de Portada</label>
                     <input 
                         type="file" 
@@ -2401,10 +2464,17 @@
                         class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                         on:change={handleImageSelect}
                     />
-                    
+                    <p class="text-xs text-muted-foreground">O bien, pega la URL de una imagen:</p>
+                    <input 
+                        type="url" 
+                        name="imageUrl"
+                        bind:value={projectImageUrlInput}
+                        placeholder="https://ejemplo.com/imagen.jpg"
+                        class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    />
                     <input type="hidden" name="removeImage" value={removeProjectImage ? 'true' : 'false'} />
 
-                    {#if project.imageUrl && !removeProjectImage}
+                    {#if project.imageUrl && !removeProjectImage && !previewImageUrl && !projectImageUrlInput.trim()}
                         <div class="relative mt-2 w-full h-32 rounded-md overflow-hidden border">
                             <img 
                                 src={project.imageUrl} 
@@ -2432,6 +2502,23 @@
                                 class="absolute top-2 right-2 bg-destructive text-destructive-foreground p-1 rounded-full hover:bg-destructive/90"
                                 on:click={clearImageSelection}
                                 title="Cancelar selección"
+                            >
+                                <X class="w-4 h-4" />
+                            </button>
+                        </div>
+                    {:else if projectImageUrlInput.trim()}
+                        <div class="relative mt-2 w-full h-32 rounded-md overflow-hidden border bg-muted/30">
+                            <img 
+                                src={projectImageUrlInput.trim()} 
+                                alt="Vista previa por URL" 
+                                class="w-full h-full object-cover"
+                                on:error={(e) => (e.currentTarget.style.display = 'none')}
+                            />
+                            <button 
+                                type="button" 
+                                class="absolute top-2 right-2 bg-destructive text-destructive-foreground p-1 rounded-full hover:bg-destructive/90"
+                                on:click={clearImageUrlInput}
+                                title="Quitar URL"
                             >
                                 <X class="w-4 h-4" />
                             </button>
@@ -2494,10 +2581,11 @@
                 </div>
 
                 <div class="flex justify-end gap-2 mt-6">
-                    <button type="button" on:click={closeEditProjectModal} class="px-4 py-2 text-sm font-medium border rounded-md hover:bg-accent transition-colors">
+                    <button type="button" on:click={closeEditProjectModal} class="px-4 py-2 text-sm font-medium border rounded-md hover:bg-accent transition-colors" disabled={isSubmittingEditProject}>
                         Cancelar
                     </button>
-                    <button type="submit" class="px-4 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors">
+                    <button type="submit" class="px-4 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center gap-2" disabled={isSubmittingEditProject}>
+                        {#if isSubmittingEditProject}<Loader2 class="w-4 h-4 animate-spin" />{/if}
                         Guardar Cambios
                     </button>
                 </div>

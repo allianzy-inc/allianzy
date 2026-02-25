@@ -58,6 +58,7 @@ export const projects = pgTable('projects', {
     status: text('status').default('Pending'),
     provider: text('provider').default('Allianzy'), // Allianzy, Beltrix, Provider
     clientId: integer('client_id').references(() => users.id),
+    companyId: integer('company_id').references(() => companies.id, { onDelete: 'set null' }), // empresa a la que pertenece el proyecto (evita mezclar si el cliente tiene varias)
     serviceId: integer('service_id').references(() => services.id),
     links: jsonb('links'), // Array of { title, url }
     imageUrl: text('image_url'),
@@ -243,6 +244,7 @@ export const companies = pgTable('companies', {
     links: jsonb('links'), // Array of { title, url }
     documents: jsonb('documents'), // Array of { type: string, value: string }
     registrationDetails: jsonb('registration_details'), // { acn, abn, ndisRegistration }
+    memberLimit: integer('member_limit'), // max members (owner + admins + members); null = unlimited
     workspaceId: integer('workspace_id').references(() => workspaces.id),
     createdAt: timestamp('created_at').defaultNow(),
     updatedAt: timestamp('updated_at').defaultNow(),

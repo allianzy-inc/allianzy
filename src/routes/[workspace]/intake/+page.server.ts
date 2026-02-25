@@ -55,16 +55,20 @@ type ProblemArea =
     | 'soporte_atencion'
     | 'ti_sistemas';
 
-export const load: PageServerLoad = async ({ params, url, locals }) => {
+export const load: PageServerLoad = async ({ params, url }) => {
     const workspace = params.workspace;
     const caseIdParam = url.searchParams.get('caseId');
+    const editPre = url.searchParams.get('edit') === 'pre';
 
     if (!caseIdParam) {
         // New intake, show step 1
         return {
             workspace,
             step: 1,
-            existingCase: null
+            existingCase: null,
+            caseId: null,
+            prefillPre: null,
+            prefillGuided: null
         };
     }
 
@@ -73,26 +77,36 @@ export const load: PageServerLoad = async ({ params, url, locals }) => {
         throw error(400, 'Invalid case id');
     }
 
-    // SECURITY: if user is logged in, we allow access to any case in this workspace.
-    // If not logged in, we require anonymous token cookie to match.
-    const token = locals.user ? null : url.searchParams.get('token');
-
-    const where = [eq(intakeCases.id, caseId), eq(intakeCases.workspace, workspace)] as const;
-
     const intakeCase = await db.query.intakeCases.findFirst({
-        where: and(...where)
+        where: and(eq(intakeCases.id, caseId), eq(intakeCases.workspace, workspace))
     });
 
     if (!intakeCase) {
         throw error(404, 'Case not found');
     }
 
+    const answers = (intakeCase.answersJson ?? {}) as Record<string, unknown>;
+    const prefillPre = (answers.preEvaluation ?? null) as Record<string, string> | null;
+    const prefillGuided = (answers.guidedEvaluation ?? null) as Record<string, unknown> | null;
+
+    if (editPre) {
+        return {
+            workspace,
+            step: 1,
+            existingCase: intakeCase,
+            caseId: intakeCase.id,
+            prefillPre,
+            prefillGuided: null
+        };
+    }
+
     return {
         workspace,
         step: 2,
         existingCase: intakeCase,
-        // For convenience in the UI
-        caseId: intakeCase.id
+        caseId: intakeCase.id,
+        prefillPre: null,
+        prefillGuided
     };
 };
 
@@ -307,6 +321,86 @@ export const actions: Actions = {
         });
 
         throw redirect(303, `/${workspace}/intake?caseId=${created.id}`);
+    },
+
+    updatePre: async ({ request, params, cookies, locals }) => {
+        const workspace = params.workspace;
+        const formData = await request.formData();
+
+        const caseIdRaw = formData.get('case_id');
+        const caseId = Number(caseIdRaw);
+        if (!caseIdRaw || Number.isNaN(caseId)) {
+            return fail(400, { error: 'Caso inválido.' });
+        }
+
+        const helpType = formData.get('help_type') as HelpType | null;
+        const impact = formData.get('impact') as ImpactType | null;
+        const people = formData.get('people') as PeopleRange | null;
+        const urgency = formData.get('urgency') as Urgency | null;
+
+        if (!helpType || !impact || !people || !urgency) {
+            return fail(400, {
+                error: 'Completa todas las preguntas para continuar.',
+                values: Object.fromEntries(formData)
+            });
+        }
+
+        const conditions = [eq(intakeCases.id, caseId), eq(intakeCases.workspace, workspace)];
+        if (!locals.user) {
+            const anonymousToken = cookies.get('intake_token');
+            if (!anonymousToken) {
+                throw error(403, 'Not allowed');
+            }
+            conditions.push(eq(intakeCases.anonymousToken, anonymousToken));
+        }
+
+        const existing = await db.query.intakeCases.findFirst({
+            where: and(...conditions)
+        });
+
+        if (!existing) {
+            throw error(404, 'Case not found');
+        }
+
+        if (helpType === 'marketing_diseno_web') {
+            await db
+                .update(intakeCases)
+                .set({
+                    answersJson: {
+                        ...((existing.answersJson ?? {}) as object),
+                        preEvaluation: { helpType, impact, people, urgency }
+                    },
+                    status: 'redirect_beltrix',
+                    score: null,
+                    updatedAt: new Date()
+                })
+                .where(and(eq(intakeCases.id, caseId), eq(intakeCases.workspace, workspace)));
+
+            const host = (request.headers.get('x-forwarded-host') || request.headers.get('host') || '').split(',')[0].trim();
+            const isLocalhost = host.includes('localhost') || host.includes('127.0.0.1');
+            const isProduction = process.env.NODE_ENV === 'production';
+            const beltrixBase = (env.BELTRIX_AGENCY_URL ?? '').replace(/\/$/, '');
+            const useExternalBeltrix = Boolean(beltrixBase || (workspace === 'allianzy' && (isProduction || !isLocalhost)));
+            const baseUrl = beltrixBase || (useExternalBeltrix ? 'https://beltrix.agency' : '');
+            const url = baseUrl ? `${baseUrl}?from=${workspace}` : `/beltrix/intake?from=${workspace}`;
+            throw redirect(303, url);
+        }
+
+        const answers = (existing.answersJson ?? {}) as Record<string, unknown>;
+        const updatedAnswers = {
+            ...answers,
+            preEvaluation: { helpType, impact, people, urgency }
+        };
+
+        await db
+            .update(intakeCases)
+            .set({
+                answersJson: updatedAnswers,
+                updatedAt: new Date()
+            })
+            .where(and(eq(intakeCases.id, caseId), eq(intakeCases.workspace, workspace)));
+
+        throw redirect(303, `/${workspace}/intake?caseId=${caseId}`);
     },
 
     complete: async ({ request, params, cookies, locals, url }) => {

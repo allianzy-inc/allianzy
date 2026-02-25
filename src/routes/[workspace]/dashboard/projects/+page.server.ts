@@ -35,12 +35,12 @@ export const load: PageServerLoad = async ({ locals, params }) => {
          }
     }
 
-    // Build conditions for project visibility
-    const visibilityConditions = [
-        // 1. Direct Project Assignment (Highest Priority)
-        eq(projects.clientId, userId),
+    const sameCompanyCondition = locals.user.companyId
+        ? and(eq(projects.clientId, userId), or(eq(projects.companyId, locals.user.companyId), isNull(projects.companyId)))
+        : eq(projects.clientId, userId);
 
-        // 2. Service Fallback (Only if Project has NO specific client assigned)
+    const visibilityConditions = [
+        sameCompanyCondition,
         and(
             eq(workspaces.slug, locals.allowedWorkspace),
             eq(services.clientId, userId),
@@ -48,9 +48,11 @@ export const load: PageServerLoad = async ({ locals, params }) => {
         )
     ];
 
-    // 3. Permission-based Access (from Company Settings)
     if (allowedProjectIds.length > 0) {
-        visibilityConditions.push(inArray(projects.id, allowedProjectIds));
+        const allowedCondition = locals.user.companyId
+            ? and(inArray(projects.id, allowedProjectIds), or(eq(projects.companyId, locals.user.companyId), isNull(projects.companyId)))
+            : inArray(projects.id, allowedProjectIds);
+        visibilityConditions.push(allowedCondition);
     }
 
     // We join projects -> services -> workspaces to filter by slug

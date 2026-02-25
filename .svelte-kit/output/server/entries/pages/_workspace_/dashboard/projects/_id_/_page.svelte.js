@@ -6,7 +6,7 @@ import "../../../../../../chunks/utils.js";
 import { a as attr } from "../../../../../../chunks/attributes.js";
 import "@sveltejs/kit/internal/server";
 import "../../../../../../chunks/state.svelte.js";
-import { C as Circle_alert, E as External_link, D as DocumentPreviewModal } from "../../../../../../chunks/DocumentPreviewModal.js";
+import { C as Circle_alert, D as DocumentPreviewModal } from "../../../../../../chunks/DocumentPreviewModal.js";
 import { A as Arrow_left } from "../../../../../../chunks/arrow-left.js";
 import { C as Clock, I as Inbox, a as Circle, b as Info } from "../../../../../../chunks/info.js";
 import { F as File_text } from "../../../../../../chunks/file-text.js";
@@ -20,6 +20,7 @@ import { E as Eye } from "../../../../../../chunks/eye.js";
 import { U as User } from "../../../../../../chunks/user.js";
 import { B as Building } from "../../../../../../chunks/building.js";
 import { B as Briefcase } from "../../../../../../chunks/briefcase.js";
+import { E as External_link } from "../../../../../../chunks/external-link.js";
 import { e as escape_html } from "../../../../../../chunks/escaping.js";
 function _page($$renderer, $$props) {
   $$renderer.component(($$renderer2) => {

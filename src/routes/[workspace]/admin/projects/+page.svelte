@@ -9,6 +9,7 @@
     $: projects = data.projects;
     $: clients = data.clients || [];
     $: services = data.services || [];
+    $: companiesByClientId = data.companiesByClientId ?? {};
 
     // UI State
     let isModalOpen = false;
@@ -17,6 +18,11 @@
     let deleteTarget: any = null;
     let showActionsFor: number | null = null;
     let isDeleting = false;
+    let isSubmittingProject = false;
+    let formClientId = '';
+    let formCompanyId = '';
+
+    $: companiesForSelectedClient = formClientId ? (companiesByClientId[Number(formClientId)] || []) : [];
 
     function formatDate(date: Date | null) {
         if (!date) return '-';
@@ -31,6 +37,8 @@
 
     function openModal(project: any = null) {
         editingProject = project;
+        formClientId = project?.clientId != null ? String(project.clientId) : '';
+        formCompanyId = project?.companyId != null ? String(project.companyId) : '';
         isModalOpen = true;
         showActionsFor = null;
     }
@@ -92,7 +100,6 @@
                     <th class="p-4">Servicio</th>
                     <th class="p-4">Fechas</th>
                     <th class="p-4">Estado</th>
-                    <th class="p-4 text-right">Acciones</th>
                 </tr>
             </thead>
             <tbody>
@@ -105,16 +112,11 @@
                             <div class="text-xs text-muted-foreground truncate max-w-[200px] mt-1">{project.description || 'Sin descripción'}</div>
                         </td>
                         <td class="p-4">
-                            <div class="flex items-center gap-3">
-                                <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                                    <User class="w-4 h-4" />
-                                </div>
-                                <div class="flex flex-col">
-                                    <span class="font-medium text-foreground">{project.clientName || 'Sin asignar'}</span>
-                                    {#if project.clientCompany}
-                                        <span class="text-xs text-muted-foreground font-medium">{project.clientCompany}</span>
-                                    {/if}
-                                </div>
+                            <div class="flex flex-col">
+                                <span class="font-medium text-foreground">{project.clientName || 'Sin asignar'}</span>
+                                {#if project.clientCompanyDisplay}
+                                    <span class="text-xs text-muted-foreground font-medium">{project.clientCompanyDisplay}</span>
+                                {/if}
                             </div>
                         </td>
                         <td class="p-4">
@@ -137,43 +139,11 @@
                                 {project.status}
                             </span>
                         </td>
-                        <td class="p-4 text-right relative">
-                            <button 
-                                on:click={() => toggleActions(project.id)}
-                                class="p-2 hover:bg-accent rounded-full transition-colors"
-                            >
-                                <MoreVertical class="w-4 h-4" />
-                            </button>
-                            
-                            {#if showActionsFor === project.id}
-                                <div 
-                                    transition:slide={{ duration: 150 }}
-                                    class="absolute right-12 top-2 z-10 bg-card border rounded-lg shadow-lg py-1 min-w-[140px] flex flex-col"
-                                >
-                                    <button 
-                                        on:click={() => openModal(project)}
-                                        class="px-4 py-2 text-left text-sm hover:bg-muted flex items-center gap-2"
-                                    >
-                                        <Pencil class="w-3.5 h-3.5" />
-                                        Editar
-                                    </button>
-                                    <button 
-                                        on:click={() => openDeleteModal(project)}
-                                        class="px-4 py-2 text-left text-sm hover:bg-red-50 text-red-500 flex items-center gap-2"
-                                    >
-                                        <Trash2 class="w-3.5 h-3.5" />
-                                        Eliminar
-                                    </button>
-                                </div>
-                                <!-- Backdrop to close menu -->
-                                <div class="fixed inset-0 z-0" on:click={() => showActionsFor = null}></div>
-                            {/if}
-                        </td>
                     </tr>
                 {/each}
                 {#if projects.length === 0}
                     <tr>
-                        <td colspan="6" class="p-12 text-center border-t">
+                        <td colspan="5" class="p-12 text-center border-t">
                             <div class="flex flex-col items-center justify-center text-muted-foreground">
                                 <Briefcase class="w-10 h-10 mb-3 opacity-20" />
                                 <p class="text-lg font-medium text-foreground">No hay proyectos</p>
@@ -208,15 +178,20 @@
                 method="POST" 
                 action={editingProject ? '?/updateProject' : '?/createProject'} 
                 use:enhance={() => {
+                    isSubmittingProject = true;
                     return async ({ result, update }) => {
-                        if (result.type === 'success') {
-                            closeModal();
-                            await update();
-                        } else if (result.type === 'redirect') {
-                            await applyAction(result);
-                        } else {
-                            console.error('Project form error:', result);
-                            alert('Error al guardar el proyecto. Verifique los campos obligatorios.');
+                        try {
+                            if (result.type === 'success') {
+                                closeModal();
+                                await update();
+                            } else if (result.type === 'redirect') {
+                                await applyAction(result);
+                            } else {
+                                console.error('Project form error:', result);
+                                alert('Error al guardar el proyecto. Verifique los campos obligatorios.');
+                            }
+                        } finally {
+                            isSubmittingProject = false;
                         }
                     };
                 }}
@@ -244,18 +219,36 @@
                         <select 
                             name="clientId" 
                             required
+                            bind:value={formClientId}
+                            on:change={() => { if (!companiesForSelectedClient.some(c => String(c.id) === formCompanyId)) formCompanyId = ''; }}
                             class="w-full px-3 py-2 border rounded-md bg-background focus:ring-2 focus:ring-primary"
-                            value={editingProject?.clientId || ''}
                         >
                             <option value="" disabled selected>Seleccionar cliente...</option>
                             {#each clients as client}
                                 <option value={client.id}>
-                                    {client.firstName || ''} {client.lastName || ''} ({client.company || 'Sin empresa'})
+                                    {client.firstName || ''} {client.lastName || ''} ({client.companyDisplay ?? 'Sin empresa'})
                                 </option>
                             {/each}
                         </select>
                     </div>
-
+                    <div class="space-y-2">
+                        <label class="text-sm font-medium" for="companyId">Empresa</label>
+                        <select 
+                            name="companyId" 
+                            bind:value={formCompanyId}
+                            class="w-full px-3 py-2 border rounded-md bg-background focus:ring-2 focus:ring-primary"
+                        >
+                            <option value="">Sin empresa / Seleccionar...</option>
+                            {#each companiesForSelectedClient as comp}
+                                <option value={comp.id}>{comp.name}</option>
+                            {/each}
+                        </select>
+                        {#if formClientId && companiesForSelectedClient.length === 0}
+                            <p class="text-xs text-muted-foreground">El cliente no tiene empresas asociadas.</p>
+                        {/if}
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
                     <div class="space-y-2">
                         <label class="text-sm font-medium" for="serviceId">Servicio <span class="text-red-500">*</span></label>
                         <select 
@@ -334,10 +327,11 @@
                 </div>
 
                 <div class="flex justify-end gap-3 pt-4 border-t">
-                    <button type="button" on:click={closeModal} class="px-4 py-2 text-sm font-medium hover:bg-muted rounded-md">
+                    <button type="button" on:click={closeModal} class="px-4 py-2 text-sm font-medium hover:bg-muted rounded-md" disabled={isSubmittingProject}>
                         Cancelar
                     </button>
-                    <button type="submit" class="px-4 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-md hover:opacity-90">
+                    <button type="submit" class="px-4 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-md hover:opacity-90 disabled:opacity-50 flex items-center gap-2" disabled={isSubmittingProject}>
+                        {#if isSubmittingProject}<Loader2 class="w-4 h-4 animate-spin" />{/if}
                         {editingProject ? 'Guardar Cambios' : 'Crear Proyecto'}
                     </button>
                 </div>

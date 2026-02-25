@@ -59,4 +59,8 @@
   body {
     @apply bg-background text-foreground;
   }
+  /* Evitar destello blanco: si html ya tiene .dark, body pinta fondo oscuro de inmediato */
+  html.dark body {
+    background-color: hsl(240 10% 3.9%);
+  }
 }

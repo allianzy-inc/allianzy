@@ -5,6 +5,7 @@
     import { Pencil, Plus, Upload, Building2, Users, FileText, ShieldCheck, Mail, Globe, MapPin, Calendar, Clock, Link as LinkIcon, Trash2, Loader2, Check, X } from 'lucide-svelte';
     import { currentLang, translations } from '$lib/i18n';
     import { portal } from '$lib/actions/portal';
+    import AddressLocationFields from '$lib/components/AddressLocationFields.svelte';
     import type { PageData } from './$types';
 
     export let data: PageData;
@@ -29,6 +30,7 @@
         website: string | null;
         region: string | null;
         timezone: string | null;
+        memberLimit?: number | null;
         addresses: Address[] | unknown;
         links: any[] | unknown;
         documents: any[] | unknown;
@@ -55,7 +57,9 @@
     $: currentUser = data.currentUser;
     $: currentUserRole = data.companyUsers?.find(u => u.id?.toString() === currentUser?.id?.toString())?.role;
     $: isMember = currentUserRole === 'member';
-    
+    $: companyMemberLimit = organization?.memberLimit ?? null;
+    $: atMemberLimit = companyMemberLimit != null && usersList.length >= companyMemberLimit;
+
     // Dynamic Lists State
     let addresses: any[] = [];
     let companyLinks: any[] = [];
@@ -77,6 +81,7 @@
     let newDoc = { type: '', value: '' };
     
     let isAddingAddress = false;
+    let editingAddressIndex: number | null = null;
     let isAddingLink = false;
     let isAddingDoc = false;
 
@@ -90,6 +95,7 @@
     let isSavingUser = false;
     let isDeletingUser = false;
     let isDeleteUserModalOpen = false;
+    let showMemberLimitModal = false;
 
     const getFullName = (u: CompanyUser) => {
         if (!u.firstName && !u.lastName) return `(${t.dashboard.page.settings.users.table?.guest || 'Guest'})`;
@@ -194,6 +200,10 @@
     };
 
     function openUserDrawer(user: CompanyUser | null = null) {
+        if (!user && atMemberLimit) {
+            showMemberLimitModal = true;
+            return;
+        }
         if (user) {
             selectedUser = user;
             const userPerms = user.permissions || {};
@@ -306,6 +316,8 @@
                 setTimeout(() => saveMessage = null, 2000);
                 closeUserDrawer();
                 await invalidateAll();
+            } else if (result.type === 'failure' && (result as any).data?.memberLimitReached) {
+                showMemberLimitModal = true;
             }
             applyAction(result);
         } catch (e) {
@@ -359,12 +371,31 @@
     function addAddress() {
         if (isMember) return;
         if (newAddress.address) {
-            const updatedAddresses = [...addresses, { ...newAddress }];
+            const updatedAddresses =
+                editingAddressIndex !== null
+                    ? addresses.map((a, i) => (i === editingAddressIndex ? { ...newAddress } : a))
+                    : [...addresses, { ...newAddress }];
             addresses = updatedAddresses;
             saveField('addresses', updatedAddresses);
             newAddress = { label: '', address: '', city: '', country: '', state: '', postalCode: '' };
             isAddingAddress = false;
+            editingAddressIndex = null;
         }
+    }
+
+    function startEditAddress(index: number) {
+        if (isMember) return;
+        const a = addresses[index];
+        newAddress = {
+            label: a.label ?? '',
+            address: a.address ?? '',
+            city: a.city ?? '',
+            country: a.country ?? '',
+            state: a.state ?? '',
+            postalCode: a.postalCode ?? ''
+        };
+        editingAddressIndex = index;
+        isAddingAddress = true;
     }
 
     function removeAddress(index: number) {
@@ -714,13 +745,23 @@
                                     </div>
                                 </div>
                                 {#if !isMember}
-                                    <button 
-                                        type="button"
-                                        class="text-muted-foreground hover:text-destructive transition-colors p-1"
-                                        on:click={() => removeAddress(i)}
-                                    >
-                                        <Trash2 class="w-4 h-4" />
-                                    </button>
+                                    <div class="flex items-center gap-1">
+                                        <button
+                                            type="button"
+                                            class="text-muted-foreground hover:text-foreground transition-colors p-1"
+                                            on:click={() => startEditAddress(i)}
+                                            title={t.dashboard.page.settings.organization.addresses.form?.save ? 'Editar' : 'Edit'}
+                                        >
+                                            <Pencil class="w-4 h-4" />
+                                        </button>
+                                        <button
+                                            type="button"
+                                            class="text-muted-foreground hover:text-destructive transition-colors p-1"
+                                            on:click={() => removeAddress(i)}
+                                        >
+                                            <Trash2 class="w-4 h-4" />
+                                        </button>
+                                    </div>
                                 {/if}
                             </div>
                         {/each}
@@ -740,54 +781,46 @@
                                         class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
                                         bind:value={newAddress.address}
                                     />
-                                    <div class="grid grid-cols-2 gap-2">
+                                    <AddressLocationFields
+                                        bind:country={newAddress.country}
+                                        bind:state={newAddress.state}
+                                        bind:city={newAddress.city}
+                                        labels={{
+                                            country: t.dashboard.page.settings.organization.addresses.form?.country || 'País',
+                                            state: t.dashboard.page.settings.organization.addresses.form?.state || 'Estado / Provincia',
+                                            city: t.dashboard.page.settings.organization.addresses.form?.city || 'Ciudad'
+                                        }}
+                                    />
+                                    <div class="space-y-1.5">
+                                        <label for="new-addr-postal" class="text-sm font-medium">{t.dashboard.page.settings.organization.addresses.form?.postal_code || "Código Postal"}</label>
                                         <input 
-                                            type="text" 
-                                            placeholder={t.dashboard.page.settings.organization.addresses.form?.city || "City"}
-                                            class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
-                                            bind:value={newAddress.city}
-                                        />
-                                        <input 
-                                            type="text" 
-                                            placeholder={t.dashboard.page.settings.organization.addresses.form?.state || "State"}
-                                            class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
-                                            bind:value={newAddress.state}
-                                        />
-                                    </div>
-                                    <div class="grid grid-cols-2 gap-2">
-                                        <input 
+                                            id="new-addr-postal"
                                             type="text" 
                                             placeholder={t.dashboard.page.settings.organization.addresses.form?.postal_code || "Postal Code"}
                                             class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
                                             bind:value={newAddress.postalCode}
                                         />
-                                        <input 
-                                            type="text" 
-                                            placeholder={t.dashboard.page.settings.organization.addresses.form?.country || "Country"}
-                                            class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
-                                            bind:value={newAddress.country}
-                                        />
                                     </div>
                                 </div>
                                 <div class="flex justify-end gap-2">
-                                    <button 
+                                    <button
                                         class="px-3 py-1.5 text-sm font-medium hover:bg-muted rounded-md"
-                                        on:click={() => isAddingAddress = false}
+                                        on:click={() => { isAddingAddress = false; editingAddressIndex = null; }}
                                     >
                                         {t.dashboard.page.settings.organization.addresses.form?.cancel || "Cancel"}
                                     </button>
-                                    <button 
+                                    <button
                                         class="px-3 py-1.5 text-sm font-medium bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
                                         on:click={addAddress}
                                     >
-                                        {t.dashboard.page.settings.organization.addresses.form?.save || "Save"}
+                                        {t.dashboard.page.settings.organization.addresses.form?.save || 'Save'}
                                     </button>
                                 </div>
                             </div>
                         {:else if !isMember}
                             <button 
                                 class="flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
-                                on:click={() => isAddingAddress = true}
+                                on:click={() => { editingAddressIndex = null; newAddress = { label: '', address: '', city: '', country: '', state: '', postalCode: '' }; isAddingAddress = true; }}
                             >
                                 <Plus class="w-4 h-4" />
                                 {t.dashboard.page.settings.organization.addresses?.add_button || 'Add Address'}
@@ -1226,6 +1259,29 @@
                         </button>
                     {/if}
                 </div>
+            </div>
+        </div>
+    </div>
+{/if}
+
+<!-- Member limit reached modal -->
+{#if showMemberLimitModal}
+    <div class="fixed inset-0 z-[1000] flex items-center justify-center bg-background/80 backdrop-blur-sm" transition:fade role="dialog" aria-modal="true">
+        <div class="fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 sm:rounded-lg">
+            <div class="flex flex-col space-y-1.5 text-center sm:text-left">
+                <h2 class="text-lg font-semibold leading-none tracking-tight">Límite de miembros alcanzado</h2>
+                <p class="text-sm text-muted-foreground">
+                    No se pueden agregar más miembros a la empresa. Se ha alcanzado el límite configurado (incluye dueño, administradores y miembros). Contacte al administrador del workspace si necesita aumentar el límite.
+                </p>
+            </div>
+            <div class="flex justify-end">
+                <button
+                    type="button"
+                    class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
+                    on:click={() => showMemberLimitModal = false}
+                >
+                    Entendido
+                </button>
             </div>
         </div>
     </div>

@@ -1,1 +1,0 @@
-import{I as S,N as h,O as k,z as O,S as T}from"./CMaAJtTz.js";function t(r,i){return r===i||(r==null?void 0:r[T])===i}function x(r={},i,a,c){return S(()=>{var f,s;return h(()=>{f=s,s=[],O(()=>{r!==a(...s)&&(i(r,...s),f&&t(a(...f),r)&&i(null,...f))})}),()=>{k(()=>{s&&t(a(...s),r)&&i(null,...s)})}}),r}export{x as b};

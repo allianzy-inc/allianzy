@@ -45,6 +45,9 @@
     $: canViewBilling = currentUserRole === 'owner' || currentUserRole === 'admin' || Object.values(currentUserPermissions).some((p: any) => Array.isArray(p) && p.includes('payments'));
     $: canViewSupport = currentUserRole === 'owner' || currentUserRole === 'admin' || Object.values(currentUserPermissions).some((p: any) => Array.isArray(p) && p.includes('support'));
 
+    // Usuario sin empresa ni proyectos: solo mostrar "Iniciar evaluación" → /intake
+    $: isEmptyState = (data.companies || []).length === 0 && (data.projects || []).length === 0;
+
     $: quickActions = [
         { 
             name: isSpanish ? 'Agendar Reunión' : 'Book Meeting', 
@@ -70,6 +73,25 @@
     </div>
 {:else}
     <div class="space-y-6">
+        {#if isEmptyState}
+            <div class="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
+                <h2 class="text-2xl font-bold tracking-tight mb-2">
+                    {isSpanish ? 'Bienvenido' : 'Welcome'}{isSpanish ? ',' : ''} {user?.firstName || user?.name?.split(' ')[0] || ''}
+                </h2>
+                <p class="text-muted-foreground mb-8 max-w-md">
+                    {isSpanish
+                        ? 'Aún no tienes empresa ni proyectos asociados. Inicia una evaluación para que podamos cotizar el servicio que necesitas.'
+                        : "You don't have a company or projects yet. Start an evaluation so we can quote the service you need."}
+                </p>
+                <a
+                    href="/{workspace}/intake"
+                    class="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-6 py-3 text-lg font-medium text-primary-foreground hover:opacity-90 transition-opacity"
+                >
+                    {isSpanish ? 'Iniciar evaluación' : 'Start evaluation'}
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+                </a>
+            </div>
+        {:else}
         <div class="flex items-center justify-between">
             <div>
                 <h2 class="text-2xl font-bold tracking-tight">
@@ -141,5 +163,6 @@
                  </div>
             </div>
         </div>
+        {/if}
     </div>
 {/if}

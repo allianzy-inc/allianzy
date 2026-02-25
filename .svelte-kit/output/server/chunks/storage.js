@@ -40,7 +40,10 @@ async function deleteFile(fileUrl) {
   }
 }
 function getSignedUrlForFile(url, workspace = "allianzy") {
-  if (!url) return null;
+  if (url == null || typeof url !== "string") return null;
+  const urlStr = url.trim();
+  if (!urlStr) return null;
+  url = urlStr;
   if ((url.includes("/api/files") || url.includes("/api/public/files")) && url.includes("url=")) {
     try {
       const match2 = url.match(/url=([^&]+)/);

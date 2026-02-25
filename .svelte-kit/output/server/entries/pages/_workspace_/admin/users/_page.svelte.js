@@ -2,7 +2,8 @@ import { a4 as ensure_array_like, a5 as stringify, Z as store_get, a0 as attr_cl
 import { p as page } from "../../../../../chunks/stores.js";
 import { U as Users } from "../../../../../chunks/users.js";
 import { S as Search } from "../../../../../chunks/search.js";
-import { F as Filter, E as Ellipsis_vertical } from "../../../../../chunks/filter.js";
+import { F as Filter } from "../../../../../chunks/filter.js";
+import { E as Ellipsis_vertical } from "../../../../../chunks/ellipsis-vertical.js";
 import { a as attr } from "../../../../../chunks/attributes.js";
 import { e as escape_html } from "../../../../../chunks/escaping.js";
 function _page($$renderer, $$props) {

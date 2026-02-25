@@ -3,7 +3,7 @@ import { redirect, fail } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 import { db } from '$lib/server/db';
 import { companies, userCompanies, projects, users, notifications, workspaces, services } from '$lib/server/schema';
-import { eq, inArray, or, and } from 'drizzle-orm';
+import { eq, inArray, or, and, sql, isNull } from 'drizzle-orm';
 import { uploadFile, getSignedUrlForFile } from '$lib/server/storage';
 import { sendEmail } from '$lib/server/email';
 
@@ -49,10 +49,13 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 
         const userIds = userLinks.map(l => l.userId).filter((id): id is number => id !== null);
 
-        // Fetch projects: ONLY those owned by the current user
+        // Fetch projects: del cliente actual y que pertenezcan a esta empresa
         if (locals.user && locals.user.id) {
             companyProjects = await db.query.projects.findMany({
-                where: eq(projects.clientId, parseInt(locals.user.id))
+                where: and(
+                    eq(projects.clientId, parseInt(locals.user.id)),
+                    or(eq(projects.companyId, companyId), isNull(projects.companyId))
+                )
             });
         }
 
@@ -373,6 +376,24 @@ export const actions: Actions = {
                     .where(eq(userCompanies.id, link.id));
             }
         } else {
+            // Adding a new member: enforce company member limit
+            const company = await db.query.companies.findFirst({
+                where: eq(companies.id, locals.user!.companyId!),
+                columns: { memberLimit: true }
+            });
+            const currentCount = await db
+                .select({ count: sql<number>`count(*)::int` })
+                .from(userCompanies)
+                .where(eq(userCompanies.companyId, locals.user!.companyId!));
+            const totalMembers = currentCount[0]?.count ?? 0;
+            const limit = company?.memberLimit ?? null;
+            if (limit != null && totalMembers >= limit) {
+                return fail(400, {
+                    message: 'No se pueden agregar más miembros. Se ha alcanzado el límite configurado para esta empresa.',
+                    memberLimitReached: true
+                });
+            }
+
             // Create new user or find existing by email
             const existingUser = await db.query.users.findFirst({
                 where: eq(users.email, email)

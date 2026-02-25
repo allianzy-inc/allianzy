@@ -1,7 +1,9 @@
-import { d as db, m as caseComments, p as projects, s as services, w as workspaces, c as cases, a as userCompanies, u as users } from "../../../../../chunks/db.js";
+import { d as db, o as caseComments, p as projects, s as services, w as workspaces, c as cases, u as users, n as notifications, a as userCompanies } from "../../../../../chunks/db.js";
 import { eq, or, and, isNull, desc, inArray, sql, asc } from "drizzle-orm";
 import { fail } from "@sveltejs/kit";
 import { u as uploadFile, a as getSignedUrlForFile } from "../../../../../chunks/storage.js";
+import { s as sendEmail } from "../../../../../chunks/email.js";
+import { b as private_env } from "../../../../../chunks/shared-server.js";
 const load = async ({ locals, url, params }) => {
   const userId = Number(locals.user?.id);
   if (!userId || isNaN(userId)) {
@@ -157,13 +159,12 @@ const actions = {
       return fail(400, { message: "Project is required. Please ensure you have at least one active project." });
     }
     try {
-      const project = await db.select({ serviceId: projects.serviceId }).from(projects).where(eq(projects.id, projectId)).limit(1);
-      let workspaceId = null;
-      if (project.length > 0 && project[0].serviceId) {
-        const service = await db.select({ workspaceId: services.workspaceId }).from(services).where(eq(services.id, project[0].serviceId)).limit(1);
-        if (service.length > 0) workspaceId = service[0].workspaceId;
-      }
-      await db.insert(cases).values({
+      const projectRows = await db.select({
+        serviceId: projects.serviceId,
+        workspaceId: services.workspaceId,
+        workspaceSlug: workspaces.slug
+      }).from(projects).innerJoin(services, eq(projects.serviceId, services.id)).innerJoin(workspaces, eq(services.workspaceId, workspaces.id)).where(eq(projects.id, projectId)).limit(1);
+      const [inserted] = await db.insert(cases).values({
         projectId,
         title,
         description,
@@ -171,7 +172,53 @@ const actions = {
         priority,
         status,
         files: uploadedFiles
-      });
+      }).returning({ id: cases.id });
+      const caseId = inserted?.id;
+      if (projectRows.length > 0 && caseId) {
+        const workspaceId = projectRows[0].workspaceId;
+        const workspaceSlug = projectRows[0].workspaceSlug;
+        if (workspaceId) {
+          const adminUsers = await db.select({ id: users.id, email: users.email }).from(users).where(and(eq(users.workspaceId, workspaceId), eq(users.role, "admin")));
+          const adminEmails = adminUsers.map((u) => u.email).filter((e) => !!e && e.length > 0);
+          const supportLink = `/${workspaceSlug}/admin/support?caseId=${caseId}`;
+          for (const admin of adminUsers) {
+            if (admin.id) {
+              await db.insert(notifications).values({
+                userId: admin.id,
+                title: "Nueva consulta de soporte",
+                message: title,
+                type: "info",
+                link: supportLink
+              });
+            }
+          }
+          if (adminEmails.length > 0) {
+            const escape = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+            const baseUrl = (private_env.PUBLIC_APP_URL || private_env.APP_BASE_URL || "").replace(/\/$/, "");
+            const supportPath = `/${workspaceSlug}/admin/support?caseId=${caseId}`;
+            const projectPath = `/${workspaceSlug}/admin/projects/${projectId}`;
+            const supportLinkAbs = baseUrl ? `${baseUrl}${supportPath}` : supportPath;
+            const projectPathFull = `/${workspaceSlug}/admin/projects/${projectId}`;
+            const projectLink = baseUrl ? `${baseUrl}${projectPathFull}` : projectPathFull;
+            const subject = `Nueva consulta de soporte: ${title}`;
+            const safeTitle = escape(title);
+            const safeDesc = description ? escape(description.slice(0, 500)) + (description.length > 500 ? "…" : "") : "";
+            const html = `
+                            <p>Un cliente ha creado una nueva consulta de soporte.</p>
+                            <p><strong>Título:</strong> ${safeTitle}</p>
+                            ${safeDesc ? `<p><strong>Descripción:</strong> ${safeDesc}</p>` : ""}
+                            <p><strong>Prioridad:</strong> ${priority || "medium"}</p>
+                            <p>Accede al panel de administración para ver y responder el ticket:</p>
+                            <p><a href="${supportLinkAbs}">Ver Soporte</a> · <a href="${projectLink}">Ver en el proyecto</a></p>
+                        `;
+            await sendEmail({
+              to: adminEmails,
+              subject,
+              html
+            });
+          }
+        }
+      }
       return { success: true };
     } catch (err) {
       console.error("Error creating case:", err);

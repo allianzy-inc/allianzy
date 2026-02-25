@@ -2,7 +2,7 @@
     import { enhance, applyAction, deserialize } from '$app/forms';
     import { page } from '$app/stores';
     import { invalidateAll } from '$app/navigation';
-    import { User, MapPin, Link as LinkIcon, Plus, Trash2, Upload, FileText, Loader2, Check } from 'lucide-svelte';
+    import { User, MapPin, Link as LinkIcon, Plus, Pencil, Trash2, Upload, FileText, Loader2, Check } from 'lucide-svelte';
     import type { PageData } from './$types';
     import { fade, slide } from 'svelte/transition';
     import { currentLang, translations } from '$lib/i18n';
@@ -31,6 +31,7 @@
     let newId = { type: '', value: '' };
     
     let isAddingAddress = false;
+    let editingAddressIndex: number | null = null;
     let isAddingLink = false;
     let isAddingId = false;
 
@@ -101,12 +102,30 @@
 
     function addAddress() {
         if (newAddress.address) {
-            const updatedAddresses = [...addresses, { ...newAddress }];
+            const updatedAddresses =
+                editingAddressIndex !== null
+                    ? addresses.map((a, i) => (i === editingAddressIndex ? { ...newAddress } : a))
+                    : [...addresses, { ...newAddress }];
             addresses = updatedAddresses;
             saveField('addresses', updatedAddresses);
             newAddress = { label: '', address: '', city: '', country: '', state: '', postalCode: '' };
             isAddingAddress = false;
+            editingAddressIndex = null;
         }
+    }
+
+    function startEditAddress(index: number) {
+        const a = addresses[index];
+        newAddress = {
+            label: a.label ?? '',
+            address: a.address ?? '',
+            city: a.city ?? '',
+            country: a.country ?? '',
+            state: a.state ?? '',
+            postalCode: a.postalCode ?? ''
+        };
+        editingAddressIndex = index;
+        isAddingAddress = true;
     }
 
     function removeAddress(index: number) {
@@ -411,13 +430,22 @@
                                     {/if}
                                 </div>
                             </div>
-                            <button 
-                                type="button"
-                                class="text-muted-foreground hover:text-destructive transition-colors p-1"
-                                on:click={() => removeAddress(i)}
-                            >
-                                <Trash2 class="w-4 h-4" />
-                            </button>
+                            <div class="flex items-center gap-1">
+                                <button
+                                    type="button"
+                                    class="text-muted-foreground hover:text-foreground transition-colors p-1"
+                                    on:click={() => startEditAddress(i)}
+                                >
+                                    <Pencil class="w-4 h-4" />
+                                </button>
+                                <button
+                                    type="button"
+                                    class="text-muted-foreground hover:text-destructive transition-colors p-1"
+                                    on:click={() => removeAddress(i)}
+                                >
+                                    <Trash2 class="w-4 h-4" />
+                                </button>
+                            </div>
                         </div>
                     {/each}
 
@@ -464,9 +492,9 @@
                                 />
                             </div>
                             <div class="flex justify-end gap-2">
-                                <button 
+                                <button
                                     class="px-3 py-1.5 text-sm font-medium hover:bg-muted rounded-md"
-                                    on:click={() => isAddingAddress = false}
+                                    on:click={() => { isAddingAddress = false; editingAddressIndex = null; }}
                                 >
                                     {t.dashboard.page.profile.addresses.form.cancel}
                                 </button>
@@ -481,7 +509,7 @@
                     {:else}
                         <button 
                             class="flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
-                            on:click={() => isAddingAddress = true}
+                            on:click={() => { editingAddressIndex = null; newAddress = { label: '', address: '', city: '', country: '', state: '', postalCode: '' }; isAddingAddress = true; }}
                         >
                             <Plus class="w-4 h-4" />
                             {t.dashboard.page.profile.addresses.add_button}

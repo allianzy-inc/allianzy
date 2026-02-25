@@ -1,4 +1,4 @@
-import { a1 as sanitize_props, a2 as spread_props, _ as slot, Z as store_get, a0 as attr_class, a5 as stringify, a4 as ensure_array_like, $ as unsubscribe_stores, a6 as bind_props } from "../../../../../chunks/index2.js";
+import { Z as store_get, a0 as attr_class, a5 as stringify, a4 as ensure_array_like, $ as unsubscribe_stores, a6 as bind_props } from "../../../../../chunks/index2.js";
 import { t as translations, c as currentLang } from "../../../../../chunks/i18n.js";
 import { o as onDestroy } from "../../../../../chunks/index-server.js";
 import "@sveltejs/kit/internal";
@@ -8,54 +8,18 @@ import { a as attr } from "../../../../../chunks/attributes.js";
 import "@sveltejs/kit/internal/server";
 import "../../../../../chunks/state.svelte.js";
 import { p as page } from "../../../../../chunks/stores.js";
-import { D as DocumentPreviewModal, a as Download } from "../../../../../chunks/DocumentPreviewModal.js";
+import { D as DocumentPreviewModal } from "../../../../../chunks/DocumentPreviewModal.js";
 import { P as Plus } from "../../../../../chunks/plus.js";
 import { C as Calendar } from "../../../../../chunks/calendar.js";
 import { X } from "../../../../../chunks/x.js";
 import { F as File_text } from "../../../../../chunks/file-text.js";
 import { C as Chevron_down } from "../../../../../chunks/chevron-down.js";
 import { E as Eye } from "../../../../../chunks/eye.js";
+import { D as Download } from "../../../../../chunks/external-link.js";
 import { P as Paperclip } from "../../../../../chunks/paperclip.js";
-import { I as Icon } from "../../../../../chunks/Icon.js";
+import { S as Send } from "../../../../../chunks/send.js";
 import { M as Message_square } from "../../../../../chunks/message-square.js";
 import { e as escape_html } from "../../../../../chunks/escaping.js";
-function Send($$renderer, $$props) {
-  const $$sanitized_props = sanitize_props($$props);
-  /**
-   * @license lucide-svelte v0.0.1 - ISC
-   *
-   * This source code is licensed under the ISC license.
-   * See the LICENSE file in the root directory of this source tree.
-   */
-  const iconNode = [
-    ["path", { "d": "m22 2-7 20-4-9-9-4Z" }],
-    ["path", { "d": "M22 2 11 13" }]
-  ];
-  Icon($$renderer, spread_props([
-    { name: "send" },
-    $$sanitized_props,
-    {
-      /**
-       * @component @name Send
-       * @description Lucide SVG icon component, renders SVG Element with children.
-       *
-       * @preview ![img](data:image/svg+xml;base64,PHN2ZyAgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIgogIHdpZHRoPSIyNCIKICBoZWlnaHQ9IjI0IgogIHZpZXdCb3g9IjAgMCAyNCAyNCIKICBmaWxsPSJub25lIgogIHN0cm9rZT0iIzAwMCIgc3R5bGU9ImJhY2tncm91bmQtY29sb3I6ICNmZmY7IGJvcmRlci1yYWRpdXM6IDJweCIKICBzdHJva2Utd2lkdGg9IjIiCiAgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIgogIHN0cm9rZS1saW5lam9pbj0icm91bmQiCj4KICA8cGF0aCBkPSJtMjIgMi03IDIwLTQtOS05LTRaIiAvPgogIDxwYXRoIGQ9Ik0yMiAyIDExIDEzIiAvPgo8L3N2Zz4K) - https://lucide.dev/icons/send
-       * @see https://lucide.dev/guide/packages/lucide-svelte - Documentation
-       *
-       * @param {Object} props - Lucide icons props and any valid SVG attribute
-       * @returns {FunctionalComponent} Svelte component
-       *
-       */
-      iconNode,
-      children: ($$renderer2) => {
-        $$renderer2.push(`<!--[-->`);
-        slot($$renderer2, $$props, "default", {});
-        $$renderer2.push(`<!--]-->`);
-      },
-      $$slots: { default: true }
-    }
-  ]));
-}
 function _page($$renderer, $$props) {
   $$renderer.component(($$renderer2) => {
     var $$store_subs;

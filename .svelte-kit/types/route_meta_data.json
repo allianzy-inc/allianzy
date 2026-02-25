@@ -20,62 +20,88 @@
 		"src/routes/[workspace]/+layout.server.ts"
 	],
 	"/[workspace]/admin": [
+		"src/routes/[workspace]/admin/+page.server.ts",
+		"src/routes/[workspace]/admin/+layout.server.ts",
 		"src/routes/[workspace]/+layout.server.ts",
+		"src/routes/[workspace]/admin/+layout.server.ts",
 		"src/routes/[workspace]/+layout.server.ts"
 	],
 	"/[workspace]/admin/cases": [
 		"src/routes/[workspace]/admin/cases/+page.server.ts",
+		"src/routes/[workspace]/admin/+layout.server.ts",
+		"src/routes/[workspace]/+layout.server.ts"
+	],
+	"/[workspace]/admin/companies": [
+		"src/routes/[workspace]/admin/companies/+page.server.ts",
+		"src/routes/[workspace]/admin/+layout.server.ts",
 		"src/routes/[workspace]/+layout.server.ts"
 	],
 	"/[workspace]/admin/finance": [
+		"src/routes/[workspace]/admin/+layout.server.ts",
 		"src/routes/[workspace]/+layout.server.ts",
+		"src/routes/[workspace]/admin/+layout.server.ts",
 		"src/routes/[workspace]/+layout.server.ts"
 	],
 	"/[workspace]/admin/finance/categories": [
+		"src/routes/[workspace]/admin/+layout.server.ts",
 		"src/routes/[workspace]/+layout.server.ts"
 	],
 	"/[workspace]/admin/finance/forecast": [
+		"src/routes/[workspace]/admin/+layout.server.ts",
 		"src/routes/[workspace]/+layout.server.ts"
 	],
 	"/[workspace]/admin/finance/obligations": [
+		"src/routes/[workspace]/admin/+layout.server.ts",
 		"src/routes/[workspace]/+layout.server.ts"
 	],
 	"/[workspace]/admin/finance/recurring": [
+		"src/routes/[workspace]/admin/+layout.server.ts",
 		"src/routes/[workspace]/+layout.server.ts"
 	],
 	"/[workspace]/admin/finance/transactions": [
+		"src/routes/[workspace]/admin/+layout.server.ts",
 		"src/routes/[workspace]/+layout.server.ts"
 	],
 	"/[workspace]/admin/finance/vendors": [
+		"src/routes/[workspace]/admin/+layout.server.ts",
 		"src/routes/[workspace]/+layout.server.ts"
 	],
 	"/[workspace]/admin/profile": [
+		"src/routes/[workspace]/admin/+layout.server.ts",
 		"src/routes/[workspace]/+layout.server.ts"
 	],
 	"/[workspace]/admin/projects": [
 		"src/routes/[workspace]/admin/projects/+page.server.ts",
+		"src/routes/[workspace]/admin/+layout.server.ts",
 		"src/routes/[workspace]/+layout.server.ts"
 	],
 	"/[workspace]/admin/projects/[id]": [
 		"src/routes/[workspace]/admin/projects/[id]/+page.server.ts",
+		"src/routes/[workspace]/admin/+layout.server.ts",
 		"src/routes/[workspace]/+layout.server.ts"
 	],
 	"/[workspace]/admin/services": [
 		"src/routes/[workspace]/admin/services/+page.server.ts",
+		"src/routes/[workspace]/admin/+layout.server.ts",
 		"src/routes/[workspace]/+layout.server.ts"
 	],
 	"/[workspace]/admin/settings": [
+		"src/routes/[workspace]/admin/+layout.server.ts",
 		"src/routes/[workspace]/+layout.server.ts"
 	],
 	"/[workspace]/admin/support": [
+		"src/routes/[workspace]/admin/support/+page.server.ts",
+		"src/routes/[workspace]/admin/+layout.server.ts",
 		"src/routes/[workspace]/+layout.server.ts"
 	],
 	"/[workspace]/admin/users": [
 		"src/routes/[workspace]/admin/users/+page.server.ts",
+		"src/routes/[workspace]/admin/+layout.server.ts",
 		"src/routes/[workspace]/+layout.server.ts"
 	],
 	"/[workspace]/admin/users/[id]": [
 		"src/routes/[workspace]/admin/users/[id]/+page.server.ts",
+		"src/routes/[workspace]/admin/+layout.server.ts",
 		"src/routes/[workspace]/+layout.server.ts"
 	],
 	"/[workspace]/auth/forgot-password": [
@@ -124,6 +150,9 @@
 		"src/routes/[workspace]/dashboard/projects/[id]/+layout.server.ts",
 		"src/routes/[workspace]/dashboard/+layout.server.ts",
 		"src/routes/[workspace]/+layout.server.ts"
+	],
+	"/[workspace]/dashboard/set-company": [
+		"src/routes/[workspace]/dashboard/set-company/+server.ts"
 	],
 	"/[workspace]/dashboard/settings": [
 		"src/routes/[workspace]/dashboard/settings/+page.server.ts",

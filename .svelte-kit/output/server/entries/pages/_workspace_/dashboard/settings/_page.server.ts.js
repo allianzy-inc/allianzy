@@ -1,25 +1,8 @@
 import { fail, redirect } from "@sveltejs/kit";
-import { d as db, n as notifications, a as userCompanies, u as users, p as projects, q as companies } from "../../../../../chunks/db.js";
+import { d as db, n as notifications, a as userCompanies, u as users, p as projects, j as companies } from "../../../../../chunks/db.js";
 import { and, eq, inArray } from "drizzle-orm";
 import { u as uploadFile, a as getSignedUrlForFile } from "../../../../../chunks/storage.js";
-import { Resend } from "resend";
-const RESEND_API_KEY = "re_SPeur9fR_2dRTtEnTSMNqmjUannfzjg43";
-const resend = new Resend(RESEND_API_KEY);
-async function sendEmail({ from = "Allianzy <no-reply@updates.allianzy.us>", to, subject, html, text }) {
-  try {
-    const data = await resend.emails.send({
-      from,
-      to,
-      subject,
-      html,
-      text
-    });
-    return { success: true, data };
-  } catch (error) {
-    console.error("Error sending email:", error);
-    return { success: false, error };
-  }
-}
+import { s as sendEmail } from "../../../../../chunks/email.js";
 const load = async ({ locals, params }) => {
   if (!locals.user) {
     throw redirect(303, "/");

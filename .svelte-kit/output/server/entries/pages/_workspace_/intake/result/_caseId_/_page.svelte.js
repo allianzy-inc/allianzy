@@ -1,7 +1,7 @@
-import { Z as store_get, $ as unsubscribe_stores, a6 as bind_props } from "../../../../../../chunks/index2.js";
+import { Z as store_get, a5 as stringify, $ as unsubscribe_stores, a6 as bind_props } from "../../../../../../chunks/index2.js";
 import { p as page } from "../../../../../../chunks/stores.js";
-import { e as escape_html } from "../../../../../../chunks/escaping.js";
 import { a as attr } from "../../../../../../chunks/attributes.js";
+import { e as escape_html } from "../../../../../../chunks/escaping.js";
 function _page($$renderer, $$props) {
   $$renderer.component(($$renderer2) => {
     var $$store_subs;
@@ -14,7 +14,7 @@ function _page($$renderer, $$props) {
     const beltrixUrl = data.beltrixAgencyUrl ?? "";
     const beltrixIntakeHref = beltrixUrl ? `${beltrixUrl}?from=allianzy` : "/beltrix/intake";
     const beltrixHomeHref = beltrixUrl || "/beltrix";
-    $$renderer2.push(`<div class="space-y-8"><div class="space-y-2"><h1 class="text-3xl font-bold">Resultado de la evaluación</h1> `);
+    $$renderer2.push(`<div class="space-y-8"><div class="space-y-2"><a${attr("href", `/${stringify(workspace)}/intake?caseId=${stringify(data.caseId)}`)} class="text-sm text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1">← Volver a editar la evaluación</a> <h1 class="text-3xl font-bold">Resultado de la evaluación</h1> `);
     if (data.score != null) {
       $$renderer2.push("<!--[-->");
       $$renderer2.push(`<p class="text-muted-foreground text-sm">Score interno: ${escape_html(data.score)}</p>`);

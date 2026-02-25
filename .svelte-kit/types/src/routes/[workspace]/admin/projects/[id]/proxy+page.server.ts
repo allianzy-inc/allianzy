@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { db } from '$lib/server/db';
-import { projects, services, users, requirements, projectMilestones, cases, proposals, payments, requests, caseComments, requestComments, requirementComments, proposalComments, projectPayments as projectPaymentsTable, notifications } from '$lib/server/schema';
+import { projects, services, users, requirements, projectMilestones, cases, proposals, payments, requests, caseComments, requestComments, requirementComments, proposalComments, projectPayments as projectPaymentsTable, notifications, userCompanies, companies } from '$lib/server/schema';
 import { uploadFile, getSignedUrlForFile, deleteFile } from '$lib/server/storage';
 import { eq, asc, desc, sql, getTableColumns, inArray } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
@@ -18,7 +18,6 @@ export const load = async ({ params, url }: Parameters<PageServerLoad>[0]) => {
         // 1. Fetch Project with Client and Service info
         const serviceUsers = alias(users, 'service_users');
 
-        // Fetch all clients for the edit modal
         const allClients = await db.select({
             id: users.id,
             firstName: users.firstName,
@@ -28,6 +27,28 @@ export const load = async ({ params, url }: Parameters<PageServerLoad>[0]) => {
         })
         .from(users)
         .where(eq(users.role, 'client'));
+
+        const clientIds = allClients.map((c) => c.id).filter((id): id is number => id != null);
+        const companiesByClientId: Record<number, { id: number; name: string }[]> = {};
+        if (clientIds.length > 0) {
+            const links = await db
+                .select({
+                    userId: userCompanies.userId,
+                    companyId: companies.id,
+                    companyName: companies.name
+                })
+                .from(userCompanies)
+                .innerJoin(companies, eq(userCompanies.companyId, companies.id))
+                .where(inArray(userCompanies.userId, clientIds));
+            for (const row of links) {
+                if (row.userId != null && row.companyId != null && row.companyName) {
+                    if (!companiesByClientId[row.userId]) companiesByClientId[row.userId] = [];
+                    if (!companiesByClientId[row.userId].some((c) => c.id === row.companyId)) {
+                        companiesByClientId[row.userId].push({ id: row.companyId, name: row.companyName });
+                    }
+                }
+            }
+        }
 
         // Fetch all services for the edit modal
         const allServices = await db.select({
@@ -41,6 +62,7 @@ export const load = async ({ params, url }: Parameters<PageServerLoad>[0]) => {
 
         const projectData = await db.select({
             id: projects.id,
+            companyId: projects.companyId,
             name: projects.name,
             description: projects.description,
             status: projects.status,
@@ -51,7 +73,6 @@ export const load = async ({ params, url }: Parameters<PageServerLoad>[0]) => {
             endDate: projects.endDate,
             serviceName: services.name,
             imageUrl: projects.imageUrl,
-            // Prefer direct client link, fallback to service client link
             clientName: sql<string>`
                 CASE 
                     WHEN ${users.id} IS NOT NULL THEN TRIM(BOTH ' ' FROM COALESCE(${users.firstName}, '') || ' ' || COALESCE(${users.lastName}, ''))
@@ -77,6 +98,31 @@ export const load = async ({ params, url }: Parameters<PageServerLoad>[0]) => {
         if (project.imageUrl) {
             project.imageUrl = await getSignedUrlForFile(project.imageUrl, params.workspace);
         }
+
+        // Empresa que se muestra al lado del usuario: la del proyecto (a la que pertenece el proyecto), no la primera del usuario
+        let clientCompanyDisplay = project.clientCompany ?? '';
+        if (project.companyId != null) {
+            const projectCompanyRow = await db
+                .select({ name: companies.name })
+                .from(companies)
+                .where(eq(companies.id, project.companyId))
+                .limit(1);
+            if (projectCompanyRow[0]?.name) {
+                clientCompanyDisplay = projectCompanyRow[0].name;
+            }
+        } else if (project.clientId != null) {
+            const companyRow = await db
+                .select({ companyName: companies.name })
+                .from(userCompanies)
+                .innerJoin(companies, eq(userCompanies.companyId, companies.id))
+                .where(eq(userCompanies.userId, project.clientId))
+                .orderBy(desc(userCompanies.isPrimary))
+                .limit(1);
+            if (companyRow[0]?.companyName) {
+                clientCompanyDisplay = companyRow[0].companyName;
+            }
+        }
+        (project as Record<string, unknown>).clientCompanyDisplay = clientCompanyDisplay;
 
         // Fetch all projects for the payment modal (same client only)
         const allProjects = await db.select({
@@ -329,7 +375,8 @@ export const load = async ({ params, url }: Parameters<PageServerLoad>[0]) => {
             selectedProposalComments,
             allClients,
             allServices,
-            allProjects
+            allProjects,
+            companiesByClientId
         };
     } catch (err) {
         console.error('Error fetching project details:', err);
@@ -346,12 +393,16 @@ export const actions = {
         const status = formData.get('status') as string;
         const provider = formData.get('provider') as string;
         const clientId = formData.get('clientId') ? Number(formData.get('clientId')) : null;
+        const companyIdRaw = formData.get('companyId');
+        const companyId = companyIdRaw !== null && companyIdRaw !== undefined && String(companyIdRaw).trim() !== '' ? Number(companyIdRaw) : null;
         const serviceId = Number(formData.get('serviceId'));
         const startDateStr = formData.get('startDate') as string;
         const startTimeStr = formData.get('startTime') as string;
+        const description = (formData.get('description') as string) ?? '';
         const linksJson = formData.get('links') as string;
         const imageFile = formData.get('image') as File;
         const removeImage = formData.get('removeImage') === 'true';
+        const imageUrlFromInput = (formData.get('imageUrl') as string)?.trim() || '';
 
         if (!name || !status || !provider || !serviceId || !startDateStr) {
             return fail(400, { message: 'All fields are required' });
@@ -372,9 +423,11 @@ export const actions = {
 
             const updateData: any = {
                 name,
+                description: description || null,
                 status,
                 provider,
                 clientId,
+                companyId: companyId ?? null,
                 serviceId,
                 startDate,
                 links
@@ -384,6 +437,8 @@ export const actions = {
                 updateData.imageUrl = null;
             } else if (imageFile && imageFile.size > 0) {
                 updateData.imageUrl = await uploadFile(imageFile, 'project-covers');
+            } else if (imageUrlFromInput && (imageUrlFromInput.startsWith('http://') || imageUrlFromInput.startsWith('https://'))) {
+                updateData.imageUrl = imageUrlFromInput;
             }
 
             await db.update(projects)

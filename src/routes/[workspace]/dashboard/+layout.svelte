@@ -1,7 +1,7 @@
 <script lang="ts">
     import { page } from '$app/stores';
     import { onMount } from 'svelte';
-    import { User, LayoutDashboard, Briefcase, Ticket, Settings, LogOut, Shield, Bell, BellOff, Moon, Sun, Monitor, Languages, Check, ChevronRight, HelpCircle, Heart, CreditCard, ChevronsUpDown, Building, AlertTriangle, Trash, Menu, X, Loader2 } from 'lucide-svelte';
+    import { User, LayoutDashboard, Briefcase, Ticket, Settings, LogOut, Shield, Bell, BellOff, Moon, Sun, Monitor, Languages, Check, ChevronRight, HelpCircle, CreditCard, ChevronsUpDown, Building, AlertTriangle, Trash, Menu, X, Loader2, PanelLeftClose, PanelLeft } from 'lucide-svelte';
     import { authClient } from '$lib/auth-client';
     import { goto } from '$app/navigation';
     import logoLight from '$lib/assets/brand/allianzy/logo-light.svg';
@@ -44,7 +44,16 @@
             theme = 'system';
         }
         applyTheme(theme);
+        const savedSidebar = localStorage.getItem('dashboard-sidebar-collapsed');
+        if (savedSidebar === 'true') sidebarCollapsed = true;
     });
+
+    function toggleSidebar() {
+        sidebarCollapsed = !sidebarCollapsed;
+        try {
+            localStorage.setItem('dashboard-sidebar-collapsed', String(sidebarCollapsed));
+        } catch (_) {}
+    }
 
     function applyTheme(t: 'light' | 'dark' | 'system') {
         theme = t;
@@ -73,15 +82,21 @@
     $: canViewBilling = currentUserRole === 'owner' || currentUserRole === 'admin' || Object.values(currentUserPermissions).some((p: any) => p && p.includes('payments'));
     $: canViewSupport = currentUserRole === 'owner' || currentUserRole === 'admin' || Object.values(currentUserPermissions).some((p: any) => p && p.includes('support'));
 
-    // Client Menu Items
-    $: menuItems = [
-        { href: `/${workspace}/dashboard`, label: t.dashboard.menu.overview, icon: LayoutDashboard },
-        { href: `/${workspace}/dashboard/projects`, label: t.dashboard.menu.projects, icon: Briefcase },
-        ...(canViewBilling ? [{ href: `/${workspace}/dashboard/billing`, label: t.dashboard.menu.billing, icon: CreditCard }] : []),
-        ...(canViewSupport ? [{ href: `/${workspace}/dashboard/support`, label: t.dashboard.menu.support, icon: Ticket }] : []),
-        { href: `/${workspace}/dashboard/settings`, label: t.dashboard.menu.settings, icon: Settings },
-        ...( (data.user?.role === 'admin' || clientRole === 'admin') ? [{ href: `/${workspace}/admin`, label: t.dashboard.menu.admin_panel, icon: Shield }] : [])
-    ];
+    // When user has no company and no projects, show only Inicio (Overview)
+    $: showOnlyInicio = !(data.hasAnyCompany ?? true) && !(data.hasAnyProject ?? true);
+
+    // Client Menu Items (cambio vista admin/cliente solo desde menú perfil)
+    $: menuItems = showOnlyInicio
+        ? [
+            { href: `/${workspace}/dashboard`, label: t.dashboard.menu.overview, icon: LayoutDashboard }
+          ]
+        : [
+            { href: `/${workspace}/dashboard`, label: t.dashboard.menu.overview, icon: LayoutDashboard },
+            { href: `/${workspace}/dashboard/projects`, label: t.dashboard.menu.projects, icon: Briefcase },
+            ...(canViewBilling ? [{ href: `/${workspace}/dashboard/billing`, label: t.dashboard.menu.billing, icon: CreditCard }] : []),
+            ...(canViewSupport ? [{ href: `/${workspace}/dashboard/support`, label: t.dashboard.menu.support, icon: Ticket }] : []),
+            { href: `/${workspace}/dashboard/settings`, label: t.dashboard.menu.settings, icon: Settings }
+          ];
 
     function clearAllCookies() {
         const cookies = document.cookie.split(';');
@@ -110,6 +125,7 @@
     let isLangMenuOpen = false;
     let isCompanyMenuOpen = false;
     let isMobileMenuOpen = false;
+    let sidebarCollapsed = false;
     
     $: companies = data.companies || [];
     let selectedCompany: any = null;
@@ -175,8 +191,23 @@
     }
     
     function selectCompany(company: any) {
+        if (!company?.id || company.id === selectedCompany?.id) {
+            isCompanyMenuOpen = false;
+            return;
+        }
         selectedCompany = company;
         isCompanyMenuOpen = false;
+        // Persistir empresa en cookie para que el servidor filtre proyectos/soporte/facturación
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/${workspace}/dashboard/set-company?redirect=${encodeURIComponent(path)}`;
+        const input = document.createElement('input');
+        input.name = 'companyId';
+        input.value = String(company.id);
+        input.type = 'hidden';
+        form.appendChild(input);
+        document.body.appendChild(form);
+        form.submit();
     }
 </script>
 
@@ -194,31 +225,46 @@
         ></div>
     {/if}
 
-    <!-- Sidebar -->
-    <aside class="fixed inset-y-0 left-0 z-50 w-64 bg-background border-r flex flex-col transition-transform duration-200 ease-in-out lg:relative lg:translate-x-0 {isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}">
-        <div class="p-6 border-b h-16 flex items-center justify-between">
+    <!-- Sidebar: expandido w-64, colapsado solo iconos w-16 -->
+    <aside class="fixed inset-y-0 left-0 z-50 bg-background border-r flex flex-col transition-[width,transform] duration-200 ease-in-out {isMobileMenuOpen ? 'translate-x-0 w-64' : '-translate-x-full w-64'} {sidebarCollapsed ? 'lg:translate-x-0 lg:w-16' : 'lg:translate-x-0 lg:w-64'}">
+        <div class="border-b h-16 flex items-center justify-between shrink-0 {sidebarCollapsed ? 'lg:justify-center lg:px-0 p-4' : 'p-4 lg:p-6'}">
             {#if workspace === 'allianzy'}
-                <a href="/{workspace}" class="block">
-                    <img src={logoLight} alt="Allianzy" class="h-8 dark:hidden" />
-                    <img src={logoDark} alt="Allianzy" class="h-8 hidden dark:block" />
-                </a>
+                {#if sidebarCollapsed}
+                    <a href="/{workspace}" class="hidden lg:flex items-center justify-center w-10 h-10 text-foreground" title="Allianzy" aria-label="Allianzy">
+                        <svg width="32" height="27" viewBox="0 0 276 232" fill="none" xmlns="http://www.w3.org/2000/svg" class="text-foreground">
+                            <path d="M197.593 228.011C189.013 233.711 178.063 231.271 173.143 222.581L122.143 132.451C117.223 123.761 120.143 112.091 128.773 106.451C137.363 100.761 148.313 103.191 153.233 111.881L174.503 149.451L204.273 202.011C209.153 210.661 206.183 222.321 197.593 228.011Z" fill="currentColor"/>
+                            <path d="M276.003 211.41C276.046 214.715 275.275 217.981 273.758 220.917C272.24 223.854 270.024 226.373 267.303 228.25C258.713 233.95 247.493 231.03 242.233 221.74L159.843 76.25L154.303 66.38L147.513 54.38C146.603 52.6361 145.233 51.175 143.551 50.1553C141.869 49.1357 139.94 48.5966 137.973 48.5966C136.006 48.5966 134.077 49.1357 132.395 50.1553C130.713 51.175 129.343 52.6361 128.433 54.38L121.653 66.38L116.023 76.33L33.6528 221.74C28.4528 230.91 17.4428 233.87 8.89282 228.45C0.0628166 222.86 -2.59718 210.21 2.75282 200.77L103.043 23.66L105.133 19.97C108.319 14.1801 112.884 9.26506 118.423 5.66C124.235 1.96826 130.977 0.00526701 137.863 0C143.536 0.0480936 149.123 1.38571 154.203 3.91165C159.282 6.4376 163.721 10.0857 167.183 14.58C168.458 16.2049 169.605 17.9268 170.613 19.73L171.973 22.13L273.303 201.11C275.077 204.253 276.007 207.801 276.003 211.41V211.41Z" fill="currentColor"/>
+                            <path d="M102.733 231.76C118.66 231.76 131.573 218.848 131.573 202.92C131.573 186.992 118.66 174.08 102.733 174.08C86.8047 174.08 73.8926 186.992 73.8926 202.92C73.8926 218.848 86.8047 231.76 102.733 231.76Z" fill="currentColor"/>
+                        </svg>
+                    </a>
+                {:else}
+                    <a href="/{workspace}" class="block shrink-0">
+                        <img src={logoLight} alt="Allianzy" class="h-8 dark:hidden" />
+                        <img src={logoDark} alt="Allianzy" class="h-8 hidden dark:block" />
+                    </a>
+                {/if}
             {:else}
-                <h2 class="text-lg font-bold tracking-tight uppercase truncate">{workspace}</h2>
+                {#if sidebarCollapsed}
+                    <span class="hidden lg:flex w-8 h-8 items-center justify-center rounded bg-muted text-sm font-bold uppercase text-foreground" title={workspace}>{workspace.charAt(0)}</span>
+                {:else}
+                    <h2 class="text-lg font-bold tracking-tight uppercase truncate">{workspace}</h2>
+                {/if}
             {/if}
-            <button class="lg:hidden ml-auto" on:click={() => isMobileMenuOpen = false}>
+            <button class="lg:hidden ml-auto shrink-0" on:click={() => isMobileMenuOpen = false}>
                 <X class="w-5 h-5" />
             </button>
         </div>
-        
+
         {#if companies.length > 0}
-        <div class="px-4 pb-2 pt-4">
+        <div class="{sidebarCollapsed ? 'lg:px-2 lg:pt-4' : 'px-4 pb-2 pt-4'}">
             <div class="relative" use:clickOutside on:click_outside={closeCompanyMenu}>
                 <button
                     on:click={() => isCompanyMenuOpen = !isCompanyMenuOpen}
-                    class="w-full flex items-center justify-between p-2 rounded-md border bg-card hover:bg-accent transition-colors shadow-sm"
+                    class="w-full flex items-center justify-between p-2 rounded-md border bg-card hover:bg-accent transition-colors shadow-sm {sidebarCollapsed ? 'lg:justify-center lg:px-2' : ''}"
                     disabled={companies.length <= 1}
+                    title={sidebarCollapsed ? selectedCompany?.name || 'Empresa' : ''}
                 >
-                    <div class="flex items-center gap-2 overflow-hidden">
+                    <div class="flex items-center gap-2 overflow-hidden {sidebarCollapsed ? 'lg:gap-0' : ''}">
                         <div class="w-6 h-6 rounded flex items-center justify-center shrink-0 bg-muted/50 border">
                             {#if selectedCompany?.logo}
                                 <img src={selectedCompany.logo} alt={selectedCompany.name} class="w-full h-full object-cover rounded" />
@@ -226,15 +272,15 @@
                                 <Building class="w-3.5 h-3.5 text-muted-foreground" />
                             {/if}
                         </div>
-                        <span class="text-sm font-medium truncate">{selectedCompany?.name || 'Empresa'}</span>
+                        <span class="text-sm font-medium truncate {sidebarCollapsed ? 'lg:sr-only' : ''}">{selectedCompany?.name || 'Empresa'}</span>
                     </div>
                     {#if companies.length > 1}
-                        <ChevronsUpDown class="w-4 h-4 text-muted-foreground ml-2 shrink-0 opacity-50" />
+                        <ChevronsUpDown class="w-4 h-4 text-muted-foreground ml-2 shrink-0 opacity-50 {sidebarCollapsed ? 'lg:hidden' : ''}" />
                     {/if}
                 </button>
 
                 {#if isCompanyMenuOpen && companies.length > 1}
-                     <div class="absolute top-full left-0 w-full mt-1 z-50 rounded-md border bg-popover shadow-md py-1 animate-in fade-in zoom-in-95 duration-100">
+                     <div class="absolute top-full left-0 mt-1 z-50 rounded-md border bg-popover shadow-md py-1 animate-in fade-in zoom-in-95 duration-100 {sidebarCollapsed ? 'lg:left-full lg:ml-1 lg:min-w-[200px]' : 'w-full'}">
                         {#each companies as company}
                             <button
                                 class="w-full flex items-center gap-2 px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground transition-colors"
@@ -259,41 +305,52 @@
         </div>
         {/if}
 
-        <nav class="flex-1 p-4 space-y-1">
+        <nav class="flex-1 p-4 space-y-1 overflow-hidden">
             {#each menuItems as item}
-                <a 
+                <a
                     href={item.href}
-                    class="flex items-center gap-3 px-4 py-2.5 rounded-md text-sm font-medium transition-colors {path === item.href || (item.href !== '/dashboard' && item.href !== `/${workspace}/dashboard` && path.startsWith(item.href)) ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'}"
+                    title={sidebarCollapsed ? item.label : ''}
+                    class="flex items-center gap-3 px-4 py-2.5 rounded-md text-sm font-medium transition-colors {sidebarCollapsed ? 'lg:justify-center lg:px-2' : ''} {path === item.href || (item.href !== '/dashboard' && item.href !== `/${workspace}/dashboard` && path.startsWith(item.href)) ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'}"
                 >
-                    <item.icon class="w-4 h-4" />
-                    {item.label}
+                    <item.icon class="w-4 h-4 shrink-0" />
+                    <span class="truncate {sidebarCollapsed ? 'lg:sr-only' : ''}">{item.label}</span>
                 </a>
             {/each}
         </nav>
 
-        <div class="p-4 border-t space-y-4">
-            <a 
-                href="mailto:support@allianzy.us" 
-                class="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors px-2"
+        <div class="p-4 border-t space-y-4 shrink-0 {sidebarCollapsed ? 'lg:px-2 lg:space-y-0' : ''}">
+            <a
+                href="mailto:support@allianzy.us"
+                class="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors px-2 {sidebarCollapsed ? 'lg:justify-center lg:px-0' : ''}"
+                title={sidebarCollapsed ? t.dashboard.footer.help_support : ''}
             >
-                <HelpCircle class="w-4 h-4" />
-                {t.dashboard.footer.help_support}
+                <HelpCircle class="w-4 h-4 shrink-0" />
+                <span class="{sidebarCollapsed ? 'lg:sr-only' : ''}">{t.dashboard.footer.help_support}</span>
             </a>
-            <div class="text-xs text-muted-foreground px-2 space-y-1">
-                <p>&copy; {t.dashboard.footer.rights}</p>
-                <p class="flex items-center gap-1">
-                    {t.dashboard.footer.made_with_love} <Heart class="w-3 h-3 text-red-500 fill-current" /> {isSpanish ? 'por Allianzy.' : 'by Allianzy.'}
-                </p>
+            <div class="text-xs text-muted-foreground px-2 space-y-1 {sidebarCollapsed ? 'lg:hidden' : ''}">
+                <p>{t.dashboard.footer.rights}</p>
             </div>
         </div>
     </aside>
 
     <!-- Main Content -->
-    <main class="flex-1 flex flex-col overflow-hidden">
+    <main class="flex-1 flex flex-col overflow-hidden transition-[margin] duration-200 {sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'}">
         <header class="h-16 bg-background border-b flex items-center justify-between px-4 md:px-8 shrink-0">
             <div class="flex items-center gap-4">
-                <button class="lg:hidden" on:click={() => isMobileMenuOpen = !isMobileMenuOpen}>
+                <button class="lg:hidden" on:click={() => isMobileMenuOpen = !isMobileMenuOpen} aria-label="Abrir menú">
                     <Menu class="w-5 h-5" />
+                </button>
+                <button
+                    class="hidden lg:flex p-2 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                    on:click={toggleSidebar}
+                    aria-label={sidebarCollapsed ? 'Mostrar menú' : 'Ocultar menú'}
+                    title={sidebarCollapsed ? 'Mostrar menú' : 'Ocultar menú'}
+                >
+                    {#if sidebarCollapsed}
+                        <PanelLeft class="w-5 h-5" />
+                    {:else}
+                        <PanelLeftClose class="w-5 h-5" />
+                    {/if}
                 </button>
                 <h1 class="text-lg font-semibold">Dashboard</h1>
             </div>
@@ -582,13 +639,23 @@
                             </div>
 
                             <a 
-                                href="/dashboard/profile" 
+                                href="/{workspace}/dashboard/profile" 
                                 class="flex items-center px-4 py-2 text-sm hover:bg-accent hover:text-accent-foreground transition-colors"
                                 on:click={closeMenus}
                             >
                                 <User class="w-4 h-4 mr-2" />
                                 {t.dashboard.header.profile.account}
                             </a>
+                            {#if data.user?.role === 'admin' || clientRole === 'admin'}
+                                <a 
+                                    href="/{workspace}/admin" 
+                                    class="flex items-center px-4 py-2 text-sm hover:bg-accent hover:text-accent-foreground transition-colors"
+                                    on:click={closeMenus}
+                                >
+                                    <Shield class="w-4 h-4 mr-2" />
+                                    {t.dashboard.header.profile.admin_panel}
+                                </a>
+                            {/if}
 
                             <!-- Theme Submenu -->
                             <div class="relative">

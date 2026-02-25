@@ -40,6 +40,11 @@ async function main() {
         `);
         console.log('✅ companies table created');
 
+        console.log('Ensuring companies.phone and companies.region columns exist...');
+        await db.execute(sql`ALTER TABLE companies ADD COLUMN IF NOT EXISTS phone text`);
+        await db.execute(sql`ALTER TABLE companies ADD COLUMN IF NOT EXISTS region text`);
+        console.log('✅ phone and region columns OK');
+
         console.log('Creating user_companies table...');
         await db.execute(sql`
             CREATE TABLE IF NOT EXISTS user_companies (

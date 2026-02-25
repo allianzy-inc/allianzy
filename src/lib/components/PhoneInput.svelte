@@ -9,6 +9,8 @@
     export let disabled = false;
     export let required = false;
     export let defaultCountry: CountryCode | null = 'AR';
+    /** Llamado al perder foco con el valor actual (E.164). Útil para guardar al salir del campo. */
+    export let onblur: ((value: string) => void) | null = null;
 
     let selectedCountry: CountryCode | null = defaultCountry;
     let valid = true;
@@ -46,9 +48,13 @@
     }
 </script>
 
-<div class="phone-input-wrapper flex rounded-md border border-input bg-background overflow-hidden focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 ring-offset-background">
+<div
+    class="phone-input-wrapper flex rounded-md border border-input bg-background overflow-hidden focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 ring-offset-background"
+    on:blur={() => onblur?.(internalValue ?? '')}
+    role="group"
+>
     <select
-        class="country-select flex items-center gap-1.5 h-10 pl-3 pr-2 border-0 bg-muted/50 text-sm font-medium cursor-pointer focus:outline-none focus:ring-0 min-w-[100px]"
+        class="country-select flex items-center gap-1.5 h-10 pl-3 pr-2 border-0 bg-muted/50 text-sm font-medium text-foreground cursor-pointer focus:outline-none focus:ring-0 min-w-[100px]"
         aria-label="Código de país"
         bind:value={selectedCountry}
         on:change={onCountrySelect}

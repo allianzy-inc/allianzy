@@ -9,7 +9,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
     const userId = Number(locals.user?.id);
 
     if (!userId || isNaN(userId)) {
-        return { payments: [] };
+        return { payments: [], subscriptions: [] };
     }
 
     // 0. Fetch permissions
@@ -63,11 +63,29 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 
     const userPayments = await Promise.all(rawPayments.map(async (p) => ({
         ...p,
-        documentUrl: await getSignedUrlForFile(p.documentUrl, params.workspace)
+        documentUrl: p.documentUrl ? await getSignedUrlForFile(p.documentUrl, params.workspace) : null
     })));
 
+    // Suscripciones vigentes: servicios activos de proyectos visibles para el usuario
+    const rawSubscriptions = await db.select({
+        serviceId: services.id,
+        serviceName: services.name,
+        serviceStatus: services.status,
+        renewalDate: services.renewalDate,
+        price: services.price,
+        projectName: projects.name,
+        projectId: projects.id
+    })
+    .from(projects)
+    .innerJoin(services, eq(projects.serviceId, services.id))
+    .where(or(...visibilityConditions))
+    .orderBy(services.name);
+
+    const subscriptions = rawSubscriptions.filter((s) => s.serviceStatus === 'Active');
+
     return {
-        payments: userPayments
+        payments: userPayments,
+        subscriptions
     };
 };
 

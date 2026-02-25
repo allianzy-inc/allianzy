@@ -280,7 +280,7 @@ export const actions: Actions = {
             return fail(400, { message: 'ID de empresa inválido.', detail: true });
         }
         const updateData: Record<string, unknown> = { updatedAt: new Date() };
-        const textFields = ['name', 'phone', 'email', 'website', 'description'];
+        const textFields = ['name', 'phone', 'email', 'website', 'region', 'description'];
         for (const field of textFields) {
             if (formData.has(field)) {
                 updateData[field] = formData.get(field) as string;

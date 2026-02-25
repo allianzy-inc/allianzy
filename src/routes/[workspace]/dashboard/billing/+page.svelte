@@ -1,14 +1,18 @@
 <script lang="ts">
-    import { CreditCard, Download, Calendar, ExternalLink, Eye } from 'lucide-svelte';
+    import { CreditCard, Download, Calendar, ExternalLink, Eye, History, Repeat } from 'lucide-svelte';
     import { currentLang, translations } from '$lib/i18n';
     import { enhance } from '$app/forms';
     import DocumentPreviewModal from '$lib/components/DocumentPreviewModal.svelte';
     import type { PageData } from './$types';
 
     export let data: PageData;
-    
+
+    type BillingTab = 'historial' | 'suscripciones';
+    let activeTab: BillingTab = 'historial';
+
     $: t = translations[$currentLang];
-    $: payments = data.payments;
+    $: payments = data.payments ?? [];
+    $: subscriptions = data.subscriptions ?? [];
 
     let isPreviewModalOpen = false;
     let previewFile = { title: '', url: null as string | null };
@@ -50,6 +54,28 @@
         </div>
     </div>
 
+    <div class="border-b border-border">
+        <nav class="flex gap-6" aria-label="Facturación">
+            <button
+                type="button"
+                class="pb-3 px-1 text-sm font-medium border-b-2 transition-colors whitespace-nowrap inline-flex items-center gap-2 {activeTab === 'historial' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground'}"
+                on:click={() => (activeTab = 'historial')}
+            >
+                <History class="w-4 h-4" />
+                Historial
+            </button>
+            <button
+                type="button"
+                class="pb-3 px-1 text-sm font-medium border-b-2 transition-colors whitespace-nowrap inline-flex items-center gap-2 {activeTab === 'suscripciones' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground'}"
+                on:click={() => (activeTab = 'suscripciones')}
+            >
+                <Repeat class="w-4 h-4" />
+                Suscripciones vigentes
+            </button>
+        </nav>
+    </div>
+
+    {#if activeTab === 'historial'}
     <div class="rounded-md border bg-card">
         <div class="p-6">
             {#if payments.length === 0}
@@ -165,7 +191,76 @@
             {/if}
         </div>
     </div>
-    
+    {:else}
+    <div class="rounded-md border bg-card">
+        <div class="p-6">
+            {#if subscriptions.length === 0}
+                <div class="text-center py-12">
+                    <Repeat class="h-12 w-12 mx-auto text-muted-foreground mb-4 opacity-50" />
+                    <h3 class="text-lg font-medium">No hay suscripciones vigentes</h3>
+                    <p class="text-muted-foreground mt-1">No tienes servicios activos asociados a tus proyectos.</p>
+                </div>
+            {:else}
+                <div class="hidden md:block relative w-full overflow-auto">
+                    <table class="w-full caption-bottom text-sm text-left">
+                        <thead class="[&_tr]:border-b">
+                            <tr class="border-b transition-colors hover:bg-muted/50">
+                                <th class="h-12 px-4 align-middle font-medium text-muted-foreground">Servicio</th>
+                                <th class="h-12 px-4 align-middle font-medium text-muted-foreground">Proyecto</th>
+                                <th class="h-12 px-4 align-middle font-medium text-muted-foreground">Precio</th>
+                                <th class="h-12 px-4 align-middle font-medium text-muted-foreground">Renovación</th>
+                                <th class="h-12 px-4 align-middle font-medium text-muted-foreground">Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody class="[&_tr:last-child]:border-0">
+                            {#each subscriptions as sub}
+                                <tr class="border-b transition-colors hover:bg-muted/50">
+                                    <td class="p-4 align-middle font-medium">{sub.serviceName}</td>
+                                    <td class="p-4 align-middle">{sub.projectName}</td>
+                                    <td class="p-4 align-middle font-mono">{sub.price ?? '—'}</td>
+                                    <td class="p-4 align-middle">
+                                        {#if sub.renewalDate}
+                                            <div class="flex items-center gap-2">
+                                                <Calendar class="h-3 w-3 text-muted-foreground" />
+                                                {sub.renewalDate}
+                                            </div>
+                                        {:else}
+                                            —
+                                        {/if}
+                                    </td>
+                                    <td class="p-4 align-middle">
+                                        <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800">
+                                            Activo
+                                        </span>
+                                    </td>
+                                </tr>
+                            {/each}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="md:hidden space-y-4">
+                    {#each subscriptions as sub}
+                        <div class="rounded-lg border bg-card text-card-foreground shadow-sm p-4 space-y-2">
+                            <div class="font-semibold">{sub.serviceName}</div>
+                            <p class="text-sm text-muted-foreground">{sub.projectName}</p>
+                            <div class="flex justify-between items-center pt-2 border-t">
+                                <span class="font-mono text-sm">{sub.price ?? '—'}</span>
+                                <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400">Activo</span>
+                            </div>
+                            {#if sub.renewalDate}
+                                <div class="flex items-center gap-2 text-xs text-muted-foreground">
+                                    <Calendar class="h-3 w-3" />
+                                    Renovación: {sub.renewalDate}
+                                </div>
+                            {/if}
+                        </div>
+                    {/each}
+                </div>
+            {/if}
+        </div>
+    </div>
+    {/if}
+
     <DocumentPreviewModal 
         isOpen={isPreviewModalOpen} 
         title={previewFile.title} 

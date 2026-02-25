@@ -48,7 +48,7 @@
         <label for="addr-country" class="text-sm font-medium">{L.country}</label>
         <select
             id="addr-country"
-            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             value={countryCode}
             on:change={onCountryChange}
             {disabled}
@@ -63,7 +63,7 @@
         <label for="addr-state" class="text-sm font-medium">{L.state}</label>
         <select
             id="addr-state"
-            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             value={stateCode}
             on:change={onStateChange}
             disabled={!countryCode || disabled}
@@ -79,7 +79,7 @@
         {#if stateCode && cities.length > 0}
             <select
                 id="addr-city"
-                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 value={city}
                 on:change={onCityChange}
                 {disabled}
@@ -93,7 +93,7 @@
             <input
                 id="addr-city"
                 type="text"
-                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 placeholder="Ciudad"
                 bind:value={city}
                 {disabled}
@@ -102,7 +102,7 @@
             <input
                 id="addr-city"
                 type="text"
-                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 placeholder="Seleccione primero país y estado"
                 bind:value={city}
                 {disabled}

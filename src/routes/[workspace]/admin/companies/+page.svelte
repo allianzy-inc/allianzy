@@ -155,15 +155,15 @@
         saveDetailField('deleteLogo', 'true');
     }
 
-    function detailAddAddress() {
+    async function detailAddAddress() {
         const next =
             editingDetailAddressIndex !== null
                 ? detailAddresses.map((a, idx) => (idx === editingDetailAddressIndex ? { ...detailNewAddress } : a))
                 : [...detailAddresses, { ...detailNewAddress }];
+        await saveDetailField('addresses', next);
         detailNewAddress = { label: '', address: '', city: '', country: '', state: '', postalCode: '' };
         detailIsAddingAddress = false;
         editingDetailAddressIndex = null;
-        saveDetailField('addresses', next);
     }
     function startEditDetailAddress(i: number) {
         const a = detailAddresses[i];
@@ -181,20 +181,20 @@
     function detailRemoveAddress(i: number) {
         saveDetailField('addresses', detailAddresses.filter((_, idx) => idx !== i));
     }
-    function detailAddLink() {
+    async function detailAddLink() {
         const next = [...detailLinks, { title: detailNewLink.title, url: detailNewLink.url }];
+        await saveDetailField('links', next);
         detailNewLink = { title: '', url: '' };
         detailIsAddingLink = false;
-        saveDetailField('links', next);
     }
     function detailRemoveLink(i: number) {
         saveDetailField('links', detailLinks.filter((_, idx) => idx !== i));
     }
-    function detailAddDoc() {
+    async function detailAddDoc() {
         const next = [...detailDocuments, { type: detailNewDoc.type, value: detailNewDoc.value }];
+        await saveDetailField('documents', next);
         detailNewDoc = { type: '', value: '' };
         detailIsAddingDoc = false;
-        saveDetailField('documents', next);
     }
     function detailRemoveDoc(i: number) {
         saveDetailField('documents', detailDocuments.filter((_, idx) => idx !== i));
@@ -613,13 +613,42 @@
                                     </div>
                                     <div class="space-y-2">
                                         <label class="text-sm font-medium">Número de Teléfono</label>
-                                        <input
-                                            type="tel"
+                                        <PhoneInput
+                                            id="detail-company-phone"
+                                            name={null}
                                             value={selectedCompanyDetail.phone ?? ''}
-                                            on:change={(e) => saveDetailField('phone', e.currentTarget.value)}
-                                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                            placeholder="+54 9 11 1234-5678"
+                                            placeholder="Ej. 9 11 1234-5678"
+                                            defaultCountry="AR"
+                                            onblur={(v) => saveDetailField('phone', v)}
                                         />
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div class="space-y-2">
+                                        <label class="text-sm font-medium">Página web</label>
+                                        <input
+                                            type="url"
+                                            value={selectedCompanyDetail.website ?? ''}
+                                            on:change={(e) => saveDetailField('website', e.currentTarget.value)}
+                                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground"
+                                            placeholder="https://"
+                                        />
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="text-sm font-medium">País / Región</label>
+                                        <select
+                                            value={selectedCompanyDetail.region ?? ''}
+                                            on:change={(e) => saveDetailField('region', e.currentTarget.value)}
+                                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
+                                        >
+                                            <option value="">Seleccionar país</option>
+                                            {#if selectedCompanyDetail.region && !countriesSorted.find((c) => c.name === selectedCompanyDetail.region)}
+                                                <option value={selectedCompanyDetail.region}>{selectedCompanyDetail.region}</option>
+                                            {/if}
+                                            {#each countriesSorted as country (country.id)}
+                                                <option value={country.name}>{country.name}</option>
+                                            {/each}
+                                        </select>
                                     </div>
                                 </div>
                                 <div class="space-y-2">
@@ -675,8 +704,8 @@
                             {/each}
                             {#if detailIsAddingAddress}
                                 <div class="border rounded-lg p-4 space-y-4 bg-muted/30">
-                                    <input type="text" placeholder="Etiqueta (ej. Sucursal Central)" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" bind:value={detailNewAddress.label} />
-                                    <input type="text" placeholder="Dirección" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" bind:value={detailNewAddress.address} />
+                                    <input type="text" placeholder="Etiqueta (ej. Sucursal Central)" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground" bind:value={detailNewAddress.label} />
+                                    <input type="text" placeholder="Dirección" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground" bind:value={detailNewAddress.address} />
                                     <AddressLocationFields
                                         bind:country={detailNewAddress.country}
                                         bind:state={detailNewAddress.state}
@@ -684,11 +713,13 @@
                                     />
                                     <div class="space-y-1.5">
                                         <label for="detail-addr-postal" class="text-sm font-medium">Código Postal</label>
-                                        <input id="detail-addr-postal" type="text" placeholder="Código Postal" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" bind:value={detailNewAddress.postalCode} />
+                                        <input id="detail-addr-postal" type="text" placeholder="Código Postal" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground" bind:value={detailNewAddress.postalCode} />
                                     </div>
                                     <div class="flex gap-2">
-                                        <button type="button" class="px-3 py-1.5 text-sm font-medium hover:bg-muted rounded-md" on:click={() => { detailIsAddingAddress = false; editingDetailAddressIndex = null; }}>Cancelar</button>
-                                        <button type="button" class="px-3 py-1.5 text-sm font-medium bg-primary text-primary-foreground rounded-md hover:bg-primary/90" on:click={detailAddAddress}>Guardar</button>
+                                        <button type="button" class="px-3 py-1.5 text-sm font-medium text-foreground bg-muted hover:bg-muted/80 rounded-md" on:click={() => { detailIsAddingAddress = false; editingDetailAddressIndex = null; }} disabled={detailSaving['addresses']}>Cancelar</button>
+                                        <button type="button" class="px-3 py-1.5 text-sm font-medium bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-70 disabled:pointer-events-none inline-flex items-center gap-2" on:click={detailAddAddress} disabled={detailSaving['addresses']}>
+                                            {#if detailSaving['addresses']}<Loader2 class="w-4 h-4 animate-spin" />Guardando...{:else}Guardar{/if}
+                                        </button>
                                     </div>
                                 </div>
                             {:else}
@@ -719,11 +750,13 @@
                             {/each}
                             {#if detailIsAddingLink}
                                 <div class="border rounded-lg p-3 space-y-2 bg-muted/30">
-                                    <input type="text" placeholder="Título" class="flex h-9 w-full rounded-md border px-2 text-sm" bind:value={detailNewLink.title} />
-                                    <input type="url" placeholder="URL" class="flex h-9 w-full rounded-md border px-2 text-sm" bind:value={detailNewLink.url} />
+                                    <input type="text" placeholder="Título" class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm text-foreground placeholder:text-muted-foreground" bind:value={detailNewLink.title} />
+                                    <input type="url" placeholder="URL" class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm text-foreground placeholder:text-muted-foreground" bind:value={detailNewLink.url} />
                                     <div class="flex gap-2">
-                                        <button type="button" class="px-2 py-1 text-sm hover:bg-muted rounded" on:click={() => (detailIsAddingLink = false)}>Cancelar</button>
-                                        <button type="button" class="px-2 py-1 text-sm bg-primary text-primary-foreground rounded" on:click={detailAddLink}>Guardar</button>
+                                        <button type="button" class="px-3 py-1.5 text-sm font-medium text-foreground bg-muted hover:bg-muted/80 rounded-md" on:click={() => (detailIsAddingLink = false)} disabled={detailSaving['links']}>Cancelar</button>
+                                        <button type="button" class="px-3 py-1.5 text-sm font-medium bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-70 disabled:pointer-events-none inline-flex items-center gap-2" on:click={detailAddLink} disabled={detailSaving['links']}>
+                                            {#if detailSaving['links']}<Loader2 class="w-4 h-4 animate-spin" />Guardando...{:else}Guardar{/if}
+                                        </button>
                                     </div>
                                 </div>
                             {:else}
@@ -754,11 +787,13 @@
                             {/each}
                             {#if detailIsAddingDoc}
                                 <div class="border rounded-lg p-3 space-y-2 bg-muted/30">
-                                    <input type="text" placeholder="Tipo (ej. ABN)" class="flex h-9 w-full rounded-md border px-2 text-sm" bind:value={detailNewDoc.type} />
-                                    <input type="text" placeholder="Valor" class="flex h-9 w-full rounded-md border px-2 text-sm" bind:value={detailNewDoc.value} />
+                                    <input type="text" placeholder="Tipo (ej. ABN)" class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm text-foreground placeholder:text-muted-foreground" bind:value={detailNewDoc.type} />
+                                    <input type="text" placeholder="Valor" class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm text-foreground placeholder:text-muted-foreground" bind:value={detailNewDoc.value} />
                                     <div class="flex gap-2">
-                                        <button type="button" class="px-2 py-1 text-sm hover:bg-muted rounded" on:click={() => (detailIsAddingDoc = false)}>Cancelar</button>
-                                        <button type="button" class="px-2 py-1 text-sm bg-primary text-primary-foreground rounded" on:click={detailAddDoc}>Guardar</button>
+                                        <button type="button" class="px-3 py-1.5 text-sm font-medium text-foreground bg-muted hover:bg-muted/80 rounded-md" on:click={() => (detailIsAddingDoc = false)} disabled={detailSaving['documents']}>Cancelar</button>
+                                        <button type="button" class="px-3 py-1.5 text-sm font-medium bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-70 disabled:pointer-events-none inline-flex items-center gap-2" on:click={detailAddDoc} disabled={detailSaving['documents']}>
+                                            {#if detailSaving['documents']}<Loader2 class="w-4 h-4 animate-spin" />Guardando...{:else}Guardar{/if}
+                                        </button>
                                     </div>
                                 </div>
                             {:else}
@@ -1017,9 +1052,11 @@
                     isSubmittingCompany = true;
                     return async ({ result, update }) => {
                         try {
-                            await update();
                             if (result.type === 'success') {
                                 closeDrawer();
+                            }
+                            await update();
+                            if (result.type === 'success') {
                                 await invalidateAll();
                             }
                         } finally {

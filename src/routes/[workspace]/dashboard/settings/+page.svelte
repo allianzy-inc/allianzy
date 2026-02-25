@@ -368,7 +368,7 @@
         }
     }
 
-    function addAddress() {
+    async function addAddress() {
         if (isMember) return;
         if (newAddress.address) {
             const updatedAddresses =
@@ -376,7 +376,7 @@
                     ? addresses.map((a, i) => (i === editingAddressIndex ? { ...newAddress } : a))
                     : [...addresses, { ...newAddress }];
             addresses = updatedAddresses;
-            saveField('addresses', updatedAddresses);
+            await saveField('addresses', updatedAddresses);
             newAddress = { label: '', address: '', city: '', country: '', state: '', postalCode: '' };
             isAddingAddress = false;
             editingAddressIndex = null;
@@ -405,12 +405,12 @@
         saveField('addresses', updatedAddresses);
     }
 
-    function addLink() {
+    async function addLink() {
         if (isMember) return;
         if (newLink.title && newLink.url) {
             const updatedLinks = [...companyLinks, { ...newLink }];
             companyLinks = updatedLinks;
-            saveField('links', updatedLinks);
+            await saveField('links', updatedLinks);
             newLink = { title: '', url: '' };
             isAddingLink = false;
         }
@@ -423,12 +423,12 @@
         saveField('links', updatedLinks);
     }
 
-    function addDoc() {
+    async function addDoc() {
         if (isMember) return;
         if (newDoc.type && newDoc.value) {
             const updatedDocs = [...documents, { ...newDoc }];
             documents = updatedDocs;
-            saveField('documents', updatedDocs);
+            await saveField('documents', updatedDocs);
             newDoc = { type: '', value: '' };
             isAddingDoc = false;
         }
@@ -623,6 +623,40 @@
                                     />
                                 </div>
                             </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div class="space-y-2">
+                                    <label class="text-sm font-medium flex items-center justify-between">
+                                        {t.dashboard.page.settings.organization.details?.website || 'Página web'}
+                                        {#if saving['website']}
+                                            <Loader2 class="w-3 h-3 animate-spin text-muted-foreground" />
+                                        {/if}
+                                    </label>
+                                    <input 
+                                        type="url" 
+                                        value={organization?.website || ''} 
+                                        on:change={(e) => saveField('website', e.currentTarget.value)}
+                                        placeholder="https://"
+                                        class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                                        disabled={isMember}
+                                    />
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="text-sm font-medium flex items-center justify-between">
+                                        {t.dashboard.page.settings.organization.details?.region || 'País / Región'}
+                                        {#if saving['region']}
+                                            <Loader2 class="w-3 h-3 animate-spin text-muted-foreground" />
+                                        {/if}
+                                    </label>
+                                    <input 
+                                        type="text" 
+                                        value={organization?.region || ''} 
+                                        on:change={(e) => saveField('region', e.currentTarget.value)}
+                                        placeholder="Ej. Argentina, España"
+                                        class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                                        disabled={isMember}
+                                    />
+                                </div>
+                            </div>
                              <div class="space-y-2">
                                 <label class="text-sm font-medium flex items-center justify-between">
                                     {t.dashboard.page.settings.organization.details?.description || 'Description'}
@@ -677,28 +711,35 @@
                                     <input 
                                         type="text" 
                                         placeholder={t.dashboard.page.settings.organization.documents.form?.type || "Type (e.g. ABN)"}
-                                        class="col-span-1 flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
+                                        class="col-span-1 flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm text-foreground placeholder:text-muted-foreground"
                                         bind:value={newDoc.type}
                                     />
                                     <input 
                                         type="text" 
                                         placeholder={t.dashboard.page.settings.organization.documents.form?.value || "Value"}
-                                        class="col-span-2 flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
+                                        class="col-span-2 flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm text-foreground placeholder:text-muted-foreground"
                                         bind:value={newDoc.value}
                                     />
                                 </div>
                                 <div class="flex justify-end gap-2">
                                     <button 
-                                        class="px-3 py-1.5 text-sm font-medium hover:bg-muted rounded-md"
+                                        class="px-3 py-1.5 text-sm font-medium text-foreground bg-muted hover:bg-muted/80 rounded-md"
                                         on:click={() => isAddingDoc = false}
                                     >
                                         {t.dashboard.page.settings.organization.documents.form?.cancel || "Cancel"}
                                     </button>
                                     <button 
-                                        class="px-3 py-1.5 text-sm font-medium bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+                                        type="button"
+                                        class="px-3 py-1.5 text-sm font-medium bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-70 disabled:pointer-events-none inline-flex items-center gap-2"
                                         on:click={addDoc}
+                                        disabled={saving['documents']}
                                     >
-                                        {t.dashboard.page.settings.organization.documents.form?.save || "Save"}
+                                        {#if saving['documents']}
+                                            <Loader2 class="w-4 h-4 animate-spin" />
+                                            {t.dashboard.page.settings.organization.documents.form?.saving || 'Guardando...'}
+                                        {:else}
+                                            {t.dashboard.page.settings.organization.documents.form?.save || "Save"}
+                                        {/if}
                                     </button>
                                 </div>
                             </div>
@@ -772,13 +813,13 @@
                                     <input 
                                         type="text" 
                                         placeholder={t.dashboard.page.settings.organization.addresses.form?.label || "Label (e.g. HQ)"}
-                                        class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
+                                        class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm text-foreground placeholder:text-muted-foreground"
                                         bind:value={newAddress.label}
                                     />
                                     <input 
                                         type="text" 
                                         placeholder={t.dashboard.page.settings.organization.addresses.form?.address || "Address"}
-                                        class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
+                                        class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm text-foreground placeholder:text-muted-foreground"
                                         bind:value={newAddress.address}
                                     />
                                     <AddressLocationFields
@@ -797,23 +838,30 @@
                                             id="new-addr-postal"
                                             type="text" 
                                             placeholder={t.dashboard.page.settings.organization.addresses.form?.postal_code || "Postal Code"}
-                                            class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
+                                            class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm text-foreground placeholder:text-muted-foreground"
                                             bind:value={newAddress.postalCode}
                                         />
                                     </div>
                                 </div>
                                 <div class="flex justify-end gap-2">
                                     <button
-                                        class="px-3 py-1.5 text-sm font-medium hover:bg-muted rounded-md"
+                                        class="px-3 py-1.5 text-sm font-medium text-foreground bg-muted hover:bg-muted/80 rounded-md"
                                         on:click={() => { isAddingAddress = false; editingAddressIndex = null; }}
                                     >
                                         {t.dashboard.page.settings.organization.addresses.form?.cancel || "Cancel"}
                                     </button>
                                     <button
-                                        class="px-3 py-1.5 text-sm font-medium bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+                                        type="button"
+                                        class="px-3 py-1.5 text-sm font-medium bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-70 disabled:pointer-events-none inline-flex items-center gap-2"
                                         on:click={addAddress}
+                                        disabled={saving['addresses']}
                                     >
-                                        {t.dashboard.page.settings.organization.addresses.form?.save || 'Save'}
+                                        {#if saving['addresses']}
+                                            <Loader2 class="w-4 h-4 animate-spin" />
+                                            {t.dashboard.page.settings.organization.addresses.form?.saving || 'Guardando...'}
+                                        {:else}
+                                            {t.dashboard.page.settings.organization.addresses.form?.save || 'Save'}
+                                        {/if}
                                     </button>
                                 </div>
                             </div>
@@ -872,28 +920,35 @@
                                 <input 
                                     type="text" 
                                     placeholder={t.dashboard.page.settings.organization.links.form?.title || "Title"}
-                                    class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
+                                    class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm text-foreground placeholder:text-muted-foreground"
                                     bind:value={newLink.title}
                                 />
                                 <input 
                                     type="url" 
                                     placeholder={t.dashboard.page.settings.organization.links.form?.url || "URL (https://...)"}
-                                    class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
+                                    class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm text-foreground placeholder:text-muted-foreground"
                                     bind:value={newLink.url}
                                 />
                             </div>
                             <div class="flex justify-end gap-2">
                                 <button 
-                                    class="px-3 py-1.5 text-sm font-medium hover:bg-muted rounded-md"
+                                    class="px-3 py-1.5 text-sm font-medium text-foreground bg-muted hover:bg-muted/80 rounded-md"
                                     on:click={() => isAddingLink = false}
                                 >
                                     {t.dashboard.page.settings.organization.links.form?.cancel || "Cancel"}
                                 </button>
                                 <button 
-                                    class="px-3 py-1.5 text-sm font-medium bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+                                    type="button"
+                                    class="px-3 py-1.5 text-sm font-medium bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-70 disabled:pointer-events-none inline-flex items-center gap-2"
                                     on:click={addLink}
+                                    disabled={saving['links']}
                                 >
-                                    {t.dashboard.page.settings.organization.links.form?.save || "Save"}
+                                    {#if saving['links']}
+                                        <Loader2 class="w-4 h-4 animate-spin" />
+                                        {t.dashboard.page.settings.organization.links.form?.saving || 'Guardando...'}
+                                    {:else}
+                                        {t.dashboard.page.settings.organization.links.form?.save || "Save"}
+                                    {/if}
                                 </button>
                             </div>
                         </div>

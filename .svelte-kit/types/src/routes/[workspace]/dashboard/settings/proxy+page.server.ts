@@ -88,7 +88,7 @@ export const actions = {
         const updateData: any = {};
 
         // Helper to conditionally add simple text fields
-        const textFields = ['name', 'phone', 'email', 'website', 'description'];
+        const textFields = ['name', 'phone', 'email', 'website', 'region', 'description'];
         for (const field of textFields) {
             if (formData.has(field)) {
                 updateData[field] = formData.get(field) as string;

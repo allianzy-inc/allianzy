@@ -15906,3 +15906,7 @@
 [2026-02-25T12:44:52.707Z] Request: http://localhost:5173/api/public/files?url=https%3A%2F%2Ff005.backblazeb2.com%2Ffile%2Fallianzy%2Favatars%2F1770214904685-Frame_1171274949.png&t=1772023490461&sig=21b867d41f3f4cbccf45e0230606121ba008dc9d5b7195f614e49be01a78e50a&w=allianzy
 [2026-02-25T12:44:52.884Z] Serving file successfully
 [2026-02-25T12:44:53.193Z] Serving file successfully
+[2026-02-25T14:40:35.319Z] Request: http://localhost:5173/api/public/files?url=https%3A%2F%2Ff005.backblazeb2.com%2Ffile%2Fallianzy%2Flogos%2F1770396624175-Logo_-_11.png&t=1772030430336&sig=2a2e8ebeca8fc17c7e969e11e921af4944fef5c2e4dfe52e28b67e76ccf46faa&w=allianzy
+[2026-02-25T14:40:35.332Z] Request: http://localhost:5173/api/public/files?url=https%3A%2F%2Ff005.backblazeb2.com%2Ffile%2Fallianzy%2Favatars%2F1770214904685-Frame_1171274949.png&t=1772030429517&sig=782265f5e5207ced20f64cd6be7ba768c59fe4119230c5c6c8ff58a400727c6f&w=allianzy
+[2026-02-25T14:40:35.936Z] Serving file successfully
+[2026-02-25T14:40:35.965Z] Serving file successfully

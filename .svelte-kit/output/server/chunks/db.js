@@ -1,8 +1,15 @@
 import { b as private_env } from "./shared-server.js";
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
-import { pgTable, timestamp, text, serial, integer, jsonb, index, decimal, char, boolean, primaryKey } from "drizzle-orm/pg-core";
+import { pgEnum, pgTable, timestamp, text, serial, integer, jsonb, index, decimal, char, boolean, primaryKey, uuid, numeric } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
+const billingProviderEnum = pgEnum("billing_provider", ["stripe", "mercadopago", "paypal", "payoneer", "bank", "manual"]);
+const paymentAccountStatusEnum = pgEnum("payment_account_status", ["active", "archived"]);
+const billingDocumentTypeEnum = pgEnum("billing_document_type", ["invoice", "receipt", "credit_note"]);
+const billingDocumentStatusEnum = pgEnum("billing_document_status", ["draft", "open", "paid", "void", "uncollectible", "canceled"]);
+const billingDocumentSourceEnum = pgEnum("billing_document_source", ["project", "subscription", "manual", "import"]);
+const paymentTransactionStatusEnum = pgEnum("payment_transaction_status", ["pending", "succeeded", "failed", "refunded", "canceled"]);
+const subscriptionStatusEnum = pgEnum("subscription_status", ["active", "trialing", "past_due", "canceled", "incomplete"]);
 const workspaces = pgTable("workspaces", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
@@ -61,6 +68,8 @@ const projects = pgTable("projects", {
   provider: text("provider").default("Allianzy"),
   // Allianzy, Beltrix, Provider
   clientId: integer("client_id").references(() => users.id),
+  companyId: integer("company_id").references(() => companies.id, { onDelete: "set null" }),
+  // empresa a la que pertenece el proyecto (evita mezclar si el cliente tiene varias)
   serviceId: integer("service_id").references(() => services.id),
   links: jsonb("links"),
   // Array of { title, url }
@@ -246,6 +255,20 @@ const companies = pgTable("companies", {
   // Array of { type: string, value: string }
   registrationDetails: jsonb("registration_details"),
   // { acn, abn, ndisRegistration }
+  memberLimit: integer("member_limit"),
+  // max members (owner + admins + members); null = unlimited
+  stripeCustomerId: text("stripe_customer_id"),
+  // legacy single; use stripe_accounts when present
+  /** Múltiples cuentas Stripe: [{ customerId: 'cus_xxx', isDefault: true }, ...] */
+  stripeAccounts: jsonb("stripe_accounts"),
+  // default []
+  stripeSubscriptionId: text("stripe_subscription_id"),
+  // optional
+  billingEmail: text("billing_email"),
+  // optional
+  /** Detalle interno por factura Stripe: { [stripeInvoiceId]: { title?, items: [{ id, label, amount }] } } */
+  invoiceOverlays: jsonb("invoice_overlays"),
+  // default {}
   workspaceId: integer("workspace_id").references(() => workspaces.id),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow()
@@ -269,6 +292,112 @@ const projectPayments = pgTable("project_payments", {
 }, (t) => ({
   pk: primaryKey({ columns: [t.projectId, t.paymentId] })
 }));
+const paymentAccounts = pgTable("payment_accounts", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  companyId: integer("company_id").references(() => companies.id, { onDelete: "cascade" }).notNull(),
+  provider: text("provider").notNull(),
+  label: text("label").notNull(),
+  externalId: text("external_id"),
+  status: paymentAccountStatusEnum("status").default("active").notNull(),
+  isDefault: boolean("is_default").default(false).notNull(),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull()
+}, (t) => ({
+  companyIdx: index("payment_accounts_company_id_idx").on(t.companyId),
+  providerIdx: index("payment_accounts_provider_idx").on(t.provider)
+}));
+const subscriptionRecords = pgTable("subscription_records", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  companyId: integer("company_id").references(() => companies.id, { onDelete: "cascade" }).notNull(),
+  provider: text("provider").notNull(),
+  providerSubscriptionId: text("provider_subscription_id"),
+  paymentAccountId: uuid("payment_account_id").references(() => paymentAccounts.id, { onDelete: "set null" }),
+  status: subscriptionStatusEnum("status").notNull(),
+  currentPeriodStart: timestamp("current_period_start", { withTimezone: true }),
+  currentPeriodEnd: timestamp("current_period_end", { withTimezone: true }),
+  amount: integer("amount").notNull(),
+  // minor units
+  currency: text("currency").notNull(),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull()
+}, (t) => ({
+  companyIdx: index("subscription_records_company_id_idx").on(t.companyId),
+  providerSubIdx: index("subscription_records_provider_sub_id_idx").on(t.providerSubscriptionId)
+}));
+const billingDocuments = pgTable("billing_documents", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  companyId: integer("company_id").references(() => companies.id, { onDelete: "cascade" }).notNull(),
+  type: billingDocumentTypeEnum("type").notNull(),
+  provider: text("provider").notNull(),
+  providerDocumentId: text("provider_document_id"),
+  paymentAccountId: uuid("payment_account_id").references(() => paymentAccounts.id, { onDelete: "set null" }),
+  number: text("number"),
+  currency: text("currency").notNull(),
+  amountTotal: integer("amount_total").notNull(),
+  // minor units
+  amountDue: integer("amount_due").notNull(),
+  status: billingDocumentStatusEnum("status").notNull(),
+  dueDate: timestamp("due_date", { withTimezone: true }),
+  issuedAt: timestamp("issued_at", { withTimezone: true }),
+  description: text("description"),
+  source: billingDocumentSourceEnum("source").notNull(),
+  projectId: integer("project_id").references(() => projects.id, { onDelete: "set null" }),
+  paymentId: integer("payment_id").references(() => payments.id, { onDelete: "set null" }),
+  subscriptionRecordId: uuid("subscription_record_id").references(() => subscriptionRecords.id, { onDelete: "set null" }),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull()
+}, (t) => ({
+  companyIdx: index("billing_documents_company_id_idx").on(t.companyId),
+  providerDocIdx: index("billing_documents_provider_doc_id_idx").on(t.providerDocumentId),
+  statusIdx: index("billing_documents_status_idx").on(t.status)
+}));
+const billingLineItems = pgTable("billing_line_items", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  billingDocumentId: uuid("billing_document_id").references(() => billingDocuments.id, { onDelete: "cascade" }).notNull(),
+  name: text("name").notNull(),
+  description: text("description"),
+  quantity: numeric("quantity", { precision: 14, scale: 4 }).notNull(),
+  unitAmount: integer("unit_amount").notNull(),
+  // minor units
+  amount: integer("amount").notNull(),
+  // minor units
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull()
+}, (t) => ({
+  documentIdx: index("billing_line_items_document_id_idx").on(t.billingDocumentId)
+}));
+const paymentTransactions = pgTable("payment_transactions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  companyId: integer("company_id").references(() => companies.id, { onDelete: "cascade" }).notNull(),
+  billingDocumentId: uuid("billing_document_id").references(() => billingDocuments.id, { onDelete: "set null" }),
+  provider: text("provider").notNull(),
+  paymentAccountId: uuid("payment_account_id").references(() => paymentAccounts.id, { onDelete: "set null" }),
+  providerPaymentId: text("provider_payment_id"),
+  amount: integer("amount").notNull(),
+  // minor units
+  currency: text("currency").notNull(),
+  status: paymentTransactionStatusEnum("status").notNull(),
+  paidAt: timestamp("paid_at", { withTimezone: true }),
+  raw: jsonb("raw"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull()
+}, (t) => ({
+  companyIdx: index("payment_transactions_company_id_idx").on(t.companyId),
+  documentIdx: index("payment_transactions_billing_document_id_idx").on(t.billingDocumentId)
+}));
+const paymentProviderConfig = pgTable("payment_provider_config", {
+  code: text("code").primaryKey(),
+  label: text("label").notNull(),
+  isAutomatic: boolean("is_automatic").notNull().default(false),
+  displayOrder: integer("display_order").notNull().default(0),
+  enabled: boolean("enabled").notNull().default(true),
+  /** Datos/direcciones por método: [{ label: "CVU", value: "..." }, { label: "Alias", value: "..." }] */
+  details: jsonb("details").$type(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow()
+});
 const notifications = pgTable("notifications", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
@@ -333,8 +462,42 @@ const intakeCaseContactsRelations = relations(intakeCaseContacts, ({ one }) => (
     references: [intakeCases.id]
   })
 }));
+const paymentAccountsRelations = relations(paymentAccounts, ({ one, many }) => ({
+  company: one(companies, { fields: [paymentAccounts.companyId], references: [companies.id] }),
+  billingDocuments: many(billingDocuments),
+  paymentTransactions: many(paymentTransactions),
+  subscriptionRecords: many(subscriptionRecords)
+}));
+const billingDocumentsRelations = relations(billingDocuments, ({ one, many }) => ({
+  company: one(companies, { fields: [billingDocuments.companyId], references: [companies.id] }),
+  paymentAccount: one(paymentAccounts, { fields: [billingDocuments.paymentAccountId], references: [paymentAccounts.id] }),
+  project: one(projects, { fields: [billingDocuments.projectId], references: [projects.id] }),
+  subscriptionRecord: one(subscriptionRecords, { fields: [billingDocuments.subscriptionRecordId], references: [subscriptionRecords.id] }),
+  lineItems: many(billingLineItems),
+  paymentTransactions: many(paymentTransactions)
+}));
+const billingLineItemsRelations = relations(billingLineItems, ({ one }) => ({
+  billingDocument: one(billingDocuments, { fields: [billingLineItems.billingDocumentId], references: [billingDocuments.id] })
+}));
+const paymentTransactionsRelations = relations(paymentTransactions, ({ one }) => ({
+  company: one(companies, { fields: [paymentTransactions.companyId], references: [companies.id] }),
+  billingDocument: one(billingDocuments, { fields: [paymentTransactions.billingDocumentId], references: [billingDocuments.id] }),
+  paymentAccount: one(paymentAccounts, { fields: [paymentTransactions.paymentAccountId], references: [paymentAccounts.id] })
+}));
+const subscriptionRecordsRelations = relations(subscriptionRecords, ({ one }) => ({
+  company: one(companies, { fields: [subscriptionRecords.companyId], references: [companies.id] }),
+  paymentAccount: one(paymentAccounts, { fields: [subscriptionRecords.paymentAccountId], references: [paymentAccounts.id] })
+}));
 const schema = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
+  billingDocumentSourceEnum,
+  billingDocumentStatusEnum,
+  billingDocumentTypeEnum,
+  billingDocuments,
+  billingDocumentsRelations,
+  billingLineItems,
+  billingLineItemsRelations,
+  billingProviderEnum,
   caseComments,
   cases,
   companies,
@@ -345,6 +508,13 @@ const schema = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProper
   intakeCasesRelations,
   notifications,
   notificationsRelations,
+  paymentAccountStatusEnum,
+  paymentAccounts,
+  paymentAccountsRelations,
+  paymentProviderConfig,
+  paymentTransactionStatusEnum,
+  paymentTransactions,
+  paymentTransactionsRelations,
   payments,
   paymentsRelations,
   projectMilestones,
@@ -359,6 +529,9 @@ const schema = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProper
   requirementComments,
   requirements,
   services,
+  subscriptionRecords,
+  subscriptionRecordsRelations,
+  subscriptionStatusEnum,
   subservices,
   userCompanies,
   userCompaniesRelations,
@@ -374,25 +547,29 @@ const sql = neon(connectionString || "postgresql://placeholder");
 const db = drizzle(sql, { schema });
 export {
   userCompanies as a,
-  projectMilestones as b,
-  cases as c,
+  subscriptionRecords as b,
+  companies as c,
   db as d,
-  proposals as e,
-  payments as f,
-  projectPayments as g,
-  requests as h,
-  intakeCases as i,
-  companies as j,
-  proposalComments as k,
-  requirementComments as l,
-  requestComments as m,
+  projectMilestones as e,
+  cases as f,
+  proposals as g,
+  payments as h,
+  projectPayments as i,
+  requests as j,
+  paymentAccounts as k,
+  paymentProviderConfig as l,
+  billingDocuments as m,
   notifications as n,
-  caseComments as o,
+  intakeCases as o,
   projects as p,
-  subservices as q,
+  proposalComments as q,
   requirements as r,
   services as s,
-  intakeCaseContacts as t,
+  requirementComments as t,
   users as u,
-  workspaces as w
+  requestComments as v,
+  workspaces as w,
+  caseComments as x,
+  subservices as y,
+  intakeCaseContacts as z
 };

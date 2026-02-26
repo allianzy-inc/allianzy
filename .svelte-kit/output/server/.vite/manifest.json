@@ -18,7 +18,7 @@
       "_file-text.js",
       "_external-link.js",
       "_x.js",
-      "_Icon.js",
+      "_circle-alert.js",
       "_context.js",
       "_attributes.js",
       "_escaping.js"
@@ -32,6 +32,27 @@
       "_context.js",
       "_attributes.js"
     ]
+  },
+  "_InvoiceDrawer.js": {
+    "file": "chunks/InvoiceDrawer.js",
+    "name": "InvoiceDrawer",
+    "imports": [
+      "_index2.js",
+      "_Icon.js",
+      "_index.js",
+      "_x.js",
+      "_external-link.js",
+      "_credit-card.js",
+      "_trash-2.js",
+      "_plus.js",
+      "_context.js",
+      "_escaping.js",
+      "_attributes.js"
+    ]
+  },
+  "_app.js": {
+    "file": "chunks/app.js",
+    "name": "app"
   },
   "_arrow-left.js": {
     "file": "chunks/arrow-left.js",
@@ -70,6 +91,14 @@
     "assets": [
       "_app/immutable/assets/beltrix-logo-light.CXgpNiEW.svg",
       "_app/immutable/assets/beltrix-logo-dark.CTslLaL0.svg"
+    ]
+  },
+  "_billing.service.js": {
+    "file": "chunks/billing.service.js",
+    "name": "billing.service",
+    "imports": [
+      "src/lib/server/billing-domain/billing-documents.repository.ts",
+      "_db.js"
     ]
   },
   "_briefcase.js": {
@@ -120,12 +149,30 @@
       "_Icon.js"
     ]
   },
+  "_circle-alert.js": {
+    "file": "chunks/circle-alert.js",
+    "name": "circle-alert",
+    "imports": [
+      "_index2.js",
+      "_Icon.js"
+    ]
+  },
   "_circle-check.js": {
     "file": "chunks/circle-check.js",
     "name": "circle-check",
     "imports": [
       "_index2.js",
       "_Icon.js"
+    ]
+  },
+  "_client.js": {
+    "file": "chunks/client.js",
+    "name": "client",
+    "imports": [
+      "_exports.js",
+      "_utils.js",
+      "_index.js",
+      "_state.svelte.js"
     ]
   },
   "_context.js": {
@@ -150,14 +197,6 @@
   "_dollar-sign.js": {
     "file": "chunks/dollar-sign.js",
     "name": "dollar-sign",
-    "imports": [
-      "_index2.js",
-      "_Icon.js"
-    ]
-  },
-  "_ellipsis-vertical.js": {
-    "file": "chunks/ellipsis-vertical.js",
-    "name": "ellipsis-vertical",
     "imports": [
       "_index2.js",
       "_Icon.js"
@@ -299,6 +338,14 @@
       "_Icon.js"
     ]
   },
+  "_loader-circle.js": {
+    "file": "chunks/loader-circle.js",
+    "name": "loader-circle",
+    "imports": [
+      "_index2.js",
+      "_Icon.js"
+    ]
+  },
   "_lock.js": {
     "file": "chunks/lock.js",
     "name": "lock",
@@ -331,6 +378,14 @@
       "_Icon.js"
     ]
   },
+  "_menu.js": {
+    "file": "chunks/menu.js",
+    "name": "menu",
+    "imports": [
+      "_index2.js",
+      "_Icon.js"
+    ]
+  },
   "_message-square.js": {
     "file": "chunks/message-square.js",
     "name": "message-square",
@@ -355,6 +410,13 @@
       "_Icon.js"
     ]
   },
+  "_payment-accounts.repository.js": {
+    "file": "chunks/payment-accounts.repository.js",
+    "name": "payment-accounts.repository",
+    "imports": [
+      "_db.js"
+    ]
+  },
   "_pencil.js": {
     "file": "chunks/pencil.js",
     "name": "pencil",
@@ -377,6 +439,21 @@
     "imports": [
       "_index2.js",
       "_Icon.js"
+    ]
+  },
+  "_provider-config.repository.js": {
+    "file": "chunks/provider-config.repository.js",
+    "name": "provider-config.repository",
+    "imports": [
+      "_db.js"
+    ]
+  },
+  "_resolve-context.js": {
+    "file": "chunks/resolve-context.js",
+    "name": "resolve-context",
+    "imports": [
+      "_db.js",
+      "_payment-accounts.repository.js"
     ]
   },
   "_search.js": {
@@ -406,14 +483,6 @@
       "_utils.js"
     ]
   },
-  "_shield.js": {
-    "file": "chunks/shield.js",
-    "name": "shield",
-    "imports": [
-      "_index2.js",
-      "_Icon.js"
-    ]
-  },
   "_state.svelte.js": {
     "file": "chunks/state.svelte.js",
     "name": "state.svelte",
@@ -436,6 +505,16 @@
       "_exports.js",
       "_utils.js",
       "_state.svelte.js"
+    ]
+  },
+  "_stripe-sync.service.js": {
+    "file": "chunks/stripe-sync.service.js",
+    "name": "stripe-sync.service",
+    "imports": [
+      "src/lib/server/billing.ts",
+      "_payment-accounts.repository.js",
+      "src/lib/server/billing-domain/billing-documents.repository.ts",
+      "_db.js"
     ]
   },
   "_tags.js": {
@@ -525,9 +604,7 @@
     "imports": [
       "_escaping.js",
       "_state.svelte.js",
-      "_exports.js",
-      "_utils.js",
-      "_index.js",
+      "_client.js",
       "_context.js"
     ]
   },
@@ -550,7 +627,8 @@
       "_utils.js",
       "_index.js",
       "_shared-server.js",
-      "_internal.js"
+      "_internal.js",
+      "_app.js"
     ]
   },
   "src/hooks.server.ts": {
@@ -587,6 +665,25 @@
     "file": "_app/immutable/assets/beltrix-logo-light.CXgpNiEW.svg",
     "src": "src/lib/assets/brand/beltrix/beltrix-logo-light.svg"
   },
+  "src/lib/server/billing-domain/billing-documents.repository.ts": {
+    "file": "chunks/billing-documents.repository.js",
+    "name": "billing-documents.repository",
+    "src": "src/lib/server/billing-domain/billing-documents.repository.ts",
+    "isDynamicEntry": true,
+    "imports": [
+      "_db.js"
+    ]
+  },
+  "src/lib/server/billing.ts": {
+    "file": "chunks/billing.js",
+    "name": "billing",
+    "src": "src/lib/server/billing.ts",
+    "isDynamicEntry": true,
+    "imports": [
+      "_shared-server.js",
+      "_db.js"
+    ]
+  },
   "src/routes/+layout.svelte": {
     "file": "entries/pages/_layout.svelte.js",
     "name": "entries/pages/_layout.svelte",
@@ -597,7 +694,7 @@
       "_stores.js"
     ],
     "css": [
-      "_app/immutable/assets/_layout.BVuv71D2.css"
+      "_app/immutable/assets/_layout.Bqgpdx1v.css"
     ]
   },
   "src/routes/+page.svelte": {
@@ -641,7 +738,7 @@
       "_attributes.js",
       "_logo-dark.js",
       "_beltrix-logo-dark.js",
-      "_shield.js",
+      "_menu.js",
       "_arrow-right.js",
       "_users.js",
       "_file-text.js",
@@ -685,12 +782,12 @@
       "_finance-role.store.js",
       "_ticket.js",
       "_user.js",
-      "_Icon.js",
       "_layout-dashboard.js",
       "_users.js",
       "_building-2.js",
       "_package.js",
       "_briefcase.js",
+      "_Icon.js",
       "_escaping.js"
     ]
   },
@@ -714,6 +811,39 @@
       "_dollar-sign.js",
       "_index2.js",
       "_Icon.js"
+    ]
+  },
+  "src/routes/[workspace]/admin/billing/[companyId]/+page.server.ts": {
+    "file": "entries/pages/_workspace_/admin/billing/_companyId_/_page.server.ts.js",
+    "name": "entries/pages/_workspace_/admin/billing/_companyId_/_page.server.ts",
+    "src": "src/routes/[workspace]/admin/billing/[companyId]/+page.server.ts",
+    "isEntry": true,
+    "imports": [
+      "_db.js"
+    ]
+  },
+  "src/routes/[workspace]/admin/billing/[companyId]/+page.svelte": {
+    "file": "entries/pages/_workspace_/admin/billing/_companyId_/_page.svelte.js",
+    "name": "entries/pages/_workspace_/admin/billing/_companyId_/_page.svelte",
+    "src": "src/routes/[workspace]/admin/billing/[companyId]/+page.svelte",
+    "isEntry": true,
+    "imports": [
+      "_index2.js",
+      "_stores.js",
+      "_InvoiceDrawer.js",
+      "_context.js",
+      "_attributes.js",
+      "_x.js",
+      "_Icon.js",
+      "_trash-2.js",
+      "_escaping.js",
+      "_arrow-left.js",
+      "_loader-circle.js",
+      "_plus.js",
+      "_credit-card.js",
+      "_calendar.js",
+      "_eye.js",
+      "_pencil.js"
     ]
   },
   "src/routes/[workspace]/admin/cases/+page.server.ts": {
@@ -754,22 +884,32 @@
     "isEntry": true,
     "imports": [
       "_index2.js",
+      "_index-server.js",
+      "_context.js",
+      "_attributes.js",
+      "_escaping.js",
       "_stores.js",
       "_exports.js",
       "_utils.js",
-      "_attributes.js",
       "_state.svelte.js",
+      "_app.js",
+      "_client.js",
       "_plus.js",
       "_search.js",
       "_filter.js",
+      "_credit-card.js",
       "_building-2.js",
       "_users.js",
+      "_loader-circle.js",
       "_upload.js",
       "_trash-2.js",
       "_map-pin.js",
+      "_pencil.js",
       "_link.js",
-      "_file-text.js",
-      "_escaping.js"
+      "_file-text.js"
+    ],
+    "css": [
+      "_app/immutable/assets/_page.gHFUTdnz.css"
     ]
   },
   "src/routes/[workspace]/admin/finance/+layout.svelte": {
@@ -919,12 +1059,8 @@
       "_plus.js",
       "_search.js",
       "_filter.js",
-      "_user.js",
       "_package.js",
       "_calendar.js",
-      "_ellipsis-vertical.js",
-      "_pencil.js",
-      "_trash-2.js",
       "_briefcase.js",
       "_escaping.js"
     ]
@@ -936,7 +1072,14 @@
     "isEntry": true,
     "imports": [
       "_db.js",
-      "_storage.js"
+      "_storage.js",
+      "_billing.service.js",
+      "_payment-accounts.repository.js",
+      "_provider-config.repository.js"
+    ],
+    "dynamicImports": [
+      "src/lib/server/billing-domain/billing-documents.repository.ts",
+      "src/lib/server/billing-domain/billing-documents.repository.ts"
     ]
   },
   "src/routes/[workspace]/admin/projects/[id]/+page.svelte": {
@@ -998,7 +1141,14 @@
     "file": "entries/pages/_workspace_/admin/settings/_page.svelte.js",
     "name": "entries/pages/_workspace_/admin/settings/_page.svelte",
     "src": "src/routes/[workspace]/admin/settings/+page.svelte",
-    "isEntry": true
+    "isEntry": true,
+    "imports": [
+      "_index2.js",
+      "_stores.js",
+      "_credit-card.js",
+      "_plus.js",
+      "_loader-circle.js"
+    ]
   },
   "src/routes/[workspace]/admin/support/+page.server.ts": {
     "file": "entries/pages/_workspace_/admin/support/_page.server.ts.js",
@@ -1052,7 +1202,7 @@
       "_users.js",
       "_search.js",
       "_filter.js",
-      "_ellipsis-vertical.js",
+      "_Icon.js",
       "_attributes.js",
       "_escaping.js"
     ]
@@ -1083,12 +1233,140 @@
       "_map-pin.js",
       "_trash-2.js",
       "_plus.js",
-      "_building.js",
       "_link.js",
       "_credit-card.js",
       "_message-square.js",
       "_Icon.js",
       "_escaping.js"
+    ]
+  },
+  "src/routes/[workspace]/api/billing/accounts/+server.ts": {
+    "file": "entries/endpoints/_workspace_/api/billing/accounts/_server.ts.js",
+    "name": "entries/endpoints/_workspace_/api/billing/accounts/_server.ts",
+    "src": "src/routes/[workspace]/api/billing/accounts/+server.ts",
+    "isEntry": true,
+    "imports": [
+      "_resolve-context.js"
+    ]
+  },
+  "src/routes/[workspace]/api/billing/documents/+server.ts": {
+    "file": "entries/endpoints/_workspace_/api/billing/documents/_server.ts.js",
+    "name": "entries/endpoints/_workspace_/api/billing/documents/_server.ts",
+    "src": "src/routes/[workspace]/api/billing/documents/+server.ts",
+    "isEntry": true,
+    "imports": [
+      "_db.js",
+      "_billing.service.js",
+      "_payment-accounts.repository.js",
+      "_provider-config.repository.js"
+    ]
+  },
+  "src/routes/[workspace]/api/billing/documents/[id]/+server.ts": {
+    "file": "entries/endpoints/_workspace_/api/billing/documents/_id_/_server.ts.js",
+    "name": "entries/endpoints/_workspace_/api/billing/documents/_id_/_server.ts",
+    "src": "src/routes/[workspace]/api/billing/documents/[id]/+server.ts",
+    "isEntry": true,
+    "imports": [
+      "src/lib/server/billing-domain/billing-documents.repository.ts"
+    ]
+  },
+  "src/routes/[workspace]/api/billing/documents/[id]/proof/+server.ts": {
+    "file": "entries/endpoints/_workspace_/api/billing/documents/_id_/proof/_server.ts.js",
+    "name": "entries/endpoints/_workspace_/api/billing/documents/_id_/proof/_server.ts",
+    "src": "src/routes/[workspace]/api/billing/documents/[id]/proof/+server.ts",
+    "isEntry": true,
+    "imports": [
+      "src/lib/server/billing.ts",
+      "src/lib/server/billing-domain/billing-documents.repository.ts",
+      "_storage.js"
+    ]
+  },
+  "src/routes/[workspace]/api/billing/invoices/+server.ts": {
+    "file": "entries/endpoints/_workspace_/api/billing/invoices/_server.ts.js",
+    "name": "entries/endpoints/_workspace_/api/billing/invoices/_server.ts",
+    "src": "src/routes/[workspace]/api/billing/invoices/+server.ts",
+    "isEntry": true,
+    "imports": [
+      "_resolve-context.js",
+      "src/lib/server/billing-domain/billing-documents.repository.ts",
+      "_payment-accounts.repository.js",
+      "_provider-config.repository.js",
+      "_stripe-sync.service.js",
+      "src/lib/server/billing.ts",
+      "_db.js"
+    ],
+    "dynamicImports": [
+      "src/lib/server/billing.ts"
+    ]
+  },
+  "src/routes/[workspace]/api/billing/link/+server.ts": {
+    "file": "entries/endpoints/_workspace_/api/billing/link/_server.ts.js",
+    "name": "entries/endpoints/_workspace_/api/billing/link/_server.ts",
+    "src": "src/routes/[workspace]/api/billing/link/+server.ts",
+    "isEntry": true,
+    "imports": [
+      "_db.js",
+      "_payment-accounts.repository.js"
+    ]
+  },
+  "src/routes/[workspace]/api/billing/overlays/+server.ts": {
+    "file": "entries/endpoints/_workspace_/api/billing/overlays/_server.ts.js",
+    "name": "entries/endpoints/_workspace_/api/billing/overlays/_server.ts",
+    "src": "src/routes/[workspace]/api/billing/overlays/+server.ts",
+    "isEntry": true,
+    "imports": [
+      "src/lib/server/billing.ts",
+      "_db.js"
+    ]
+  },
+  "src/routes/[workspace]/api/billing/portal/+server.ts": {
+    "file": "entries/endpoints/_workspace_/api/billing/portal/_server.ts.js",
+    "name": "entries/endpoints/_workspace_/api/billing/portal/_server.ts",
+    "src": "src/routes/[workspace]/api/billing/portal/+server.ts",
+    "isEntry": true,
+    "imports": [
+      "src/lib/server/billing.ts",
+      "_resolve-context.js"
+    ]
+  },
+  "src/routes/[workspace]/api/billing/provider-config/+server.ts": {
+    "file": "entries/endpoints/_workspace_/api/billing/provider-config/_server.ts.js",
+    "name": "entries/endpoints/_workspace_/api/billing/provider-config/_server.ts",
+    "src": "src/routes/[workspace]/api/billing/provider-config/+server.ts",
+    "isEntry": true,
+    "imports": [
+      "_provider-config.repository.js"
+    ]
+  },
+  "src/routes/[workspace]/api/billing/providers/+server.ts": {
+    "file": "entries/endpoints/_workspace_/api/billing/providers/_server.ts.js",
+    "name": "entries/endpoints/_workspace_/api/billing/providers/_server.ts",
+    "src": "src/routes/[workspace]/api/billing/providers/+server.ts",
+    "isEntry": true,
+    "imports": [
+      "_provider-config.repository.js"
+    ]
+  },
+  "src/routes/[workspace]/api/billing/subscriptions/+server.ts": {
+    "file": "entries/endpoints/_workspace_/api/billing/subscriptions/_server.ts.js",
+    "name": "entries/endpoints/_workspace_/api/billing/subscriptions/_server.ts",
+    "src": "src/routes/[workspace]/api/billing/subscriptions/+server.ts",
+    "isEntry": true,
+    "imports": [
+      "_resolve-context.js",
+      "_stripe-sync.service.js",
+      "src/lib/server/billing.ts"
+    ]
+  },
+  "src/routes/[workspace]/api/billing/sync/+server.ts": {
+    "file": "entries/endpoints/_workspace_/api/billing/sync/_server.ts.js",
+    "name": "entries/endpoints/_workspace_/api/billing/sync/_server.ts",
+    "src": "src/routes/[workspace]/api/billing/sync/+server.ts",
+    "isEntry": true,
+    "imports": [
+      "src/lib/server/billing.ts",
+      "_resolve-context.js",
+      "_stripe-sync.service.js"
     ]
   },
   "src/routes/[workspace]/auth/forgot-password/+page.svelte": {
@@ -1192,10 +1470,10 @@
       "_briefcase.js",
       "_credit-card.js",
       "_ticket.js",
-      "_shield.js",
       "_x.js",
       "_building.js",
       "_Icon.js",
+      "_menu.js",
       "_user.js",
       "_escaping.js"
     ]
@@ -1241,15 +1519,16 @@
     "isEntry": true,
     "imports": [
       "_index2.js",
+      "_stores.js",
       "_i18n.js",
-      "_exports.js",
-      "_utils.js",
-      "_escaping.js",
-      "_state.svelte.js",
-      "_DocumentPreviewModal.js",
+      "_InvoiceDrawer.js",
+      "_circle-alert.js",
+      "_loader-circle.js",
       "_credit-card.js",
       "_calendar.js",
-      "_eye.js"
+      "_eye.js",
+      "_escaping.js",
+      "_attributes.js"
     ]
   },
   "src/routes/[workspace]/dashboard/contact/+page.svelte": {
@@ -1287,11 +1566,13 @@
       "_state.svelte.js",
       "_i18n.js",
       "_user.js",
-      "_upload.js",
+      "_loader-circle.js",
       "_trash-2.js",
+      "_upload.js",
       "_file-text.js",
       "_plus.js",
       "_map-pin.js",
+      "_pencil.js",
       "_link.js",
       "_escaping.js"
     ]
@@ -1361,12 +1642,22 @@
       "_circle-check.js",
       "_calendar.js",
       "_paperclip.js",
+      "_circle-alert.js",
       "_eye.js",
       "_user.js",
       "_building.js",
       "_briefcase.js",
       "_external-link.js",
       "_escaping.js"
+    ]
+  },
+  "src/routes/[workspace]/dashboard/set-company/+server.ts": {
+    "file": "entries/endpoints/_workspace_/dashboard/set-company/_server.ts.js",
+    "name": "entries/endpoints/_workspace_/dashboard/set-company/_server.ts",
+    "src": "src/routes/[workspace]/dashboard/set-company/+server.ts",
+    "isEntry": true,
+    "imports": [
+      "_db.js"
     ]
   },
   "src/routes/[workspace]/dashboard/settings/+page.server.ts": {
@@ -1394,11 +1685,13 @@
       "_i18n.js",
       "_building-2.js",
       "_users.js",
-      "_upload.js",
+      "_loader-circle.js",
       "_trash-2.js",
+      "_upload.js",
       "_file-text.js",
       "_plus.js",
       "_map-pin.js",
+      "_pencil.js",
       "_link.js",
       "_escaping.js"
     ]

@@ -962,7 +962,28 @@ const options = {
   service_worker: false,
   service_worker_options: void 0,
   templates: {
-    app: ({ head, body, assets, nonce, env }) => '<!DOCTYPE html>\n<html lang="en">\n	<head>\n		<meta charset="utf-8" />\n		<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />\n		<meta http-equiv="Pragma" content="no-cache" />\n		<meta http-equiv="Expires" content="0" />\n		<link rel="icon" href="' + assets + '/favicon.svg" />\n		<meta name="viewport" content="width=device-width" />\n		<!-- Google Fonts: Bricolage Grotesque -->\n		<link rel="preconnect" href="https://fonts.googleapis.com">\n		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n		<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&display=swap" rel="stylesheet">\n		' + head + '\n	</head>\n	<body data-sveltekit-preload-data="hover">\n		<div style="display: contents">' + body + "</div>\n	</body>\n</html>\n",
+    app: ({ head, body, assets, nonce, env }) => `<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<script>
+			(function() {
+				var t = typeof localStorage !== 'undefined' ? localStorage.getItem('theme') : null;
+				var dark = t === 'dark' || (t === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+				if (t === 'light') dark = false;
+				if (dark) {
+					document.documentElement.classList.add('dark');
+					document.documentElement.style.backgroundColor = 'hsl(240 10% 3.9%)';
+				} else {
+					document.documentElement.classList.remove('dark');
+					document.documentElement.style.backgroundColor = 'hsl(0 0% 100%)';
+				}
+			})();
+		<\/script>
+		<meta charset="utf-8" />
+		<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+		<meta http-equiv="Pragma" content="no-cache" />
+		<meta http-equiv="Expires" content="0" />
+		<link rel="icon" href="` + assets + '/favicon.svg" />\n		<meta name="viewport" content="width=device-width" />\n		<!-- Google Fonts: Bricolage Grotesque -->\n		<link rel="preconnect" href="https://fonts.googleapis.com">\n		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n		<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&display=swap" rel="stylesheet">\n		' + head + '\n	</head>\n	<body data-sveltekit-preload-data="hover">\n		<div style="display: contents">' + body + "</div>\n	</body>\n</html>\n",
     error: ({ status, message }) => '<!doctype html>\n<html lang="en">\n	<head>\n		<meta charset="utf-8" />\n		<title>' + message + `</title>
 
 		<style>
@@ -1034,7 +1055,7 @@ const options = {
 		<div class="error">
 			<span class="status">` + status + '</span>\n			<div class="message">\n				<h1>' + message + "</h1>\n			</div>\n		</div>\n	</body>\n</html>\n"
   },
-  version_hash: "1r0g9g4"
+  version_hash: "1s868ql"
 };
 async function get_hooks() {
   let handle;

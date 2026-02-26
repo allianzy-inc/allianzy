@@ -13,10 +13,10 @@ import { L as Layout_dashboard } from "../../../../chunks/layout-dashboard.js";
 import { B as Briefcase } from "../../../../chunks/briefcase.js";
 import { C as Credit_card } from "../../../../chunks/credit-card.js";
 import { T as Ticket, S as Settings, P as Panel_left_close, B as Bell } from "../../../../chunks/ticket.js";
-import { S as Shield, M as Menu } from "../../../../chunks/shield.js";
 import { X } from "../../../../chunks/x.js";
 import { B as Building } from "../../../../chunks/building.js";
 import { I as Icon } from "../../../../chunks/Icon.js";
+import { M as Menu } from "../../../../chunks/menu.js";
 import { U as User } from "../../../../chunks/user.js";
 import { e as escape_html } from "../../../../chunks/escaping.js";
 function Chevrons_up_down($$renderer, $$props) {
@@ -97,9 +97,8 @@ function Circle_help($$renderer, $$props) {
 function _layout($$renderer, $$props) {
   $$renderer.component(($$renderer2) => {
     var $$store_subs;
-    let t, workspace, path, notifications, inboxNotifications, unreadCount, companies, currentUserRole, currentUserPermissions, canViewBilling, canViewSupport, menuItems;
+    let t, workspace, path, notifications, inboxNotifications, unreadCount, companies, currentUserRole, currentUserPermissions, canViewBilling, canViewSupport, showOnlyInicio, menuItems;
     let data = $$props["data"];
-    let clientRole = "";
     let isMobileMenuOpen = false;
     let selectedCompany = null;
     t = translations[store_get($$store_subs ??= {}, "$currentLang", currentLang)];
@@ -121,7 +120,14 @@ function _layout($$renderer, $$props) {
     currentUserPermissions = selectedCompany?.permissions || {};
     canViewBilling = currentUserRole === "owner" || currentUserRole === "admin" || Object.values(currentUserPermissions).some((p) => p && p.includes("payments"));
     canViewSupport = currentUserRole === "owner" || currentUserRole === "admin" || Object.values(currentUserPermissions).some((p) => p && p.includes("support"));
-    menuItems = [
+    showOnlyInicio = !(data.hasAnyCompany ?? true) && !(data.hasAnyProject ?? true);
+    menuItems = showOnlyInicio ? [
+      {
+        href: `/${workspace}/dashboard`,
+        label: t.dashboard.menu.overview,
+        icon: Layout_dashboard
+      }
+    ] : [
       {
         href: `/${workspace}/dashboard`,
         label: t.dashboard.menu.overview,
@@ -150,14 +156,7 @@ function _layout($$renderer, $$props) {
         href: `/${workspace}/dashboard/settings`,
         label: t.dashboard.menu.settings,
         icon: Settings
-      },
-      ...data.user?.role === "admin" || clientRole === "admin" ? [
-        {
-          href: `/${workspace}/admin`,
-          label: t.dashboard.menu.admin_panel,
-          icon: Shield
-        }
-      ] : []
+      }
     ];
     store_get($$store_subs ??= {}, "$currentLang", currentLang) === "es";
     if (path) {

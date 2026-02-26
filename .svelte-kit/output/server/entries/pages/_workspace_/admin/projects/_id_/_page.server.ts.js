@@ -1,6 +1,9 @@
-import { d as db, k as proposalComments, e as proposals, p as projects, n as notifications, l as requirementComments, r as requirements, m as requestComments, h as requests, c as cases, o as caseComments, f as payments, g as projectPayments, b as projectMilestones, u as users, s as services } from "../../../../../../chunks/db.js";
+import { d as db, q as proposalComments, g as proposals, p as projects, n as notifications, t as requirementComments, r as requirements, v as requestComments, j as requests, f as cases, x as caseComments, h as payments, i as projectPayments, e as projectMilestones, u as users, c as companies, a as userCompanies, s as services } from "../../../../../../chunks/db.js";
 import { u as uploadFile, d as deleteFile, a as getSignedUrlForFile } from "../../../../../../chunks/storage.js";
-import { eq, sql, desc, asc, getTableColumns } from "drizzle-orm";
+import { c as createBillingDocument } from "../../../../../../chunks/billing.service.js";
+import { f as findOrCreateManualProviderAccount } from "../../../../../../chunks/payment-accounts.repository.js";
+import { f as findProviderConfigByCode } from "../../../../../../chunks/provider-config.repository.js";
+import { eq, inArray, sql, desc, asc, getTableColumns } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { fail, error } from "@sveltejs/kit";
 const load = async ({ params, url }) => {
@@ -17,6 +20,23 @@ const load = async ({ params, url }) => {
       company: users.company,
       email: users.email
     }).from(users).where(eq(users.role, "client"));
+    const clientIds = allClients.map((c) => c.id).filter((id) => id != null);
+    const companiesByClientId = {};
+    if (clientIds.length > 0) {
+      const links = await db.select({
+        userId: userCompanies.userId,
+        companyId: companies.id,
+        companyName: companies.name
+      }).from(userCompanies).innerJoin(companies, eq(userCompanies.companyId, companies.id)).where(inArray(userCompanies.userId, clientIds));
+      for (const row of links) {
+        if (row.userId != null && row.companyId != null && row.companyName) {
+          if (!companiesByClientId[row.userId]) companiesByClientId[row.userId] = [];
+          if (!companiesByClientId[row.userId].some((c) => c.id === row.companyId)) {
+            companiesByClientId[row.userId].push({ id: row.companyId, name: row.companyName });
+          }
+        }
+      }
+    }
     const allServices = await db.select({
       id: services.id,
       name: services.name,
@@ -25,6 +45,7 @@ const load = async ({ params, url }) => {
     }).from(services).where(eq(services.status, "Active"));
     const projectData = await db.select({
       id: projects.id,
+      companyId: projects.companyId,
       name: projects.name,
       description: projects.description,
       status: projects.status,
@@ -35,7 +56,6 @@ const load = async ({ params, url }) => {
       endDate: projects.endDate,
       serviceName: services.name,
       imageUrl: projects.imageUrl,
-      // Prefer direct client link, fallback to service client link
       clientName: sql`
                 CASE 
                     WHEN ${users.id} IS NOT NULL THEN TRIM(BOTH ' ' FROM COALESCE(${users.firstName}, '') || ' ' || COALESCE(${users.lastName}, ''))
@@ -53,6 +73,19 @@ const load = async ({ params, url }) => {
     if (project.imageUrl) {
       project.imageUrl = await getSignedUrlForFile(project.imageUrl, params.workspace);
     }
+    let clientCompanyDisplay = project.clientCompany ?? "";
+    if (project.companyId != null) {
+      const projectCompanyRow = await db.select({ name: companies.name }).from(companies).where(eq(companies.id, project.companyId)).limit(1);
+      if (projectCompanyRow[0]?.name) {
+        clientCompanyDisplay = projectCompanyRow[0].name;
+      }
+    } else if (project.clientId != null) {
+      const companyRow = await db.select({ companyName: companies.name }).from(userCompanies).innerJoin(companies, eq(userCompanies.companyId, companies.id)).where(eq(userCompanies.userId, project.clientId)).orderBy(desc(userCompanies.isPrimary)).limit(1);
+      if (companyRow[0]?.companyName) {
+        clientCompanyDisplay = companyRow[0].companyName;
+      }
+    }
+    project.clientCompanyDisplay = clientCompanyDisplay;
     const allProjects = await db.select({
       id: projects.id,
       name: projects.name
@@ -232,7 +265,8 @@ const load = async ({ params, url }) => {
       selectedProposalComments,
       allClients,
       allServices,
-      allProjects
+      allProjects,
+      companiesByClientId
     };
   } catch (err) {
     console.error("Error fetching project details:", err);
@@ -248,12 +282,16 @@ const actions = {
     const status = formData.get("status");
     const provider = formData.get("provider");
     const clientId = formData.get("clientId") ? Number(formData.get("clientId")) : null;
+    const companyIdRaw = formData.get("companyId");
+    const companyId = companyIdRaw !== null && companyIdRaw !== void 0 && String(companyIdRaw).trim() !== "" ? Number(companyIdRaw) : null;
     const serviceId = Number(formData.get("serviceId"));
     const startDateStr = formData.get("startDate");
     const startTimeStr = formData.get("startTime");
+    const description = formData.get("description") ?? "";
     const linksJson = formData.get("links");
     const imageFile = formData.get("image");
     const removeImage = formData.get("removeImage") === "true";
+    const imageUrlFromInput = formData.get("imageUrl")?.trim() || "";
     if (!name || !status || !provider || !serviceId || !startDateStr) {
       return fail(400, { message: "All fields are required" });
     }
@@ -270,9 +308,11 @@ const actions = {
       }
       const updateData = {
         name,
+        description: description || null,
         status,
         provider,
         clientId,
+        companyId: companyId ?? null,
         serviceId,
         startDate,
         links
@@ -281,6 +321,8 @@ const actions = {
         updateData.imageUrl = null;
       } else if (imageFile && imageFile.size > 0) {
         updateData.imageUrl = await uploadFile(imageFile, "project-covers");
+      } else if (imageUrlFromInput && (imageUrlFromInput.startsWith("http://") || imageUrlFromInput.startsWith("https://"))) {
+        updateData.imageUrl = imageUrlFromInput;
       }
       await db.update(projects).set(updateData).where(eq(projects.id, projectId));
       return { success: true };
@@ -714,6 +756,39 @@ const actions = {
           }))
         );
       }
+      if (newPayment) {
+        const [proj] = await db.select({ companyId: projects.companyId }).from(projects).where(eq(projects.id, currentProjectId)).limit(1);
+        if (proj?.companyId != null) {
+          const amountNum = parseFloat(String(amountUsd || amount).replace(/[^0-9.-]/g, "")) || 0;
+          const amountCents = Math.round(amountNum * 100);
+          const isPaid = status === "paid";
+          const providerCode = (paymentMethod || "manual").toLowerCase().replace(/\s+/g, "_");
+          try {
+            const providerConfig = await findProviderConfigByCode(providerCode);
+            const label = providerConfig?.label ?? providerCode;
+            const paymentAccountId = await findOrCreateManualProviderAccount(proj.companyId, providerCode, label);
+            await createBillingDocument({
+              companyId: proj.companyId,
+              type: "invoice",
+              provider: providerCode,
+              source: "project",
+              paymentAccountId,
+              projectId: currentProjectId,
+              paymentId: newPayment.id,
+              currency: (currencyOriginal || "usd").toLowerCase().slice(0, 3),
+              amountTotal: amountCents,
+              amountDue: isPaid ? 0 : amountCents,
+              status: isPaid ? "paid" : "open",
+              dueDate: dueDate || null,
+              issuedAt: /* @__PURE__ */ new Date(),
+              description: title,
+              number: `PAY-${newPayment.id}`
+            });
+          } catch (e) {
+            console.error("Error creating billing document for payment:", e);
+          }
+        }
+      }
       const project = await db.select({ clientId: projects.clientId }).from(projects).where(eq(projects.id, currentProjectId)).limit(1);
       if (project.length > 0 && project[0].clientId) {
         await db.insert(notifications).values({
@@ -780,6 +855,14 @@ const actions = {
         updateData.documentUrl = await uploadFile(file, "payments");
       }
       await db.update(payments).set(updateData).where(eq(payments.id, id));
+      if (status === "paid") {
+        const { findBillingDocumentByPaymentId } = await import("../../../../../../chunks/billing-documents.repository.js");
+        const doc = await findBillingDocumentByPaymentId(id);
+        if (doc) {
+          const { updateBillingDocumentAmountDue } = await import("../../../../../../chunks/billing-documents.repository.js");
+          await updateBillingDocumentAmountDue(doc.id, 0, "paid");
+        }
+      }
       await db.delete(projectPayments).where(eq(projectPayments.paymentId, id));
       if (projectIds.length > 0) {
         const uniqueProjectIds = [...new Set(projectIds)];

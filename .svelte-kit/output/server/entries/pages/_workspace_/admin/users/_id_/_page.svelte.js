@@ -11,7 +11,6 @@ import { U as User } from "../../../../../../chunks/user.js";
 import { M as Map_pin } from "../../../../../../chunks/map-pin.js";
 import { T as Trash_2 } from "../../../../../../chunks/trash-2.js";
 import { P as Plus } from "../../../../../../chunks/plus.js";
-import { B as Building } from "../../../../../../chunks/building.js";
 import { L as Link } from "../../../../../../chunks/link.js";
 import { C as Credit_card } from "../../../../../../chunks/credit-card.js";
 import { M as Message_square } from "../../../../../../chunks/message-square.js";
@@ -63,8 +62,18 @@ function Save($$renderer, $$props) {
 function _page($$renderer, $$props) {
   $$renderer.component(($$renderer2) => {
     var $$store_subs;
-    let user, projects, payments, cases;
+    let user, projects, payments, cases, userCompaniesList, userIdNum;
     let data = $$props["data"];
+    let formPersonal = {
+      firstName: "",
+      lastName: "",
+      email: "",
+      phone: "",
+      role: "client",
+      avatarUrl: ""
+    };
+    let formNotes = "";
+    let lastSyncedUserId = 0;
     let identification = [];
     let addresses = [];
     let companyLinks = [];
@@ -72,7 +81,19 @@ function _page($$renderer, $$props) {
     projects = data.projects;
     payments = data.payments;
     cases = data.cases;
-    if (user) {
+    userCompaniesList = data.userCompaniesList ?? [];
+    userIdNum = user ? Number(user.id) : 0;
+    if (user && userIdNum && userIdNum !== lastSyncedUserId) {
+      lastSyncedUserId = userIdNum;
+      formPersonal = {
+        firstName: user.firstName ?? "",
+        lastName: user.lastName ?? "",
+        email: user.email ?? "",
+        phone: user.phone ?? "",
+        role: user.role ?? "client",
+        avatarUrl: user.avatarUrl ?? ""
+      };
+      formNotes = user.notes ?? "";
       identification = user.identification || [];
       addresses = user.addresses || [];
       companyLinks = user.companyLinks || [];
@@ -91,17 +112,17 @@ function _page($$renderer, $$props) {
     }
     $$renderer2.push(`<!--]--> ${escape_html(user.firstName)} ${escape_html(user.lastName)}</h2> <p class="text-muted-foreground ml-14">${escape_html(user.email)}</p></div> <div class="flex items-center gap-2"><span${attr_class(`capitalize px-3 py-1 rounded-full text-sm font-medium ${stringify(user.role === "admin" ? "bg-purple-100 text-purple-700" : user.role === "staff" ? "bg-blue-100 text-blue-700" : "bg-green-100 text-green-700")}`)}>${escape_html(user.role)}</span></div></div> <div class="border-b"><nav class="flex gap-4"><button${attr_class(`px-4 py-2 border-b-2 font-medium text-sm transition-colors ${stringify(
       "border-primary text-primary"
-    )}`)}>Información General</button> <button${attr_class(`px-4 py-2 border-b-2 font-medium text-sm transition-colors ${stringify("border-transparent text-muted-foreground hover:text-foreground")}`)}>Proyectos (${escape_html(projects.length)})</button> <button${attr_class(`px-4 py-2 border-b-2 font-medium text-sm transition-colors ${stringify("border-transparent text-muted-foreground hover:text-foreground")}`)}>Pagos (${escape_html(payments.length)})</button> <button${attr_class(`px-4 py-2 border-b-2 font-medium text-sm transition-colors ${stringify("border-transparent text-muted-foreground hover:text-foreground")}`)}>Soporte (${escape_html(cases.length)})</button></nav></div> <div class="mt-6">`);
+    )}`)}>Información General</button> <button${attr_class(`px-4 py-2 border-b-2 font-medium text-sm transition-colors ${stringify("border-transparent text-muted-foreground hover:text-foreground")}`)}>Empresas (${escape_html(userCompaniesList.length)})</button> <button${attr_class(`px-4 py-2 border-b-2 font-medium text-sm transition-colors ${stringify("border-transparent text-muted-foreground hover:text-foreground")}`)}>Proyectos (${escape_html(projects.length)})</button> <button${attr_class(`px-4 py-2 border-b-2 font-medium text-sm transition-colors ${stringify("border-transparent text-muted-foreground hover:text-foreground")}`)}>Pagos (${escape_html(payments.length)})</button> <button${attr_class(`px-4 py-2 border-b-2 font-medium text-sm transition-colors ${stringify("border-transparent text-muted-foreground hover:text-foreground")}`)}>Soporte (${escape_html(cases.length)})</button></nav></div> <div class="mt-6">`);
     {
       $$renderer2.push("<!--[-->");
       $$renderer2.push(`<form action="?/updateUser" method="POST" class="space-y-8 max-w-4xl"><div class="space-y-4"><h3 class="text-lg font-semibold flex items-center gap-2">`);
       User($$renderer2, { class: "w-5 h-5" });
-      $$renderer2.push(`<!----> Información Personal</h3> <div class="grid grid-cols-2 gap-4"><div class="space-y-2"><label class="text-sm font-medium">Nombre</label> <input type="text" name="firstName"${attr("value", user.firstName || "")} class="w-full p-2 border rounded-md"/></div> <div class="space-y-2"><label class="text-sm font-medium">Apellido</label> <input type="text" name="lastName"${attr("value", user.lastName || "")} class="w-full p-2 border rounded-md"/></div> <div class="space-y-2"><label class="text-sm font-medium">Email</label> <input type="email" name="email"${attr("value", user.email)} class="w-full p-2 border rounded-md"/></div> <div class="space-y-2"><label class="text-sm font-medium">Teléfono</label> <input type="text" name="phone"${attr("value", user.phone || "")} class="w-full p-2 border rounded-md" placeholder="+1234567890"/></div> <div class="space-y-2"><label class="text-sm font-medium">Rol</label> `);
+      $$renderer2.push(`<!----> Información Personal</h3> <div class="grid grid-cols-2 gap-4"><div class="space-y-2"><label class="text-sm font-medium">Nombre</label> <input type="text" name="firstName"${attr("value", formPersonal.firstName)} class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground"/></div> <div class="space-y-2"><label class="text-sm font-medium">Apellido</label> <input type="text" name="lastName"${attr("value", formPersonal.lastName)} class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground"/></div> <div class="space-y-2"><label class="text-sm font-medium">Email</label> <input type="email" name="email"${attr("value", formPersonal.email)} class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground"/></div> <div class="space-y-2"><label class="text-sm font-medium">Teléfono</label> <input type="text" name="phone"${attr("value", formPersonal.phone)} class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground" placeholder="+1234567890"/></div> <div class="space-y-2"><label class="text-sm font-medium">Rol</label> `);
       $$renderer2.select(
         {
           name: "role",
-          value: user.role,
-          class: "w-full p-2 border rounded-md"
+          value: formPersonal.role,
+          class: "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground"
         },
         ($$renderer3) => {
           $$renderer3.option({ value: "staff" }, ($$renderer4) => {
@@ -118,7 +139,7 @@ function _page($$renderer, $$props) {
           });
         }
       );
-      $$renderer2.push(`</div> <div class="space-y-2 col-span-2"><label class="text-sm font-medium">Avatar URL</label> <input type="text" name="avatarUrl"${attr("value", user.avatarUrl || "")} class="w-full p-2 border rounded-md" placeholder="https://..."/></div></div></div> <div class="space-y-4"><h3 class="text-lg font-semibold flex items-center gap-2">`);
+      $$renderer2.push(`</div> <div class="space-y-2 col-span-2"><label class="text-sm font-medium">Avatar URL</label> <input type="text" name="avatarUrl"${attr("value", formPersonal.avatarUrl)} class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground" placeholder="https://..."/></div></div></div> <div class="space-y-4"><h3 class="text-lg font-semibold flex items-center gap-2">`);
       Map_pin($$renderer2, { class: "w-5 h-5" });
       $$renderer2.push(`<!----> Direcciones</h3> <input type="hidden" name="addresses"${attr("value", JSON.stringify(addresses))}/> <div class="space-y-4"><!--[-->`);
       const each_array = ensure_array_like(addresses);
@@ -126,31 +147,29 @@ function _page($$renderer, $$props) {
         let addr = each_array[i];
         $$renderer2.push(`<div class="p-4 border rounded-md space-y-3 relative bg-card"><button type="button" class="absolute top-4 right-4 text-red-500 hover:text-red-700">`);
         Trash_2($$renderer2, { class: "w-5 h-5" });
-        $$renderer2.push(`<!----></button> <div class="grid grid-cols-2 gap-4"><div class="space-y-1"><label class="text-xs text-muted-foreground">Etiqueta (e.g., Casa, Oficina)</label> <input type="text"${attr("value", addr.label)} class="w-full p-2 border rounded-md" placeholder="Etiqueta"/></div> <div class="space-y-1"><label class="text-xs text-muted-foreground">Dirección</label> <input type="text"${attr("value", addr.address)} class="w-full p-2 border rounded-md" placeholder="Calle 123"/></div> <div class="space-y-1"><label class="text-xs text-muted-foreground">Ciudad</label> <input type="text"${attr("value", addr.city)} class="w-full p-2 border rounded-md" placeholder="Ciudad"/></div> <div class="space-y-1"><label class="text-xs text-muted-foreground">País</label> <input type="text"${attr("value", addr.country)} class="w-full p-2 border rounded-md" placeholder="País"/></div></div></div>`);
+        $$renderer2.push(`<!----></button> <div class="grid grid-cols-2 gap-4"><div class="space-y-1"><label class="text-xs text-muted-foreground">Etiqueta (e.g., Casa, Oficina)</label> <input type="text"${attr("value", addr.label)} class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground" placeholder="Etiqueta"/></div> <div class="space-y-1"><label class="text-xs text-muted-foreground">Dirección</label> <input type="text"${attr("value", addr.address)} class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground" placeholder="Calle 123"/></div> <div class="space-y-1"><label class="text-xs text-muted-foreground">Ciudad</label> <input type="text"${attr("value", addr.city)} class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground" placeholder="Ciudad"/></div> <div class="space-y-1"><label class="text-xs text-muted-foreground">País</label> <input type="text"${attr("value", addr.country)} class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground" placeholder="País"/></div></div></div>`);
       }
       $$renderer2.push(`<!--]--> <button type="button" class="flex items-center gap-2 text-sm text-primary hover:underline">`);
       Plus($$renderer2, { class: "w-4 h-4" });
-      $$renderer2.push(`<!----> Agregar Dirección</button></div></div> <div class="space-y-4"><h3 class="text-lg font-semibold flex items-center gap-2">`);
-      Building($$renderer2, { class: "w-5 h-5" });
-      $$renderer2.push(`<!----> Empresa</h3> <div class="grid grid-cols-2 gap-4"><div class="space-y-2"><label class="text-sm font-medium">Nombre de la Empresa</label> <input type="text" name="company"${attr("value", user.company || "")} class="w-full p-2 border rounded-md"/></div> <div class="space-y-2"><label class="text-sm font-medium">Cargo / Rol</label> <input type="text" name="jobTitle"${attr("value", user.jobTitle || "")} class="w-full p-2 border rounded-md"/></div></div> <div class="space-y-2 pt-2"><label class="text-sm font-medium flex items-center gap-2">`);
+      $$renderer2.push(`<!----> Agregar Dirección</button></div></div> <div class="space-y-2 pt-2"><label class="text-sm font-medium flex items-center gap-2">`);
       Link($$renderer2, { class: "w-4 h-4" });
       $$renderer2.push(`<!----> Enlaces de Interés</label> <input type="hidden" name="companyLinks"${attr("value", JSON.stringify(companyLinks))}/> <div class="space-y-3"><!--[-->`);
       const each_array_1 = ensure_array_like(companyLinks);
       for (let i = 0, $$length = each_array_1.length; i < $$length; i++) {
         let link = each_array_1[i];
-        $$renderer2.push(`<div class="flex items-end gap-3"><div class="flex-1 space-y-1"><label class="text-xs text-muted-foreground">Título</label> <input type="text"${attr("value", link.title)} class="w-full p-2 border rounded-md" placeholder="Web, LinkedIn..."/></div> <div class="flex-[2] space-y-1"><label class="text-xs text-muted-foreground">URL</label> <input type="text"${attr("value", link.url)} class="w-full p-2 border rounded-md" placeholder="https://..."/></div> <button type="button" class="p-2 text-red-500 hover:bg-red-50 rounded-md mb-[1px]">`);
+        $$renderer2.push(`<div class="flex items-end gap-3"><div class="flex-1 space-y-1"><label class="text-xs text-muted-foreground">Título</label> <input type="text"${attr("value", link.title)} class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground" placeholder="Web, LinkedIn..."/></div> <div class="flex-[2] space-y-1"><label class="text-xs text-muted-foreground">URL</label> <input type="text"${attr("value", link.url)} class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground" placeholder="https://..."/></div> <button type="button" class="p-2 text-destructive hover:bg-destructive/10 rounded-md mb-[1px]">`);
         Trash_2($$renderer2, { class: "w-5 h-5" });
         $$renderer2.push(`<!----></button></div>`);
       }
       $$renderer2.push(`<!--]--> <button type="button" class="flex items-center gap-2 text-sm text-primary hover:underline mt-2">`);
       Plus($$renderer2, { class: "w-4 h-4" });
-      $$renderer2.push(`<!----> Agregar Enlace</button></div></div></div> <div class="space-y-4"><h3 class="text-lg font-semibold flex items-center gap-2">`);
+      $$renderer2.push(`<!----> Agregar Enlace</button></div></div> <div class="space-y-4"><h3 class="text-lg font-semibold flex items-center gap-2">`);
       Credit_card($$renderer2, { class: "w-5 h-5" });
       $$renderer2.push(`<!----> Documentación</h3> <input type="hidden" name="identification"${attr("value", JSON.stringify(identification))}/> <div class="space-y-3"><!--[-->`);
       const each_array_2 = ensure_array_like(identification);
       for (let i = 0, $$length = each_array_2.length; i < $$length; i++) {
         let doc = each_array_2[i];
-        $$renderer2.push(`<div class="flex items-end gap-3"><div class="flex-1 space-y-1"><label class="text-xs text-muted-foreground">Tipo (e.g., DNI, Pasaporte)</label> <input type="text"${attr("value", doc.type)} class="w-full p-2 border rounded-md" placeholder="Tipo de documento"/></div> <div class="flex-[2] space-y-1"><label class="text-xs text-muted-foreground">Número / Valor</label> <input type="text"${attr("value", doc.value)} class="w-full p-2 border rounded-md" placeholder="Número de documento"/></div> <button type="button" class="p-2 text-red-500 hover:bg-red-50 rounded-md mb-[1px]">`);
+        $$renderer2.push(`<div class="flex items-end gap-3"><div class="flex-1 space-y-1"><label class="text-xs text-muted-foreground">Tipo (e.g., DNI, Pasaporte)</label> <input type="text"${attr("value", doc.type)} class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground" placeholder="Tipo de documento"/></div> <div class="flex-[2] space-y-1"><label class="text-xs text-muted-foreground">Número / Valor</label> <input type="text"${attr("value", doc.value)} class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground" placeholder="Número de documento"/></div> <button type="button" class="p-2 text-destructive hover:bg-destructive/10 rounded-md mb-[1px]">`);
         Trash_2($$renderer2, { class: "w-5 h-5" });
         $$renderer2.push(`<!----></button></div>`);
       }
@@ -158,8 +177,8 @@ function _page($$renderer, $$props) {
       Plus($$renderer2, { class: "w-4 h-4" });
       $$renderer2.push(`<!----> Agregar Documento</button></div></div> <div class="space-y-4"><h3 class="text-lg font-semibold flex items-center gap-2">`);
       Message_square($$renderer2, { class: "w-5 h-5" });
-      $$renderer2.push(`<!----> Notas Adicionales</h3> <textarea name="notes" rows="4" class="w-full p-2 border rounded-md" placeholder="Notas internas sobre el cliente...">`);
-      const $$body = escape_html(user.notes || "");
+      $$renderer2.push(`<!----> Notas Adicionales</h3> <textarea name="notes" rows="4" class="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground resize-none" placeholder="Notas internas sobre el cliente...">`);
+      const $$body = escape_html(formNotes);
       if ($$body) {
         $$renderer2.push(`${$$body}`);
       }

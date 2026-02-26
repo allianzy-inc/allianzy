@@ -1,0 +1,268 @@
+import { json } from '@sveltejs/kit';
+import type { RequestHandler } from './$types';
+import { getBillingContext } from '$lib/server/billing-domain/resolve-context';
+import * as billingDocsRepo from '$lib/server/billing-domain/billing-documents.repository';
+import * as paymentAccountsRepo from '$lib/server/billing-domain/payment-accounts.repository';
+import * as providerConfigRepo from '$lib/server/billing-domain/provider-config.repository';
+import { syncStripeForCompany } from '$lib/server/billing-domain/stripe-sync.service';
+import { getStripe, getBillingCompany } from '$lib/server/billing';
+import { db } from '$lib/server/db';
+import { projects, services } from '$lib/server/schema';
+import { eq, inArray } from 'drizzle-orm';
+
+type ProviderDetailItem = { label: string; value: string };
+
+/** Código de cuenta: Stripe = cus_xxx; otros = 8 caracteres alfanuméricos del uuid (estable). */
+function accountCodeForDisplay(
+	paymentAccountId: string | null,
+	account: { id: string; provider: string; externalId: string | null } | null
+): string | undefined {
+	if (!paymentAccountId || !account) return undefined;
+	if (account.provider === 'stripe' && account.externalId) return account.externalId;
+	return paymentAccountId.replace(/-/g, '').slice(0, 8).toUpperCase();
+}
+
+/** Respuesta con forma compatible con la UI actual (id = provider_document_id cuando hay Stripe). */
+function mapDocumentToInvoiceShape(
+	doc: {
+		id: string;
+		projectId: number | null;
+		provider: string;
+		providerDocumentId: string | null;
+		paymentAccountId: string | null;
+		number: string | null;
+		amountTotal: number;
+		amountDue: number;
+		status: string;
+		dueDate: Date | null;
+		issuedAt: Date | null;
+		description: string | null;
+		currency: string;
+		metadata: Record<string, unknown> | null;
+	},
+	projectInfo?: { projectName: string; serviceName: string | null },
+	providerDetails?: ProviderDetailItem[] | null,
+	accountCode?: string | null,
+	/** Si viene de la cuenta de pago, prevalece sobre doc.provider (evita docs mal etiquetados). */
+	resolvedProvider?: string | null
+) {
+	const provider = resolvedProvider ?? doc.provider;
+	const meta = (doc.metadata ?? {}) as {
+		hosted_invoice_url?: string;
+		invoice_pdf?: string;
+		receipt_url?: string;
+		proof_url?: string;
+		proof_uploaded_at?: string;
+		proof_files?: { id: string; url: string; name: string; uploadedAt: string }[];
+		projectIds?: number[];
+	};
+	const linkedProjectIds = Array.isArray(meta.projectIds) ? meta.projectIds : (doc.projectId ? [doc.projectId] : []);
+	const proofFiles = Array.isArray(meta.proof_files) && meta.proof_files.length > 0
+		? meta.proof_files
+		: meta.proof_url
+			? [{ id: 'legacy', url: meta.proof_url, name: (meta.proof_url as string).split('/').pop() ?? 'Comprobante', uploadedAt: meta.proof_uploaded_at ?? '' }]
+			: [];
+	return {
+		id: doc.providerDocumentId ?? doc.id,
+		documentId: doc.id,
+		provider,
+		account_code: accountCode ?? undefined,
+		provider_details: Array.isArray(providerDetails) && providerDetails.length > 0 ? providerDetails : undefined,
+		number: doc.number ?? undefined,
+		amount_due: doc.amountDue,
+		amount_paid: doc.amountTotal - doc.amountDue,
+		status: doc.status,
+		due_date: doc.dueDate?.toISOString(),
+		hosted_invoice_url: meta.hosted_invoice_url,
+		invoice_pdf: meta.invoice_pdf,
+		receipt_url: meta.receipt_url,
+		proof_url: meta.proof_url,
+		proof_uploaded_at: meta.proof_uploaded_at,
+		proof_files: proofFiles,
+		currency: doc.currency,
+		created: doc.issuedAt?.toISOString() ?? undefined,
+		description: doc.description ?? undefined,
+		projectName: projectInfo?.projectName,
+		serviceName: projectInfo?.serviceName,
+		linked_project_ids: linkedProjectIds
+	};
+}
+
+/** Resuelve nombres de proyectos para una lista de IDs (projectMap de getProjectInfoMap). */
+function linkedProjectNames(linkedIds: number[], projectMap: Record<number, { projectName: string; serviceName: string | null }>): string[] {
+	return linkedIds.map((pid) => projectMap[pid]?.projectName ?? `Proyecto ${pid}`);
+}
+
+async function getProviderDetailsMap(codes: string[]): Promise<Record<string, ProviderDetailItem[]>> {
+	const map: Record<string, ProviderDetailItem[]> = {};
+	for (const code of codes) {
+		if (!code || code === 'stripe') continue;
+		const config = await providerConfigRepo.findProviderConfigByCode(code);
+		const details = Array.isArray(config?.details) ? config.details : [];
+		map[code] = details.filter((d) => d && typeof d.label === 'string' && typeof d.value === 'string');
+	}
+	return map;
+}
+
+async function getProjectInfoMap(projectIds: number[]) {
+	if (projectIds.length === 0) return {} as Record<number, { projectName: string; serviceName: string | null }>;
+	const rows = await db
+		.select({
+			id: projects.id,
+			projectName: projects.name,
+			serviceName: services.name
+		})
+		.from(projects)
+		.leftJoin(services, eq(projects.serviceId, services.id))
+		.where(inArray(projects.id, projectIds));
+	return Object.fromEntries(rows.map((r) => [r.id, { projectName: r.projectName ?? '', serviceName: r.serviceName ?? null }]));
+}
+
+/** Devuelve código de cuenta y proveedor real por paymentAccountId (el de la cuenta manda sobre doc.provider). */
+async function getAccountMaps(docs: { paymentAccountId: string | null }[]): Promise<{
+	codeMap: Record<string, string>;
+	providerMap: Record<string, string>;
+}> {
+	const ids = [...new Set(docs.map((d) => d.paymentAccountId).filter(Boolean))] as string[];
+	const codeMap: Record<string, string> = {};
+	const providerMap: Record<string, string> = {};
+	if (ids.length === 0) return { codeMap, providerMap };
+	const accounts = await paymentAccountsRepo.findPaymentAccountsByIds(ids);
+	const byId = Object.fromEntries(accounts.map((a) => [a.id, a]));
+	for (const id of ids) {
+		const acc = byId[id];
+		const code = accountCodeForDisplay(id, acc ?? null);
+		if (code) codeMap[id] = code;
+		if (acc?.provider) providerMap[id] = acc.provider;
+	}
+	return { codeMap, providerMap };
+}
+
+export const GET: RequestHandler = async (event) => {
+	const url = event.url;
+	const providerFilter = url.searchParams.get('provider')?.toLowerCase().trim();
+
+	// 0) Filtro por proveedor (cualquier código distinto de stripe): listar documentos de ese proveedor
+	if (providerFilter && providerFilter !== 'stripe') {
+		const { getBillingCompanyId } = await import('$lib/server/billing');
+		const companyId = await getBillingCompanyId(event);
+		if (companyId == null) return json({ linked: false, invoices: [] });
+		const docs = await billingDocsRepo.findBillingDocumentsByCompanyId(companyId, {
+			provider: providerFilter,
+			limit: 100
+		});
+		const allProjectIds = [...new Set(docs.flatMap((d) => {
+			const ids = [d.projectId].filter(Boolean) as number[];
+			const meta = (d.metadata as { projectIds?: number[] }) ?? {};
+			if (Array.isArray(meta.projectIds)) ids.push(...meta.projectIds);
+			return ids;
+		}))] as number[];
+		const projectMap = await getProjectInfoMap(allProjectIds);
+		const providerCodes = [...new Set(docs.map((d) => d.provider).filter(Boolean))];
+		const detailsMap = await getProviderDetailsMap(providerCodes);
+		const { codeMap: accountCodeMap, providerMap } = await getAccountMaps(docs);
+		const invoices = docs.map((d) => {
+			const resolvedProvider = d.paymentAccountId ? providerMap[d.paymentAccountId] : undefined;
+			const providerForDetails = resolvedProvider ?? d.provider;
+			const meta = (d.metadata as { projectIds?: number[] }) ?? {};
+			const linkedIds = Array.isArray(meta.projectIds) ? meta.projectIds : (d.projectId ? [d.projectId] : []);
+			const projectInfo = linkedIds.length > 0 ? projectMap[linkedIds[0]] : (d.projectId ? projectMap[d.projectId] : undefined);
+			const shape = mapDocumentToInvoiceShape(
+				d,
+				projectInfo,
+				detailsMap[providerForDetails],
+				d.paymentAccountId ? accountCodeMap[d.paymentAccountId] : undefined,
+				resolvedProvider
+			);
+			(shape as { linked_project_names?: string[] }).linked_project_names = linkedProjectNames(linkedIds, projectMap);
+			return shape;
+		});
+		return json({ linked: true, invoices });
+	}
+
+	const ctx = await getBillingContext(event);
+	if (!ctx) {
+		return json({ linked: false, invoices: [] });
+	}
+
+	// 1) Devolver todos los documentos de la empresa (Stripe + MercadoPago, etc.) cuando hay companyId
+	if (ctx.companyId) {
+		let docs = await billingDocsRepo.findBillingDocumentsByCompanyId(ctx.companyId, { limit: 100 });
+		// Sync Stripe si hay cuenta Stripe y no hay docs en DB
+		if (docs.length === 0 && ctx.accounts.some((a) => a.provider === 'stripe')) {
+			try {
+				await syncStripeForCompany(ctx.companyId);
+				docs = await billingDocsRepo.findBillingDocumentsByCompanyId(ctx.companyId, { limit: 100 });
+			} catch (err: any) {
+				console.error('[billing/invoices] sync error:', err?.message ?? err);
+			}
+		}
+		if (docs.length > 0) {
+			const allProjectIds = [...new Set(docs.flatMap((d) => {
+				const ids = [d.projectId].filter(Boolean) as number[];
+				const meta = (d.metadata as { projectIds?: number[] }) ?? {};
+				if (Array.isArray(meta.projectIds)) ids.push(...meta.projectIds);
+				return ids;
+			}))] as number[];
+			const projectMap = await getProjectInfoMap(allProjectIds);
+			const providerCodes = [...new Set(docs.map((d) => d.provider).filter(Boolean))];
+			const detailsMap = await getProviderDetailsMap(providerCodes);
+			const { codeMap: accountCodeMap, providerMap } = await getAccountMaps(docs);
+			const invoices = docs.map((d) => {
+				const resolvedProvider = d.paymentAccountId ? providerMap[d.paymentAccountId] : undefined;
+				const providerForDetails = resolvedProvider ?? d.provider;
+				const meta = (d.metadata as { projectIds?: number[] }) ?? {};
+				const linkedIds = Array.isArray(meta.projectIds) ? meta.projectIds : (d.projectId ? [d.projectId] : []);
+				const projectInfo = linkedIds.length > 0 ? projectMap[linkedIds[0]] : (d.projectId ? projectMap[d.projectId] : undefined);
+				const shape = mapDocumentToInvoiceShape(
+					d,
+					projectInfo,
+					detailsMap[providerForDetails],
+					d.paymentAccountId ? accountCodeMap[d.paymentAccountId] : undefined,
+					resolvedProvider
+				);
+				(shape as { linked_project_names?: string[] }).linked_project_names = linkedProjectNames(linkedIds, projectMap);
+				return shape;
+			});
+			return json({ linked: true, invoices });
+		}
+	}
+
+	// 2) Legacy: sin payment_accounts en DB, llamar Stripe directo
+	const billing = await getBillingCompany(event);
+	if (!billing) return json({ linked: false, invoices: [] });
+	const stripe = getStripe();
+	if (!stripe) return json({ linked: true, invoices: [] });
+	try {
+		const list = await stripe.invoices.list({
+			customer: billing.stripeCustomerId,
+			limit: 100,
+			expand: ['data.charge']
+		});
+		const invoices = (list.data ?? []).map((inv) => {
+			const charge = inv.charge as { receipt_url?: string | null } | string | null;
+			const receiptUrl = typeof charge === 'object' && charge?.receipt_url ? charge.receipt_url : undefined;
+			return {
+				id: inv.id,
+				documentId: null,
+				provider: 'stripe',
+				account_code: billing.stripeCustomerId ?? undefined,
+				number: inv.number ?? undefined,
+				amount_due: inv.amount_due ?? 0,
+				amount_paid: inv.amount_paid ?? 0,
+				status: inv.status ?? undefined,
+				due_date: inv.due_date ? new Date(inv.due_date * 1000).toISOString() : undefined,
+				hosted_invoice_url: inv.hosted_invoice_url ?? undefined,
+				invoice_pdf: inv.invoice_pdf ?? undefined,
+				receipt_url: receiptUrl ?? undefined,
+				currency: inv.currency ?? 'usd',
+				created: inv.created ? new Date(inv.created * 1000).toISOString() : undefined,
+				description: inv.description ?? undefined
+			};
+		});
+		return json({ linked: true, invoices });
+	} catch (err: any) {
+		console.error('[billing/invoices] Stripe error:', err?.message ?? err);
+		return json({ linked: true, invoices: [], error: err?.message ?? 'Stripe error' }, { status: 500 });
+	}
+};

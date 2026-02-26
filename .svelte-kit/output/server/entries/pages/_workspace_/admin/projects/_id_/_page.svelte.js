@@ -64,9 +64,9 @@ function _page($$renderer, $$props) {
     $$renderer2.push(`<!----></button></div> <p class="text-muted-foreground flex items-center gap-2 text-sm"><span class="inline-flex items-center gap-1">`);
     User($$renderer2, { class: "w-3 h-3" });
     $$renderer2.push(`<!----> ${escape_html(project.clientName)} `);
-    if (project.clientCompany) {
+    if (project.clientCompanyDisplay) {
       $$renderer2.push("<!--[-->");
-      $$renderer2.push(`<span class="text-muted-foreground font-semibold">| ${escape_html(project.clientCompany)}</span>`);
+      $$renderer2.push(`<span class="text-muted-foreground font-semibold">| ${escape_html(project.clientCompanyDisplay)}</span>`);
     } else {
       $$renderer2.push("<!--[!-->");
     }
@@ -135,9 +135,9 @@ function _page($$renderer, $$props) {
     $$renderer2.push(`<!--]--></div></div> <div class="space-y-6"><div class="rounded-lg border bg-card text-card-foreground shadow-sm"><div class="p-6"><h3 class="font-semibold flex items-center gap-2 mb-4">`);
     User($$renderer2, { class: "w-4 h-4" });
     $$renderer2.push(`<!----> Cliente</h3> <div class="space-y-3 text-sm"><div><p class="text-muted-foreground text-xs">Nombre</p> <p class="font-medium">${escape_html(project.clientName)}</p></div> `);
-    if (project.clientCompany) {
+    if (project.clientCompanyDisplay) {
       $$renderer2.push("<!--[-->");
-      $$renderer2.push(`<div><p class="text-muted-foreground text-xs">Empresa</p> <p class="font-medium">${escape_html(project.clientCompany)}</p></div>`);
+      $$renderer2.push(`<div><p class="text-muted-foreground text-xs">Empresa</p> <p class="font-medium">${escape_html(project.clientCompanyDisplay)}</p></div>`);
     } else {
       $$renderer2.push("<!--[!-->");
     }

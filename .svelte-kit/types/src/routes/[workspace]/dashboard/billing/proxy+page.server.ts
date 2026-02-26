@@ -10,10 +10,12 @@ export const load = async ({ locals, params }: Parameters<PageServerLoad>[0]) =>
     const userId = Number(locals.user?.id);
 
     if (!userId || isNaN(userId)) {
-        return { payments: [], subscriptions: [] };
+        return { payments: [], subscriptions: [], canViewBilling: false, canManageBilling: false };
     }
 
-    // 0. Fetch permissions
+    // Billing permissions: from current user's role in selected company
+    let canViewBilling = false;
+    let canManageBilling = false;
     let allowedProjectIds: number[] = [];
     if (locals.user?.companyId) {
         const userCompany = await db.query.userCompanies.findFirst({
@@ -22,12 +24,17 @@ export const load = async ({ locals, params }: Parameters<PageServerLoad>[0]) =>
                 eq(userCompanies.companyId, locals.user.companyId)
             )
         });
-
+        const role = userCompany?.role ?? '';
+        if (role === 'owner' || role === 'admin') {
+            canViewBilling = true;
+            canManageBilling = true;
+        }
         if (userCompany && userCompany.permissions) {
             const perms = userCompany.permissions as Record<string, string[]>;
             for (const [pid, pList] of Object.entries(perms)) {
                 if (Array.isArray(pList) && pList.includes('payments')) {
                     allowedProjectIds.push(Number(pid));
+                    canViewBilling = true;
                 }
             }
         }
@@ -86,7 +93,9 @@ export const load = async ({ locals, params }: Parameters<PageServerLoad>[0]) =>
 
     return {
         payments: userPayments,
-        subscriptions
+        subscriptions,
+        canViewBilling,
+        canManageBilling
     };
 };
 

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Building2, Search, Filter, Plus, Pencil, User, X, MapPin, Link as LinkIcon, FileText, Upload, Trash2, Loader2, Users } from 'lucide-svelte';
+    import { Building2, Search, Filter, Plus, Pencil, User, X, MapPin, Link as LinkIcon, FileText, Upload, Trash2, Loader2, Users, CreditCard } from 'lucide-svelte';
     import AddressLocationFields from '$lib/components/AddressLocationFields.svelte';
     import { fade } from 'svelte/transition';
     import { portal } from '$lib/actions/portal';
@@ -434,11 +434,13 @@
                     <th class="p-4">Web</th>
                     <th class="p-4">Región</th>
                     <th class="p-4">Usuarios</th>
+                    <th class="p-4 text-right">Acciones</th>
                 </tr>
             </thead>
             <tbody>
                 {#each companies as company}
                     {@const detailUrl = `${companiesListUrl}?detail=${company.id}`}
+                    {@const billingUrl = `/${$page.params.workspace}/admin/billing/${company.id}`}
                     <tr class="border-t hover:bg-muted/50 transition-colors cursor-pointer">
                         <td class="p-4 font-medium">
                             <a href={detailUrl} class="block text-foreground hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary rounded">
@@ -471,6 +473,15 @@
                                 <span class="px-2 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">
                                     {company.usersCount}
                                 </span>
+                            </a>
+                        </td>
+                        <td class="p-4 text-right">
+                            <a
+                                href={billingUrl}
+                                class="inline-flex items-center gap-2 rounded-md border border-input bg-background px-3 py-1.5 text-sm font-medium hover:bg-accent hover:text-accent-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                            >
+                                <CreditCard class="w-4 h-4" />
+                                Ver facturación
                             </a>
                         </td>
                     </tr>

@@ -12,6 +12,7 @@ import { p as public_env, s as set_private_env, a as set_public_env } from "./ch
 import { parse, serialize } from "cookie";
 import * as set_cookie_parser from "set-cookie-parser";
 import { r as read_implementation, o as options, g as get_hooks, s as set_read_implementation } from "./chunks/internal.js";
+import { s as set_app } from "./chunks/app.js";
 function with_resolvers() {
   let resolve2;
   let reject;
@@ -3747,8 +3748,6 @@ function filter_env(env, allowed, disallowed) {
       ([k]) => k.startsWith(allowed) && (disallowed === "" || !k.startsWith(disallowed))
     )
   );
-}
-function set_app(value) {
 }
 let init_promise;
 let current = null;

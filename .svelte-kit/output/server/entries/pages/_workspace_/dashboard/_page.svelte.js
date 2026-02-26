@@ -19,6 +19,7 @@ function _page($$renderer, $$props) {
     currentUserPermissions = selectedCompany?.permissions || {};
     currentUserRole === "owner" || currentUserRole === "admin" || Object.values(currentUserPermissions).some((p) => Array.isArray(p) && p.includes("payments"));
     currentUserRole === "owner" || currentUserRole === "admin" || Object.values(currentUserPermissions).some((p) => Array.isArray(p) && p.includes("support"));
+    (data.companies || []).length === 0 && (data.projects || []).length === 0;
     {
       $$renderer2.push("<!--[-->");
       $$renderer2.push(`<div class="flex items-center justify-center h-64"><p class="text-muted-foreground">${escape_html(isSpanish ? "Cargando panel..." : "Loading dashboard...")}</p></div>`);

@@ -1,6 +1,9 @@
 import { db } from '$lib/server/db';
 import { projects, services, users, requirements, projectMilestones, cases, proposals, payments, requests, caseComments, requestComments, requirementComments, proposalComments, projectPayments as projectPaymentsTable, notifications, userCompanies, companies } from '$lib/server/schema';
 import { uploadFile, getSignedUrlForFile, deleteFile } from '$lib/server/storage';
+import * as billingService from '$lib/server/billing-domain/billing.service';
+import * as paymentAccountsRepo from '$lib/server/billing-domain/payment-accounts.repository';
+import * as providerConfigRepo from '$lib/server/billing-domain/provider-config.repository';
 import { eq, asc, desc, sql, getTableColumns, inArray } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import { error, fail } from '@sveltejs/kit';
@@ -360,6 +363,14 @@ export const load: PageServerLoad = async ({ params, url }) => {
             return { ...r, files };
         }));
 
+        // Métodos de pago desde configuraciones (para el modal Nuevo/Editar Pago)
+        const billingProviderConfigs = await providerConfigRepo.findAllProviderConfigs(true);
+        const billingProviders = billingProviderConfigs.map((c) => ({
+            code: c.code,
+            label: c.label,
+            isAutomatic: c.isAutomatic
+        }));
+
         return {
             project,
             requirements: projectRequirements,
@@ -375,7 +386,8 @@ export const load: PageServerLoad = async ({ params, url }) => {
             allClients,
             allServices,
             allProjects,
-            companiesByClientId
+            companiesByClientId,
+            billingProviders
         };
     } catch (err) {
         console.error('Error fetching project details:', err);
@@ -888,12 +900,11 @@ export const actions: Actions = {
         }
     },
 
-    // Payment Actions
+    // Payment Actions — calcula tasa y USD desde monto original y monto abonado
     createPayment: async ({ request, params }) => {
         const formData = await request.formData();
         const currentProjectId = Number(params.id); // Context project
         const title = formData.get('title') as string;
-        const amount = formData.get('amount') as string; // Legacy/Display amount
         const status = formData.get('status') as string;
         const dueDateStr = formData.get('dueDate') as string;
         const dueTime = formData.get('dueTime') as string;
@@ -901,25 +912,24 @@ export const actions: Actions = {
         const paidTime = formData.get('paidTime') as string;
         const file = formData.get('file') as File;
         
-        // New fields
         const amountOriginal = formData.get('amountOriginal') as string;
-        const currencyOriginal = formData.get('currencyOriginal') as string;
-        const exchangeRate = formData.get('exchangeRate') as string;
-        const amountUsd = formData.get('amountUsd') as string;
+        const currencyOriginal = (formData.get('currencyOriginal') as string) || 'USD';
+        const amountPaid = formData.get('amountPaid') as string;
+        const currencyPaid = (formData.get('currencyPaid') as string) || 'USD';
         const paymentMethod = formData.get('paymentMethod') as string;
         const providerPaymentId = formData.get('providerPaymentId') as string;
 
-        // Get all selected project IDs
         const projectIds = formData.getAll('projectIds').map(id => Number(id));
+        if (projectIds.length === 0) projectIds.push(currentProjectId);
 
-        // Ensure at least one project is selected (if none, default to current)
-        if (projectIds.length === 0) {
-            projectIds.push(currentProjectId);
-        }
+        if (!title?.trim()) return fail(400, { message: 'El concepto es obligatorio' });
+        const numOriginal = parseFloat(String(amountOriginal).replace(',', '.')) || 0;
+        const numPaid = parseFloat(String(amountPaid).replace(',', '.')) || 0;
+        if (numOriginal <= 0 || numPaid <= 0) return fail(400, { message: 'Monto original y monto abonado son obligatorios y deben ser mayores a 0' });
 
-        if (!title || !amount) {
-            return fail(400, { message: 'Title and amount are required' });
-        }
+        const exchangeRate = numPaid > 0 ? (numOriginal / numPaid).toFixed(6) : '1.000000';
+        const amountUsd = currencyPaid.toUpperCase() === 'USD' ? String(numPaid) : (currencyOriginal.toUpperCase() === 'USD' ? String(numOriginal) : String(numPaid));
+        const amount = `${numPaid} ${currencyPaid.toUpperCase()}`;
 
         try {
             let documentUrl = null;
@@ -939,17 +949,18 @@ export const actions: Actions = {
                 paidAt = new Date(`${paidAtStr}T${timeStr}`);
             }
 
-            // Insert payment and return ID
             const [newPayment] = await db.insert(payments).values({
-                projectId: currentProjectId, // Keep for backward compatibility/primary context
+                projectId: currentProjectId,
                 title,
                 amount,
                 status: status || 'pending',
                 dueDate,
                 paidAt,
                 documentUrl,
-                amountOriginal,
-                currencyOriginal,
+                amountOriginal: String(numOriginal),
+                currencyOriginal: currencyOriginal.slice(0, 3),
+                amountPaid: String(numPaid),
+                currencyPaid: currencyPaid.slice(0, 3),
                 exchangeRate,
                 amountUsd,
                 paymentMethod,
@@ -965,6 +976,41 @@ export const actions: Actions = {
                         projectId: pid
                     }))
                 );
+            }
+
+            // Crear documento de facturación vinculado al pago del proyecto (siempre en USD para Historial)
+            if (newPayment) {
+                const [proj] = await db.select({ companyId: projects.companyId }).from(projects).where(eq(projects.id, currentProjectId)).limit(1);
+                if (proj?.companyId != null) {
+                    const amountNumUsd = parseFloat(String(amountUsd || amount).replace(/[^0-9.-]/g, '')) || 0;
+                    const amountCentsUsd = Math.round(amountNumUsd * 100);
+                    const isPaid = status === 'paid';
+                    const providerCode = (paymentMethod || 'manual').toLowerCase().replace(/\s+/g, '_');
+                    try {
+                        const providerConfig = await providerConfigRepo.findProviderConfigByCode(providerCode);
+                        const label = providerConfig?.label ?? providerCode;
+                        const paymentAccountId = await paymentAccountsRepo.findOrCreateManualProviderAccount(proj.companyId, providerCode, label);
+                        await billingService.createBillingDocument({
+                            companyId: proj.companyId,
+                            type: 'invoice',
+                            provider: providerCode as any,
+                            source: 'project',
+                            paymentAccountId,
+                            projectId: currentProjectId,
+                            paymentId: newPayment.id,
+                            currency: 'usd',
+                            amountTotal: amountCentsUsd,
+                            amountDue: isPaid ? 0 : amountCentsUsd,
+                            status: isPaid ? 'paid' : 'open',
+                            dueDate: dueDate || null,
+                            issuedAt: new Date(),
+                            description: title,
+                            number: `PAY-${newPayment.id}`
+                        });
+                    } catch (e) {
+                        console.error('Error creating billing document for payment:', e);
+                    }
+                }
             }
 
             // Notify Client
@@ -991,7 +1037,6 @@ export const actions: Actions = {
         const projectId = Number(params.id);
         const id = Number(formData.get('id'));
         const title = formData.get('title') as string;
-        const amount = formData.get('amount') as string;
         const status = formData.get('status') as string;
         const dueDateStr = formData.get('dueDate') as string;
         const dueTime = formData.get('dueTime') as string;
@@ -999,20 +1044,22 @@ export const actions: Actions = {
         const paidTime = formData.get('paidTime') as string;
         const file = formData.get('file') as File;
         
-        // New fields
         const amountOriginal = formData.get('amountOriginal') as string;
-        const currencyOriginal = formData.get('currencyOriginal') as string;
-        const exchangeRate = formData.get('exchangeRate') as string;
-        const amountUsd = formData.get('amountUsd') as string;
+        const currencyOriginal = (formData.get('currencyOriginal') as string) || 'USD';
+        const amountPaid = formData.get('amountPaid') as string;
+        const currencyPaid = (formData.get('currencyPaid') as string) || 'USD';
         const paymentMethod = formData.get('paymentMethod') as string;
         const providerPaymentId = formData.get('providerPaymentId') as string;
-
-        // Get all selected project IDs
         const projectIds = formData.getAll('projectIds').map(pid => Number(pid));
 
-        if (!id || !title || !amount) {
-            return fail(400, { message: 'ID, Title and Amount are required' });
-        }
+        if (!id || !title?.trim()) return fail(400, { message: 'ID y concepto son obligatorios' });
+        const numOriginal = parseFloat(String(amountOriginal).replace(',', '.')) || 0;
+        const numPaid = parseFloat(String(amountPaid).replace(',', '.')) || 0;
+        if (numOriginal <= 0 || numPaid <= 0) return fail(400, { message: 'Monto original y monto abonado son obligatorios' });
+
+        const exchangeRate = numPaid > 0 ? (numOriginal / numPaid).toFixed(6) : '1.000000';
+        const amountUsd = currencyPaid.toUpperCase() === 'USD' ? String(numPaid) : (currencyOriginal.toUpperCase() === 'USD' ? String(numOriginal) : String(numPaid));
+        const amount = `${numPaid} ${currencyPaid.toUpperCase()}`;
 
         try {
             let dueDate = null;
@@ -1033,8 +1080,10 @@ export const actions: Actions = {
                 status,
                 dueDate,
                 paidAt,
-                amountOriginal,
-                currencyOriginal,
+                amountOriginal: String(numOriginal),
+                currencyOriginal: currencyOriginal.slice(0, 3),
+                amountPaid: String(numPaid),
+                currencyPaid: currencyPaid.slice(0, 3),
                 exchangeRate,
                 amountUsd,
                 paymentMethod,
@@ -1048,6 +1097,54 @@ export const actions: Actions = {
             await db.update(payments)
                 .set(updateData)
                 .where(eq(payments.id, id));
+
+            const billingDocsRepo = await import('$lib/server/billing-domain/billing-documents.repository');
+            const existingDoc = await billingDocsRepo.findBillingDocumentByPaymentId(id);
+
+            // Sincronizar documento de facturación vinculado: siempre guardar monto en USD para que el historial muestre dólares
+            if (existingDoc) {
+                const amountUsdNum = parseFloat(String(amountUsd).replace(/[^0-9.-]/g, '')) || 0;
+                const amountCentsUsd = Math.round(amountUsdNum * 100);
+                await billingDocsRepo.updateBillingDocument(existingDoc.id, {
+                    currency: 'usd',
+                    amountTotal: amountCentsUsd,
+                    amountDue: status === 'paid' ? 0 : amountCentsUsd,
+                    ...(status === 'paid' && { status: 'paid' as const })
+                });
+            }
+
+            // Si el pago no tiene documento de facturación pero tiene método (MercadoPago, PayPal, etc.), crear uno para que aparezca en Facturación → Historial (siempre en USD)
+            const providerCode = (paymentMethod || '').toLowerCase().replace(/\s+/g, '_');
+            if (!existingDoc && providerCode && providerCode !== 'stripe' && projectIds.length > 0) {
+                const [proj] = await db.select({ companyId: projects.companyId }).from(projects).where(eq(projects.id, projectIds[0])).limit(1);
+                if (proj?.companyId != null) {
+                    const amountUsdNum = parseFloat(String(amountUsd).replace(/[^0-9.-]/g, '')) || 0;
+                    const amountCentsUsd = Math.round(amountUsdNum * 100);
+                    try {
+                        const label = (await providerConfigRepo.findProviderConfigByCode(providerCode))?.label ?? providerCode;
+                        const paymentAccountId = await paymentAccountsRepo.findOrCreateManualProviderAccount(proj.companyId, providerCode, label);
+                        await billingService.createBillingDocument({
+                            companyId: proj.companyId,
+                            type: 'invoice',
+                            provider: providerCode as any,
+                            source: 'project',
+                            paymentAccountId,
+                            paymentId: id,
+                            number: title,
+                            currency: 'usd',
+                            amountTotal: amountCentsUsd,
+                            amountDue: status === 'paid' ? 0 : amountCentsUsd,
+                            status: status === 'paid' ? 'paid' : 'open',
+                            dueDate: dueDate ?? null,
+                            issuedAt: new Date(),
+                            description: title,
+                            metadata: { projectIds }
+                        });
+                    } catch (e) {
+                        console.error('Error creating billing document for updated payment:', e);
+                    }
+                }
+            }
 
             // Update Many-to-Many relationships
             // 1. Delete existing for this payment

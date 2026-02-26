@@ -1,6 +1,6 @@
 import { fail, redirect } from "@sveltejs/kit";
-import { d as db, n as notifications, a as userCompanies, u as users, p as projects, j as companies } from "../../../../../chunks/db.js";
-import { and, eq, inArray } from "drizzle-orm";
+import { d as db, n as notifications, a as userCompanies, u as users, p as projects, c as companies } from "../../../../../chunks/db.js";
+import { and, eq, inArray, sql, or, isNull } from "drizzle-orm";
 import { u as uploadFile, a as getSignedUrlForFile } from "../../../../../chunks/storage.js";
 import { s as sendEmail } from "../../../../../chunks/email.js";
 const load = async ({ locals, params }) => {
@@ -31,7 +31,10 @@ const load = async ({ locals, params }) => {
     userLinks.map((l) => l.userId).filter((id) => id !== null);
     if (locals.user && locals.user.id) {
       companyProjects = await db.query.projects.findMany({
-        where: eq(projects.clientId, parseInt(locals.user.id))
+        where: and(
+          eq(projects.clientId, parseInt(locals.user.id)),
+          or(eq(projects.companyId, companyId), isNull(projects.companyId))
+        )
       });
     }
     companyUsers = userLinks.map((link) => ({
@@ -57,7 +60,7 @@ const actions = {
     if (!locals.user || !locals.user.companyId) return fail(401, { message: "Unauthorized" });
     const formData = await request.formData();
     const updateData = {};
-    const textFields = ["name", "phone", "email", "website", "description"];
+    const textFields = ["name", "phone", "email", "website", "region", "description"];
     for (const field of textFields) {
       if (formData.has(field)) {
         updateData[field] = formData.get(field);
@@ -274,6 +277,19 @@ const actions = {
         await db.update(userCompanies).set({ permissions, status }).where(eq(userCompanies.id, link.id));
       }
     } else {
+      const company = await db.query.companies.findFirst({
+        where: eq(companies.id, locals.user.companyId),
+        columns: { memberLimit: true }
+      });
+      const currentCount = await db.select({ count: sql`count(*)::int` }).from(userCompanies).where(eq(userCompanies.companyId, locals.user.companyId));
+      const totalMembers = currentCount[0]?.count ?? 0;
+      const limit = company?.memberLimit ?? null;
+      if (limit != null && totalMembers >= limit) {
+        return fail(400, {
+          message: "No se pueden agregar más miembros. Se ha alcanzado el límite configurado para esta empresa.",
+          memberLimitReached: true
+        });
+      }
       const existingUser = await db.query.users.findFirst({
         where: eq(users.email, email)
       });
@@ -327,7 +343,7 @@ const actions = {
           }
         }
       } else {
-        const company = await db.query.companies.findFirst({
+        const company2 = await db.query.companies.findFirst({
           where: eq(companies.id, locals.user.companyId)
         });
         const [newUser] = await db.insert(users).values({
@@ -335,7 +351,7 @@ const actions = {
           lastName,
           email,
           role: "staff",
-          workspaceId: company?.workspaceId
+          workspaceId: company2?.workspaceId
         }).returning();
         targetUserId = newUser.id;
         await db.insert(userCompanies).values({

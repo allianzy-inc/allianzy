@@ -7,11 +7,13 @@ import "@sveltejs/kit/internal/server";
 import "../../../../../chunks/state.svelte.js";
 import { t as translations, c as currentLang } from "../../../../../chunks/i18n.js";
 import { U as User } from "../../../../../chunks/user.js";
-import { L as Loader_circle, U as Upload } from "../../../../../chunks/upload.js";
+import { L as Loader_circle } from "../../../../../chunks/loader-circle.js";
 import { T as Trash_2 } from "../../../../../chunks/trash-2.js";
+import { U as Upload } from "../../../../../chunks/upload.js";
 import { F as File_text } from "../../../../../chunks/file-text.js";
 import { P as Plus } from "../../../../../chunks/plus.js";
 import { M as Map_pin } from "../../../../../chunks/map-pin.js";
+import { P as Pencil } from "../../../../../chunks/pencil.js";
 import { L as Link } from "../../../../../chunks/link.js";
 import { e as escape_html } from "../../../../../chunks/escaping.js";
 function _page($$renderer, $$props) {
@@ -143,9 +145,11 @@ function _page($$renderer, $$props) {
       } else {
         $$renderer2.push("<!--[!-->");
       }
-      $$renderer2.push(`<!--]--></div></div> <button type="button" class="text-muted-foreground hover:text-destructive transition-colors p-1">`);
+      $$renderer2.push(`<!--]--></div></div> <div class="flex items-center gap-1"><button type="button" class="text-muted-foreground hover:text-foreground transition-colors p-1">`);
+      Pencil($$renderer2, { class: "w-4 h-4" });
+      $$renderer2.push(`<!----></button> <button type="button" class="text-muted-foreground hover:text-destructive transition-colors p-1">`);
       Trash_2($$renderer2, { class: "w-4 h-4" });
-      $$renderer2.push(`<!----></button></div>`);
+      $$renderer2.push(`<!----></button></div></div>`);
     }
     $$renderer2.push(`<!--]--> `);
     {

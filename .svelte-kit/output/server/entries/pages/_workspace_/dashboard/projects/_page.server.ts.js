@@ -1,6 +1,6 @@
 import { d as db, a as userCompanies, p as projects, w as workspaces, s as services } from "../../../../../chunks/db.js";
 import { a as getSignedUrlForFile } from "../../../../../chunks/storage.js";
-import { and, eq, isNull, inArray, or } from "drizzle-orm";
+import { and, eq, or, isNull, inArray } from "drizzle-orm";
 const load = async ({ locals, params }) => {
   if (!locals.user) {
     return {
@@ -23,10 +23,9 @@ const load = async ({ locals, params }) => {
       allowedProjectIds = Object.keys(perms).map((id) => parseInt(id)).filter((id) => !isNaN(id));
     }
   }
+  const sameCompanyCondition = locals.user.companyId ? and(eq(projects.clientId, userId), or(eq(projects.companyId, locals.user.companyId), isNull(projects.companyId))) : eq(projects.clientId, userId);
   const visibilityConditions = [
-    // 1. Direct Project Assignment (Highest Priority)
-    eq(projects.clientId, userId),
-    // 2. Service Fallback (Only if Project has NO specific client assigned)
+    sameCompanyCondition,
     and(
       eq(workspaces.slug, locals.allowedWorkspace),
       eq(services.clientId, userId),
@@ -34,7 +33,8 @@ const load = async ({ locals, params }) => {
     )
   ];
   if (allowedProjectIds.length > 0) {
-    visibilityConditions.push(inArray(projects.id, allowedProjectIds));
+    const allowedCondition = locals.user.companyId ? and(inArray(projects.id, allowedProjectIds), or(eq(projects.companyId, locals.user.companyId), isNull(projects.companyId))) : inArray(projects.id, allowedProjectIds);
+    visibilityConditions.push(allowedCondition);
   }
   const workspaceProjects = await db.select({
     id: projects.id,

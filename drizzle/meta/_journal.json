@@ -1,1 +1,41 @@
-{"version":"7","dialect":"postgresql","entries":[{"idx":0,"version":"7","when":1769789729466,"tag":"0000_brown_starjammers","breakpoints":true},{"idx":1,"version":"7","when":1770049646730,"tag":"0001_lively_texas_twister","breakpoints":true},{"idx":2,"version":"7","when":1770217259822,"tag":"0002_boring_tarot","breakpoints":true},{"idx":3,"version":"7","when":1770217260000,"tag":"0004_companies_phone_region","breakpoints":true}]}
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1769789729466,
+      "tag": "0000_brown_starjammers",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1770049646730,
+      "tag": "0001_lively_texas_twister",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1770217259822,
+      "tag": "0002_boring_tarot",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1770217260000,
+      "tag": "0004_companies_phone_region",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1772143313680,
+      "tag": "0004_payments_amount_columns",
+      "breakpoints": true
+    }
+  ]
+}

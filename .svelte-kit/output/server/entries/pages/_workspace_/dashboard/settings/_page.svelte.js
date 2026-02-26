@@ -8,17 +8,19 @@ import "../../../../../chunks/state.svelte.js";
 import { t as translations, c as currentLang } from "../../../../../chunks/i18n.js";
 import { B as Building_2 } from "../../../../../chunks/building-2.js";
 import { U as Users } from "../../../../../chunks/users.js";
-import { L as Loader_circle, U as Upload } from "../../../../../chunks/upload.js";
+import { L as Loader_circle } from "../../../../../chunks/loader-circle.js";
 import { T as Trash_2 } from "../../../../../chunks/trash-2.js";
+import { U as Upload } from "../../../../../chunks/upload.js";
 import { F as File_text } from "../../../../../chunks/file-text.js";
 import { P as Plus } from "../../../../../chunks/plus.js";
 import { M as Map_pin } from "../../../../../chunks/map-pin.js";
+import { P as Pencil } from "../../../../../chunks/pencil.js";
 import { L as Link } from "../../../../../chunks/link.js";
 import { e as escape_html } from "../../../../../chunks/escaping.js";
 function _page($$renderer, $$props) {
   $$renderer.component(($$renderer2) => {
     var $$store_subs;
-    let t, organization, currentUser, currentUserRole, isMember;
+    let t, organization, usersList, currentUser, currentUserRole, isMember, companyMemberLimit;
     let data = $$props["data"];
     let addresses = [];
     let companyLinks = [];
@@ -26,11 +28,13 @@ function _page($$renderer, $$props) {
     let saving = {};
     t = translations[store_get($$store_subs ??= {}, "$currentLang", currentLang)];
     organization = data.company || {};
-    data.companyUsers || [];
+    usersList = data.companyUsers || [];
     data.companyProjects || [];
     currentUser = data.currentUser;
     currentUserRole = data.companyUsers?.find((u) => u.id?.toString() === currentUser?.id?.toString())?.role;
     isMember = currentUserRole === "member";
+    companyMemberLimit = organization?.memberLimit ?? null;
+    companyMemberLimit != null && usersList.length >= companyMemberLimit;
     if (organization) {
       addresses = organization.addresses || [];
       companyLinks = organization.links || [];
@@ -121,7 +125,21 @@ function _page($$renderer, $$props) {
         } else {
           $$renderer3.push("<!--[!-->");
         }
-        $$renderer3.push(`<!--]--></label> <input type="tel"${attr("value", organization?.phone || "")} class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"${attr("disabled", isMember, true)}/></div></div> <div class="space-y-2"><label class="text-sm font-medium flex items-center justify-between">${escape_html(t.dashboard.page.settings.organization.details?.description || "Description")} `);
+        $$renderer3.push(`<!--]--></label> <input type="tel"${attr("value", organization?.phone || "")} class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"${attr("disabled", isMember, true)}/></div></div> <div class="grid grid-cols-1 md:grid-cols-2 gap-6"><div class="space-y-2"><label class="text-sm font-medium flex items-center justify-between">${escape_html(t.dashboard.page.settings.organization.details?.website || "Página web")} `);
+        if (saving["website"]) {
+          $$renderer3.push("<!--[-->");
+          Loader_circle($$renderer3, { class: "w-3 h-3 animate-spin text-muted-foreground" });
+        } else {
+          $$renderer3.push("<!--[!-->");
+        }
+        $$renderer3.push(`<!--]--></label> <input type="url"${attr("value", organization?.website || "")} placeholder="https://" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"${attr("disabled", isMember, true)}/></div> <div class="space-y-2"><label class="text-sm font-medium flex items-center justify-between">${escape_html(t.dashboard.page.settings.organization.details?.region || "País / Región")} `);
+        if (saving["region"]) {
+          $$renderer3.push("<!--[-->");
+          Loader_circle($$renderer3, { class: "w-3 h-3 animate-spin text-muted-foreground" });
+        } else {
+          $$renderer3.push("<!--[!-->");
+        }
+        $$renderer3.push(`<!--]--></label> <input type="text"${attr("value", organization?.region || "")} placeholder="Ej. Argentina, España" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"${attr("disabled", isMember, true)}/></div></div> <div class="space-y-2"><label class="text-sm font-medium flex items-center justify-between">${escape_html(t.dashboard.page.settings.organization.details?.description || "Description")} `);
         if (saving["description"]) {
           $$renderer3.push("<!--[-->");
           Loader_circle($$renderer3, { class: "w-3 h-3 animate-spin text-muted-foreground" });
@@ -196,9 +214,11 @@ function _page($$renderer, $$props) {
           $$renderer3.push(`<!--]--></div></div> `);
           if (!isMember) {
             $$renderer3.push("<!--[-->");
-            $$renderer3.push(`<button type="button" class="text-muted-foreground hover:text-destructive transition-colors p-1">`);
+            $$renderer3.push(`<div class="flex items-center gap-1"><button type="button" class="text-muted-foreground hover:text-foreground transition-colors p-1"${attr("title", t.dashboard.page.settings.organization.addresses.form?.save ? "Editar" : "Edit")}>`);
+            Pencil($$renderer3, { class: "w-4 h-4" });
+            $$renderer3.push(`<!----></button> <button type="button" class="text-muted-foreground hover:text-destructive transition-colors p-1">`);
             Trash_2($$renderer3, { class: "w-4 h-4" });
-            $$renderer3.push(`<!----></button>`);
+            $$renderer3.push(`<!----></button></div>`);
           } else {
             $$renderer3.push("<!--[!-->");
           }
@@ -259,6 +279,10 @@ function _page($$renderer, $$props) {
         $$renderer3.push(`<!--]--></div></div></div></div>`);
       }
       $$renderer3.push(`<!--]--></div> `);
+      {
+        $$renderer3.push("<!--[!-->");
+      }
+      $$renderer3.push(`<!--]--> `);
       {
         $$renderer3.push("<!--[!-->");
       }

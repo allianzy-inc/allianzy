@@ -1,4 +1,4 @@
-import { d as db, o as caseComments, p as projects, s as services, w as workspaces, c as cases, u as users, n as notifications, a as userCompanies } from "../../../../../chunks/db.js";
+import { d as db, x as caseComments, p as projects, s as services, w as workspaces, f as cases, u as users, n as notifications, a as userCompanies } from "../../../../../chunks/db.js";
 import { eq, or, and, isNull, desc, inArray, sql, asc } from "drizzle-orm";
 import { fail } from "@sveltejs/kit";
 import { u as uploadFile, a as getSignedUrlForFile } from "../../../../../chunks/storage.js";
@@ -26,6 +26,15 @@ const load = async ({ locals, url, params }) => {
       }
     }
   }
+  const companyId = locals.user?.companyId ?? null;
+  const sameCompanyFilter = companyId ? or(eq(projects.companyId, companyId), isNull(projects.companyId)) : void 0;
+  const ticketConditions = [
+    companyId ? and(eq(projects.clientId, userId), sameCompanyFilter) : eq(projects.clientId, userId),
+    companyId ? and(eq(workspaces.slug, params.workspace), eq(services.clientId, userId), isNull(projects.clientId), sameCompanyFilter) : and(eq(workspaces.slug, params.workspace), eq(services.clientId, userId), isNull(projects.clientId))
+  ];
+  if (allowedProjectIds.length > 0) {
+    ticketConditions.push(companyId ? and(inArray(projects.id, allowedProjectIds), sameCompanyFilter) : inArray(projects.id, allowedProjectIds));
+  }
   const rawTickets = await db.select({
     id: cases.id,
     title: cases.title,
@@ -37,18 +46,7 @@ const load = async ({ locals, url, params }) => {
     projectName: projects.name,
     serviceName: services.name,
     projectId: projects.id
-  }).from(cases).innerJoin(projects, eq(cases.projectId, projects.id)).leftJoin(services, eq(projects.serviceId, services.id)).leftJoin(workspaces, eq(services.workspaceId, workspaces.id)).where(or(
-    // 1. Direct Project Assignment
-    eq(projects.clientId, userId),
-    // 2. Explicit Permissions
-    allowedProjectIds.length > 0 ? inArray(projects.id, allowedProjectIds) : void 0,
-    // 3. Service Fallback (Only if Project has NO specific client assigned)
-    and(
-      eq(workspaces.slug, params.workspace),
-      eq(services.clientId, userId),
-      isNull(projects.clientId)
-    )
-  )).orderBy(desc(cases.createdAt));
+  }).from(cases).innerJoin(projects, eq(cases.projectId, projects.id)).leftJoin(services, eq(projects.serviceId, services.id)).leftJoin(workspaces, eq(services.workspaceId, workspaces.id)).where(or(...ticketConditions)).orderBy(desc(cases.createdAt));
   const tickets = await Promise.all(rawTickets.map(async (t) => {
     let files = t.files;
     if (files && Array.isArray(files)) {
@@ -59,22 +57,18 @@ const load = async ({ locals, url, params }) => {
     }
     return { ...t, files };
   }));
+  const projectConditions = [
+    companyId ? and(eq(projects.clientId, userId), sameCompanyFilter) : eq(projects.clientId, userId),
+    companyId ? and(eq(workspaces.slug, params.workspace), eq(services.clientId, userId), isNull(projects.clientId), sameCompanyFilter) : and(eq(workspaces.slug, params.workspace), eq(services.clientId, userId), isNull(projects.clientId))
+  ];
+  if (allowedProjectIds.length > 0) {
+    projectConditions.push(companyId ? and(inArray(projects.id, allowedProjectIds), sameCompanyFilter) : inArray(projects.id, allowedProjectIds));
+  }
   const projectsList = await db.select({
     id: projects.id,
     name: projects.name,
     serviceName: services.name
-  }).from(projects).leftJoin(services, eq(projects.serviceId, services.id)).leftJoin(workspaces, eq(services.workspaceId, workspaces.id)).where(or(
-    // 1. Direct Project Assignment
-    eq(projects.clientId, userId),
-    // 2. Explicit Permissions
-    allowedProjectIds.length > 0 ? inArray(projects.id, allowedProjectIds) : void 0,
-    // 3. Service Fallback (Only if Project has NO specific client assigned)
-    and(
-      eq(workspaces.slug, params.workspace),
-      eq(services.clientId, userId),
-      isNull(projects.clientId)
-    )
-  )).orderBy(desc(projects.createdAt));
+  }).from(projects).leftJoin(services, eq(projects.serviceId, services.id)).leftJoin(workspaces, eq(services.workspaceId, workspaces.id)).where(or(...projectConditions)).orderBy(desc(projects.createdAt));
   let selectedCaseComments = [];
   const selectedCaseId = url.searchParams.get("caseId");
   if (selectedCaseId) {

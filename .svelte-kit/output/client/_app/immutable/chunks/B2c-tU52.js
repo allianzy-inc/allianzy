@@ -1,1 +1,0 @@
-function p(t,d="body"){async function i(o){let e;typeof o=="string"?(e=document.querySelector(o),o==="body"&&(e=document.body)):e=o,e&&(e.appendChild(t),t.hidden=!1)}function f(){t.parentNode&&t.parentNode.removeChild(t)}return i(d),{update:i,destroy:f}}export{p};

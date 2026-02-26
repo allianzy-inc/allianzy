@@ -322,6 +322,8 @@ const translations = {
         },
         profile: {
           account: "My Account",
+          admin_panel: "Admin Panel",
+          client_panel: "Client Panel",
           theme: {
             title: "Theme",
             light: "Light",
@@ -865,6 +867,8 @@ const translations = {
         },
         profile: {
           account: "Mi cuenta",
+          admin_panel: "Panel de Admin",
+          client_panel: "Panel de Cliente",
           theme: {
             title: "Tema",
             light: "Claro",

@@ -1,4 +1,4 @@
-import { d as db, j as companies, u as users, a as userCompanies, n as notifications, p as projects, w as workspaces } from "../../../../../chunks/db.js";
+import { d as db, u as users, c as companies, a as userCompanies, n as notifications, p as projects, w as workspaces } from "../../../../../chunks/db.js";
 import { eq, and, or, inArray, sql } from "drizzle-orm";
 import { fail } from "@sveltejs/kit";
 import { u as uploadFile, a as getSignedUrlForFile } from "../../../../../chunks/storage.js";
@@ -226,10 +226,19 @@ const actions = {
       return fail(400, { message: "ID de empresa inválido.", detail: true });
     }
     const updateData = { updatedAt: /* @__PURE__ */ new Date() };
-    const textFields = ["name", "phone", "email", "website", "description"];
+    const textFields = ["name", "phone", "email", "website", "region", "description"];
     for (const field of textFields) {
       if (formData.has(field)) {
         updateData[field] = formData.get(field);
+      }
+    }
+    const memberLimitRaw = formData.get("member_limit");
+    if (formData.has("member_limit")) {
+      if (memberLimitRaw === "" || memberLimitRaw === null || memberLimitRaw === void 0) {
+        updateData.memberLimit = null;
+      } else {
+        const n = parseInt(String(memberLimitRaw), 10);
+        if (!Number.isNaN(n) && n >= 1) updateData.memberLimit = n;
       }
     }
     const documentsJson = formData.get("documents");
@@ -441,6 +450,26 @@ const actions = {
       }
     }
     return { success: true, message: "Invitación enviada correctamente", inviteUser: true };
+  },
+  checkUserByEmail: async ({ request }) => {
+    const formData = await request.formData();
+    const email = String(formData.get("email") ?? "").trim().toLowerCase();
+    if (!email) {
+      return { checkEmail: true, exists: false };
+    }
+    const user = await db.query.users.findFirst({
+      where: eq(users.email, email),
+      columns: { id: true, firstName: true, lastName: true }
+    });
+    if (!user) {
+      return { checkEmail: true, exists: false };
+    }
+    return {
+      checkEmail: true,
+      exists: true,
+      firstName: user.firstName ?? "",
+      lastName: user.lastName ?? ""
+    };
   }
 };
 export {

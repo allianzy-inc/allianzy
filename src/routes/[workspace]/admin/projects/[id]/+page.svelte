@@ -362,6 +362,7 @@
     // Payment Modal Logic
     let isPaymentModalOpen = false;
     let editingPayment: any = null;
+    let isSubmittingPayment = false;
 
     function openCreatePaymentModal() {
         editingPayment = null;
@@ -371,6 +372,16 @@
     function openEditPaymentModal(payment: any) {
         editingPayment = { ...payment };
         isPaymentModalOpen = true;
+    }
+
+    /** Nombre para mostrar del método de pago (MercadoPago, PayPal, etc.) o "—" si no está asignado. */
+    function paymentMethodDisplayName(code: string | null | undefined) {
+        if (!code || code === 'stripe') return '—';
+        const p = (data.billingProviders ?? []).find((x: { code: string }) => x.code === code);
+        if (p) return (p as { label: string }).label;
+        if (code.toLowerCase().startsWith('mercadopago')) return 'MercadoPago';
+        if (code.toLowerCase().startsWith('paypal')) return 'PayPal';
+        return code;
     }
 
     function closePaymentModal() {
@@ -949,6 +960,7 @@
                                             <th class="p-3 font-medium">Concepto</th>
                                             <th class="p-3 font-medium">Fecha Venc.</th>
                                             <th class="p-3 font-medium">Monto</th>
+                                            <th class="p-3 font-medium">Método</th>
                                             <th class="p-3 font-medium text-right">Estado</th>
                                             <th class="p-3 font-medium text-right w-[100px]">Acciones</th>
                                         </tr>
@@ -976,6 +988,9 @@
                                                     {:else}
                                                         {pay.amount}
                                                     {/if}
+                                                </td>
+                                                <td class="p-3 text-muted-foreground" title={pay.paymentMethod ? 'Editar pago para cambiar método' : 'Sin asignar — hacé clic en Editar para asignar MercadoPago, PayPal, etc.'}>
+                                                    {paymentMethodDisplayName(pay.paymentMethod)}
                                                 </td>
                                                 <td class="p-3 text-right">
                                                     <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium capitalize
@@ -2596,27 +2611,33 @@
 
 <!-- Payment Modal -->
 {#if isPaymentModalOpen}
-    <div class="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50">
-        <div class="bg-card border rounded-lg shadow-lg p-6 w-full max-w-md relative">
-            <button on:click={closePaymentModal} class="absolute top-4 right-4 text-muted-foreground hover:text-foreground">
-                <X class="w-4 h-4" />
-            </button>
-            
-            <h2 class="text-lg font-bold mb-4">
-                {editingPayment ? 'Editar Pago' : 'Nuevo Pago'}
-            </h2>
-            
+    <div class="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
+        <div class="bg-card border rounded-lg shadow-lg w-full max-w-md relative flex flex-col max-h-[90vh] my-auto">
+            <div class="shrink-0 p-6 pb-0 flex items-start justify-between gap-4">
+                <h2 class="text-lg font-bold">
+                    {editingPayment ? 'Editar Pago' : 'Nuevo Pago'}
+                </h2>
+                <button type="button" on:click={closePaymentModal} class="text-muted-foreground hover:text-foreground p-1" aria-label="Cerrar">
+                    <X class="w-5 h-5" />
+                </button>
+            </div>
+            <div class="flex-1 min-h-0 overflow-y-auto p-6">
             <form 
                 action={editingPayment ? '?/updatePayment' : '?/createPayment'} 
                 method="POST" 
                 enctype="multipart/form-data"
                 use:enhance={() => {
+                    isSubmittingPayment = true;
                     return async ({ result, update }) => {
-                        if (result.type === 'success') {
-                            closePaymentModal();
-                            await invalidateAll();
-                        } else {
-                            await update();
+                        try {
+                            if (result.type === 'success') {
+                                closePaymentModal();
+                                await invalidateAll();
+                            } else {
+                                await update();
+                            }
+                        } finally {
+                            isSubmittingPayment = false;
                         }
                     };
                 }}
@@ -2689,85 +2710,84 @@
                     </div>
                     <div class="space-y-2">
                         <label for="pay-currencyOriginal" class="text-sm font-medium">Moneda Original</label>
-                        <input 
-                            type="text" 
-                            name="currencyOriginal" 
-                            id="pay-currencyOriginal"
-                            required
-                            maxlength="3"
-                            value={editingPayment?.currencyOriginal || 'USD'}
-                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                            placeholder="USD"
-                        />
+                        <select name="currencyOriginal" id="pay-currencyOriginal" required class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" value={editingPayment?.currencyOriginal || 'USD'}>
+                            <option value="USD">USD</option>
+                            <option value="ARS">ARS</option>
+                            <option value="EUR">EUR</option>
+                        </select>
                     </div>
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
                     <div class="space-y-2">
-                        <label for="pay-exchangeRate" class="text-sm font-medium">Tasa de Cambio</label>
-                        <input 
-                            type="number" 
-                            step="0.000001"
-                            name="exchangeRate" 
-                            id="pay-exchangeRate"
-                            required
-                            value={editingPayment?.exchangeRate || '1.000000'}
-                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                            placeholder="1.000000"
-                        />
-                    </div>
-                    <div class="space-y-2">
-                        <label for="pay-amountUsd" class="text-sm font-medium">Monto USD</label>
+                        <label for="pay-amountPaid" class="text-sm font-medium">Monto Abonado</label>
                         <input 
                             type="number" 
                             step="0.01"
-                            name="amountUsd" 
-                            id="pay-amountUsd"
+                            name="amountPaid" 
+                            id="pay-amountPaid"
                             required
-                            value={editingPayment?.amountUsd || ''}
+                            value={editingPayment?.amountPaid ?? editingPayment?.amountUsd ?? editingPayment?.amountOriginal ?? ''}
                             class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                             placeholder="0.00"
                         />
                     </div>
+                    <div class="space-y-2">
+                        <label for="pay-currencyPaid" class="text-sm font-medium">Moneda Abonada</label>
+                        <select name="currencyPaid" id="pay-currencyPaid" required class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" value={editingPayment?.currencyPaid || editingPayment?.currencyOriginal || 'USD'}>
+                            <option value="USD">USD</option>
+                            <option value="ARS">ARS</option>
+                            <option value="EUR">EUR</option>
+                        </select>
+                    </div>
                 </div>
 
-                <div class="space-y-2">
-                    <label for="pay-amount" class="text-sm font-medium">Monto (Texto/Display)</label>
-                    <input 
-                        type="text" 
-                        name="amount" 
-                        id="pay-amount"
-                        required
-                        value={editingPayment?.amount || ''}
-                        class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        placeholder="$0.00 (Texto)"
-                    />
-                </div>
+                <p class="text-xs text-muted-foreground">La tasa de cambio y el monto en USD se calculan automáticamente al guardar.</p>
 
                 <div class="grid grid-cols-2 gap-4">
                     <div class="space-y-2">
                         <label for="pay-paymentMethod" class="text-sm font-medium">Método de Pago</label>
-                        <input 
-                            type="text" 
+                        <p class="text-xs text-muted-foreground">Asigná el método con el que se cobró o se cobrará (MercadoPago, PayPal, etc.). Si el pago es viejo y no estaba asignado, elegilo acá y guardá.</p>
+                        <select 
                             name="paymentMethod" 
                             id="pay-paymentMethod"
-                            value={editingPayment?.paymentMethod || ''}
-                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                            placeholder="stripe, transfer, etc."
-                        />
+                            value={(() => {
+                                const providers = (data.billingProviders ?? []).filter((p: { code: string }) => p.code !== 'stripe');
+                                const current = editingPayment?.paymentMethod;
+                                if (current && current !== 'stripe' && providers.some((p: { code: string }) => p.code === current)) return current;
+                                if (current && current !== 'stripe' && providers.length === 0) return current;
+                                return providers[0]?.code ?? 'manual';
+                            })()}
+                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                            {#each (data.billingProviders ?? []).filter((p: { code: string }) => p.code !== 'stripe') as provider}
+                                <option value={provider.code}>{provider.label}</option>
+                            {/each}
+                            {#if editingPayment?.paymentMethod && editingPayment.paymentMethod !== 'stripe' && !(data.billingProviders ?? []).some((p: { code: string }) => p.code === editingPayment.paymentMethod)}
+                                <option value={editingPayment.paymentMethod}>{editingPayment.paymentMethod} (no está en config)</option>
+                            {/if}
+                            {#if ((data.billingProviders ?? []).filter((p: { code: string }) => p.code !== 'stripe')).length === 0 && !editingPayment?.paymentMethod}
+                                <option value="manual">Manual</option>
+                            {/if}
+                        </select>
+                        <p class="text-[10px] text-muted-foreground">Los pagos con Stripe se vinculan desde Facturación (la factura se genera en Stripe).</p>
                     </div>
                     <div class="space-y-2">
-                        <label for="pay-providerPaymentId" class="text-sm font-medium">ID Pago Proveedor</label>
+                        <label for="pay-providerPaymentId" class="text-sm font-medium">ID Pago Proveedor (opcional)</label>
                         <input 
                             type="text" 
                             name="providerPaymentId" 
                             id="pay-providerPaymentId"
                             value={editingPayment?.providerPaymentId || ''}
                             class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                            placeholder="ID de transacción"
+                            placeholder="ID de transacción (Stripe, MP, etc.)"
                         />
                     </div>
                 </div>
+
+                <p class="text-xs text-muted-foreground bg-muted/50 rounded-md px-3 py-2">
+                    Este pago se mostrará en <strong>Pagos</strong> de este proyecto y también en <strong>Facturación</strong> de la empresa (pestaña Historial).
+                </p>
 
                 <div class="space-y-2">
                     <label for="pay-dueDate" class="text-sm font-medium">Fecha y Hora de Vencimiento</label>
@@ -2824,14 +2844,20 @@
                 </div>
 
                 <div class="flex justify-end gap-2 mt-6">
-                    <button type="button" on:click={closePaymentModal} class="px-4 py-2 text-sm font-medium border rounded-md hover:bg-accent transition-colors">
+                    <button type="button" on:click={closePaymentModal} class="px-4 py-2 text-sm font-medium border rounded-md hover:bg-accent transition-colors" disabled={isSubmittingPayment}>
                         Cancelar
                     </button>
-                    <button type="submit" class="px-4 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors">
-                        {editingPayment ? 'Guardar Cambios' : 'Crear Pago'}
+                    <button type="submit" class="px-4 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors disabled:opacity-70 disabled:cursor-not-allowed flex items-center gap-2 min-w-[140px] justify-center" disabled={isSubmittingPayment}>
+                        {#if isSubmittingPayment}
+                            <Loader2 class="w-4 h-4 animate-spin" />
+                            Guardando…
+                        {:else}
+                            {editingPayment ? 'Guardar Cambios' : 'Crear Pago'}
+                        {/if}
                     </button>
                 </div>
             </form>
+            </div>
         </div>
     </div>
 {/if}

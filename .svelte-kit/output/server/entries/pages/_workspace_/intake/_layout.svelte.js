@@ -1,4 +1,4 @@
-import { Z as store_get, a0 as attr_class, a7 as attr_style, _ as slot, $ as unsubscribe_stores, a5 as stringify } from "../../../../chunks/index2.js";
+import { Z as store_get, a0 as attr_class, aa as attr_style, _ as slot, $ as unsubscribe_stores, a5 as stringify } from "../../../../chunks/index2.js";
 import { p as page } from "../../../../chunks/stores.js";
 import { a as logoDark, l as logoLight } from "../../../../chunks/logo-dark.js";
 import { L as Laptop, a as Languages, b as beltrixLogoLight, c as beltrixLogoDark } from "../../../../chunks/beltrix-logo-dark.js";

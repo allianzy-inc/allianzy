@@ -12,12 +12,12 @@ import { t as translations, c as currentLang } from "../../../../chunks/i18n.js"
 import { f as financeRole } from "../../../../chunks/finance-role.store.js";
 import { P as Panel_left_close, B as Bell, T as Ticket, S as Settings } from "../../../../chunks/ticket.js";
 import { U as User } from "../../../../chunks/user.js";
-import { I as Icon } from "../../../../chunks/Icon.js";
 import { L as Layout_dashboard } from "../../../../chunks/layout-dashboard.js";
 import { U as Users } from "../../../../chunks/users.js";
 import { B as Building_2 } from "../../../../chunks/building-2.js";
 import { P as Package } from "../../../../chunks/package.js";
 import { B as Briefcase } from "../../../../chunks/briefcase.js";
+import { I as Icon } from "../../../../chunks/Icon.js";
 import { e as escape_html } from "../../../../chunks/escaping.js";
 function Badge_dollar_sign($$renderer, $$props) {
   const $$sanitized_props = sanitize_props($$props);
@@ -62,51 +62,6 @@ function Badge_dollar_sign($$renderer, $$props) {
     }
   ]));
 }
-function House($$renderer, $$props) {
-  const $$sanitized_props = sanitize_props($$props);
-  /**
-   * @license lucide-svelte v0.0.1 - ISC
-   *
-   * This source code is licensed under the ISC license.
-   * See the LICENSE file in the root directory of this source tree.
-   */
-  const iconNode = [
-    [
-      "path",
-      { "d": "M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" }
-    ],
-    [
-      "path",
-      {
-        "d": "M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"
-      }
-    ]
-  ];
-  Icon($$renderer, spread_props([
-    { name: "house" },
-    $$sanitized_props,
-    {
-      /**
-       * @component @name House
-       * @description Lucide SVG icon component, renders SVG Element with children.
-       *
-       * @preview ![img](data:image/svg+xml;base64,PHN2ZyAgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIgogIHdpZHRoPSIyNCIKICBoZWlnaHQ9IjI0IgogIHZpZXdCb3g9IjAgMCAyNCAyNCIKICBmaWxsPSJub25lIgogIHN0cm9rZT0iIzAwMCIgc3R5bGU9ImJhY2tncm91bmQtY29sb3I6ICNmZmY7IGJvcmRlci1yYWRpdXM6IDJweCIKICBzdHJva2Utd2lkdGg9IjIiCiAgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIgogIHN0cm9rZS1saW5lam9pbj0icm91bmQiCj4KICA8cGF0aCBkPSJNMTUgMjF2LThhMSAxIDAgMCAwLTEtMWgtNGExIDEgMCAwIDAtMSAxdjgiIC8+CiAgPHBhdGggZD0iTTMgMTBhMiAyIDAgMCAxIC43MDktMS41MjhsNy01Ljk5OWEyIDIgMCAwIDEgMi41ODIgMGw3IDUuOTk5QTIgMiAwIDAgMSAyMSAxMHY5YTIgMiAwIDAgMS0yIDJINWEyIDIgMCAwIDEtMi0yeiIgLz4KPC9zdmc+Cg==) - https://lucide.dev/icons/house
-       * @see https://lucide.dev/guide/packages/lucide-svelte - Documentation
-       *
-       * @param {Object} props - Lucide icons props and any valid SVG attribute
-       * @returns {FunctionalComponent} Svelte component
-       *
-       */
-      iconNode,
-      children: ($$renderer2) => {
-        $$renderer2.push(`<!--[-->`);
-        slot($$renderer2, $$props, "default", {});
-        $$renderer2.push(`<!--]-->`);
-      },
-      $$slots: { default: true }
-    }
-  ]));
-}
 function _layout($$renderer, $$props) {
   $$renderer.component(($$renderer2) => {
     var $$store_subs;
@@ -121,11 +76,6 @@ function _layout($$renderer, $$props) {
     unreadCount = inboxNotifications.filter((n) => !n.read).length;
     showFinance = ["admin", "accountant", "client_owner"].includes(store_get($$store_subs ??= {}, "$financeRole", financeRole));
     menuItems = [
-      {
-        href: `/${workspace}/dashboard`,
-        label: "Vista Cliente",
-        icon: House
-      },
       {
         href: `/${workspace}/admin`,
         label: "Overview",
@@ -190,7 +140,7 @@ function _layout($$renderer, $$props) {
       }
       $$renderer2.push(`<!--]-->`);
     }
-    $$renderer2.push(`<!--]--> <span${attr_class(`text-xs font-semibold bg-primary/10 text-primary px-2 py-1 rounded shrink-0 ${stringify("ml-2")}`)}>ADMIN</span></div> <nav class="flex-1 p-4 space-y-1 overflow-hidden"><!--[-->`);
+    $$renderer2.push(`<!--]--> <span${attr_class(`text-[10px] font-semibold bg-primary/10 text-primary px-2 py-0.5 rounded-full shrink-0 ${stringify("ml-2")}`)}>ADMIN</span></div> <nav class="flex-1 p-4 space-y-1 overflow-hidden"><!--[-->`);
     const each_array = ensure_array_like(menuItems);
     for (let $$index = 0, $$length = each_array.length; $$index < $$length; $$index++) {
       let item = each_array[$$index];

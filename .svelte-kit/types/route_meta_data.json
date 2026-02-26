@@ -26,6 +26,11 @@
 		"src/routes/[workspace]/admin/+layout.server.ts",
 		"src/routes/[workspace]/+layout.server.ts"
 	],
+	"/[workspace]/admin/billing/[companyId]": [
+		"src/routes/[workspace]/admin/billing/[companyId]/+page.server.ts",
+		"src/routes/[workspace]/admin/+layout.server.ts",
+		"src/routes/[workspace]/+layout.server.ts"
+	],
 	"/[workspace]/admin/cases": [
 		"src/routes/[workspace]/admin/cases/+page.server.ts",
 		"src/routes/[workspace]/admin/+layout.server.ts",
@@ -103,6 +108,45 @@
 		"src/routes/[workspace]/admin/users/[id]/+page.server.ts",
 		"src/routes/[workspace]/admin/+layout.server.ts",
 		"src/routes/[workspace]/+layout.server.ts"
+	],
+	"/[workspace]/api/billing/accounts": [
+		"src/routes/[workspace]/api/billing/accounts/+server.ts"
+	],
+	"/[workspace]/api/billing/documents": [
+		"src/routes/[workspace]/api/billing/documents/+server.ts"
+	],
+	"/[workspace]/api/billing/documents/[id]": [
+		"src/routes/[workspace]/api/billing/documents/[id]/+server.ts"
+	],
+	"/[workspace]/api/billing/documents/[id]/proof": [
+		"src/routes/[workspace]/api/billing/documents/[id]/proof/+server.ts"
+	],
+	"/[workspace]/api/billing/invoices": [
+		"src/routes/[workspace]/api/billing/invoices/+server.ts"
+	],
+	"/[workspace]/api/billing/link": [
+		"src/routes/[workspace]/api/billing/link/+server.ts"
+	],
+	"/[workspace]/api/billing/overlays": [
+		"src/routes/[workspace]/api/billing/overlays/+server.ts"
+	],
+	"/[workspace]/api/billing/portal": [
+		"src/routes/[workspace]/api/billing/portal/+server.ts"
+	],
+	"/[workspace]/api/billing/projects": [
+		"src/routes/[workspace]/api/billing/projects/+server.ts"
+	],
+	"/[workspace]/api/billing/provider-config": [
+		"src/routes/[workspace]/api/billing/provider-config/+server.ts"
+	],
+	"/[workspace]/api/billing/providers": [
+		"src/routes/[workspace]/api/billing/providers/+server.ts"
+	],
+	"/[workspace]/api/billing/subscriptions": [
+		"src/routes/[workspace]/api/billing/subscriptions/+server.ts"
+	],
+	"/[workspace]/api/billing/sync": [
+		"src/routes/[workspace]/api/billing/sync/+server.ts"
 	],
 	"/[workspace]/auth/forgot-password": [
 		"src/routes/[workspace]/+layout.server.ts"

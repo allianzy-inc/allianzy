@@ -1,4 +1,4 @@
-import { a1 as sanitize_props, a8 as rest_props, a9 as attributes, a4 as ensure_array_like, aa as element, _ as slot, a6 as bind_props } from "./index2.js";
+import { a1 as sanitize_props, a7 as rest_props, a8 as attributes, a4 as ensure_array_like, a9 as element, _ as slot, a6 as bind_props } from "./index2.js";
 import { w as fallback } from "./context.js";
 import { c as clsx } from "./attributes.js";
 /**

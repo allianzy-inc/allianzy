@@ -1,5 +1,5 @@
 import { redirect } from "@sveltejs/kit";
-import { d as db, n as notifications, a as userCompanies } from "../../../../chunks/db.js";
+import { d as db, n as notifications, a as userCompanies, p as projects } from "../../../../chunks/db.js";
 import { eq, desc } from "drizzle-orm";
 import { a as getSignedUrlForFile } from "../../../../chunks/storage.js";
 const load = async ({ locals, url, params }) => {
@@ -27,10 +27,15 @@ const load = async ({ locals, url, params }) => {
     };
   }));
   if (mappedCompanies.length === 0 && locals.user.companyName) ;
+  const userId = parseInt(locals.user.id);
+  const hasAnyCompany = mappedCompanies.length > 0;
+  const hasAnyProject = (await db.select({ id: projects.id }).from(projects).where(eq(projects.clientId, userId)).limit(1)).length > 0;
   return {
     user: locals.user,
     companies: mappedCompanies,
-    notifications: userNotifications
+    notifications: userNotifications,
+    hasAnyCompany,
+    hasAnyProject
   };
 };
 export {

@@ -5,16 +5,20 @@ import * as subscriptionRecordsRepo from '$lib/server/billing-domain/subscriptio
 import { syncStripeForCompany } from '$lib/server/billing-domain/stripe-sync.service';
 import { getStripe, getBillingCompany } from '$lib/server/billing';
 
-/** Forma compatible con la UI actual. */
-function mapSubscriptionToShape(sub: {
-	id: string;
-	providerSubscriptionId: string | null;
-	status: string;
-	currentPeriodEnd: Date | null;
-	amount: number;
-	currency: string;
-	metadata: Record<string, unknown> | null;
-}) {
+/** Forma compatible con la UI actual. Incluye account_code (cus_xxx o id cuenta) para identificar la cuenta. */
+function mapSubscriptionToShape(
+	sub: {
+		id: string;
+		paymentAccountId: string | null;
+		providerSubscriptionId: string | null;
+		status: string;
+		currentPeriodEnd: Date | null;
+		amount: number;
+		currency: string;
+		metadata: Record<string, unknown> | null;
+	},
+	accountCode?: string | null
+) {
 	const meta = (sub.metadata ?? {}) as { price_nickname?: string };
 	return {
 		id: sub.providerSubscriptionId ?? sub.id,
@@ -23,7 +27,8 @@ function mapSubscriptionToShape(sub: {
 		cancel_at_period_end: false,
 		price_nickname: meta.price_nickname,
 		price_unit_amount: sub.amount,
-		currency: sub.currency
+		currency: sub.currency,
+		account_code: accountCode ?? undefined
 	};
 }
 
@@ -33,24 +38,22 @@ export const GET: RequestHandler = async (event) => {
 		return json({ linked: false, subscriptions: [] });
 	}
 
-	// 1) Dominio nuevo: leer de DB y sync on-demand si vacío
-	if (ctx.selectedPaymentAccountId) {
-		let subs = await subscriptionRecordsRepo.findSubscriptionRecordsByCompanyId(
-			ctx.companyId,
-			ctx.selectedPaymentAccountId
-		);
-		if (subs.length === 0 && ctx.accounts.some((a) => a.provider === 'stripe')) {
+	// 1) Dominio nuevo: suscripciones de TODAS las cuentas Stripe de la empresa (no solo la seleccionada)
+	if (ctx.accounts.length > 0) {
+		const stripeAccounts = ctx.accounts.filter((a) => (a.provider ?? 'stripe') === 'stripe');
+		let subs = await subscriptionRecordsRepo.findSubscriptionRecordsByCompanyId(ctx.companyId);
+		if (subs.length === 0 && stripeAccounts.length > 0) {
 			try {
 				await syncStripeForCompany(ctx.companyId);
-				subs = await subscriptionRecordsRepo.findSubscriptionRecordsByCompanyId(
-					ctx.companyId,
-					ctx.selectedPaymentAccountId
-				);
+				subs = await subscriptionRecordsRepo.findSubscriptionRecordsByCompanyId(ctx.companyId);
 			} catch (err: any) {
 				console.error('[billing/subscriptions] sync error:', err?.message ?? err);
 			}
 		}
-		const subscriptions = subs.map((s) => mapSubscriptionToShape(s));
+		const accountByPaymentId = Object.fromEntries(ctx.accounts.map((a) => [a.paymentAccountId, a.customerId]));
+		const subscriptions = subs.map((s) =>
+			mapSubscriptionToShape(s, s.paymentAccountId ? accountByPaymentId[s.paymentAccountId] : undefined)
+		);
 		return json({ linked: true, subscriptions });
 	}
 

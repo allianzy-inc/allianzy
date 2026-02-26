@@ -45,6 +45,8 @@
 		currentPeriodEnd: string;
 		projectName?: string;
 		serviceName?: string;
+		/** Cuenta Stripe (cus_xxx) a la que pertenece la suscripción */
+		accountCode?: string | null;
 	}> = [];
 	let portalLoading = false;
 	let billingError: string | null = null;
@@ -68,7 +70,7 @@
 			const [accountsRes, invRes, subRes, overlaysRes, projectsRes] = await Promise.all([
 				fetch(`/${workspace}/api/billing/accounts?companyId=${companyId}`, { credentials: 'include' }),
 				fetch(`/${workspace}/api/billing/invoices?companyId=${companyId}`, { credentials: 'include' }),
-				fetch(`/${workspace}/api/billing/subscriptions?companyId=${companyId}${subscriptionQuery()}`, { credentials: 'include' }),
+				fetch(`/${workspace}/api/billing/subscriptions?companyId=${companyId}`, { credentials: 'include' }),
 				fetch(`/${workspace}/api/billing/overlays?companyId=${companyId}`, { credentials: 'include' }),
 				fetch(`/${workspace}/api/billing/projects?companyId=${companyId}`, { credentials: 'include' })
 			]);
@@ -127,7 +129,8 @@
 				currency: sub.currency ?? 'usd',
 				currentPeriodEnd: sub.current_period_end
 					? new Date(sub.current_period_end).toLocaleDateString('es-ES')
-					: '—'
+					: '—',
+				accountCode: sub.account_code ?? null
 			}));
 		} finally {
 			loading = false;
@@ -970,6 +973,7 @@
 							<thead class="[&_tr]:border-b">
 								<tr class="border-b transition-colors hover:bg-muted/50">
 									<th class="h-12 px-4 align-middle font-medium text-muted-foreground">Plan</th>
+									<th class="h-12 px-4 align-middle font-medium text-muted-foreground">Cuenta Stripe</th>
 									<th class="h-12 px-4 align-middle font-medium text-muted-foreground">Servicio / Proyecto</th>
 									<th class="h-12 px-4 align-middle font-medium text-muted-foreground">Precio</th>
 									<th class="h-12 px-4 align-middle font-medium text-muted-foreground">Renovación</th>
@@ -980,6 +984,7 @@
 								{#each allSubscriptions as sub}
 									<tr class="border-b transition-colors hover:bg-muted/50">
 										<td class="p-4 align-middle font-medium">{sub.planName}</td>
+										<td class="p-4 align-middle font-mono text-xs text-muted-foreground" title={sub.accountCode ?? ''}>{sub.accountCode ?? '—'}</td>
 										<td class="p-4 align-middle">
 											<div class="flex flex-col">
 												<span>{sub.serviceName ?? '—'}</span>
@@ -1011,6 +1016,9 @@
 						{#each allSubscriptions as sub}
 							<div class="rounded-lg border bg-card text-card-foreground shadow-sm p-4 space-y-2">
 								<div class="font-semibold">{sub.planName}</div>
+								{#if sub.accountCode}
+									<p class="text-xs font-mono text-muted-foreground">{sub.accountCode}</p>
+								{/if}
 								<p class="text-sm text-muted-foreground">{sub.serviceName ?? sub.projectName ?? '—'}</p>
 								<div class="flex justify-between items-center pt-2 border-t border-border">
 									<span class="font-mono text-sm">{formatBillingAmount(sub.amount, sub.currency)}</span>

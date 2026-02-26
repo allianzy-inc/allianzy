@@ -138,6 +138,62 @@ async function getAccountMaps(docs: { paymentAccountId: string | null }[]): Prom
 	return { codeMap, providerMap };
 }
 
+/** Forma mínima de una fila de historial (factura o pago único). */
+type InvoiceRow = {
+	id: string;
+	documentId?: string | null;
+	provider: string;
+	account_code?: string;
+	amount_due?: number;
+	amount_paid?: number;
+	status?: string;
+	created?: string;
+	[key: string]: unknown;
+};
+
+/** Obtiene cargos de Stripe que no son parte de una factura (pagos únicos) para un cliente, en forma de filas de historial. */
+async function getStandaloneChargeRows(
+	stripe: import('stripe').Stripe,
+	customerId: string
+): Promise<InvoiceRow[]> {
+	const rows: InvoiceRow[] = [];
+	try {
+		const charges = await stripe.charges.list({ customer: customerId, limit: 100 });
+		for (const ch of charges.data ?? []) {
+			if (ch.status !== 'succeeded') continue;
+			if (ch.invoice) continue;
+			rows.push({
+				id: ch.id,
+				documentId: null,
+				provider: 'stripe',
+				account_code: customerId,
+				number: undefined,
+				amount_due: 0,
+				amount_paid: ch.amount ?? 0,
+				status: 'paid',
+				due_date: undefined,
+				hosted_invoice_url: undefined,
+				invoice_pdf: undefined,
+				receipt_url: (ch as { receipt_url?: string }).receipt_url ?? undefined,
+				currency: (ch.currency ?? 'usd').toLowerCase(),
+				created: ch.created ? new Date(ch.created * 1000).toISOString() : undefined,
+				description: (ch.description as string) ?? 'Pago único'
+			});
+		}
+	} catch (e) {
+		console.error('[billing/invoices] standalone charges error:', (e as Error)?.message);
+	}
+	return rows;
+}
+
+function sortInvoicesByCreated(invoices: InvoiceRow[]): void {
+	invoices.sort((a, b) => {
+		const ta = a.created ?? '';
+		const tb = b.created ?? '';
+		return tb.localeCompare(ta);
+	});
+}
+
 export const GET: RequestHandler = async (event) => {
 	const url = event.url;
 	const providerFilter = url.searchParams.get('provider')?.toLowerCase().trim();
@@ -208,7 +264,7 @@ export const GET: RequestHandler = async (event) => {
 			const providerCodes = [...new Set(docs.map((d) => d.provider).filter(Boolean))];
 			const detailsMap = await getProviderDetailsMap(providerCodes);
 			const { codeMap: accountCodeMap, providerMap } = await getAccountMaps(docs);
-			const invoices = docs.map((d) => {
+			const invoices: InvoiceRow[] = docs.map((d) => {
 				const resolvedProvider = d.paymentAccountId ? providerMap[d.paymentAccountId] : undefined;
 				const providerForDetails = resolvedProvider ?? d.provider;
 				const meta = (d.metadata as { projectIds?: number[] }) ?? {};
@@ -222,8 +278,17 @@ export const GET: RequestHandler = async (event) => {
 					resolvedProvider
 				);
 				(shape as { linked_project_names?: string[] }).linked_project_names = linkedProjectNames(linkedIds, projectMap);
-				return shape;
+				return shape as InvoiceRow;
 			});
+			const stripe = getStripe();
+			if (stripe) {
+				for (const acc of ctx.accounts) {
+					if ((acc.provider ?? 'stripe') !== 'stripe' || !acc.customerId) continue;
+					const standalone = await getStandaloneChargeRows(stripe, acc.customerId);
+					invoices.push(...standalone);
+				}
+				sortInvoicesByCreated(invoices);
+			}
 			return json({ linked: true, invoices });
 		}
 	}
@@ -239,7 +304,7 @@ export const GET: RequestHandler = async (event) => {
 			limit: 100,
 			expand: ['data.charge']
 		});
-		const invoices = (list.data ?? []).map((inv) => {
+		const invoices: InvoiceRow[] = (list.data ?? []).map((inv) => {
 			const charge = inv.charge as { receipt_url?: string | null } | string | null;
 			const receiptUrl = typeof charge === 'object' && charge?.receipt_url ? charge.receipt_url : undefined;
 			return {
@@ -260,6 +325,9 @@ export const GET: RequestHandler = async (event) => {
 				description: inv.description ?? undefined
 			};
 		});
+		const standalone = await getStandaloneChargeRows(stripe, billing.stripeCustomerId ?? '');
+		invoices.push(...standalone);
+		sortInvoicesByCreated(invoices);
 		return json({ linked: true, invoices });
 	} catch (err: any) {
 		console.error('[billing/invoices] Stripe error:', err?.message ?? err);

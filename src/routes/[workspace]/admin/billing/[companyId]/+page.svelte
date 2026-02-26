@@ -194,6 +194,21 @@
 		return list;
 	})();
 
+	/** Paginación del historial */
+	const PAGE_SIZE_OPTIONS = [10, 25, 50] as const;
+	let pageSize = 25;
+	let currentPage = 1;
+	$: totalFiltered = filteredInvoices.length;
+	$: totalPages = Math.max(1, Math.ceil(totalFiltered / pageSize));
+	$: currentPage = totalFiltered === 0 ? 1 : Math.min(currentPage, totalPages);
+	$: paginatedInvoices = filteredInvoices.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+	$: rangeStart = totalFiltered === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+	$: rangeEnd = Math.min(currentPage * pageSize, totalFiltered);
+
+	function goToPage(page: number) {
+		currentPage = Math.max(1, Math.min(page, totalPages));
+	}
+
 	let drawerOpen = false;
 	let selectedInvoice: BillingInvoice | null = null;
 	let manageAccountsModalOpen = false;
@@ -706,7 +721,7 @@
 								</tr>
 							</thead>
 							<tbody class="[&_tr:last-child]:border-0">
-								{#each filteredInvoices as invoice}
+								{#each paginatedInvoices as invoice}
 									<tr class="border-b transition-colors hover:bg-muted/50">
 										<td class="p-4 align-middle font-medium">{invoice.description ?? invoice.id}</td>
 										<td class="p-4 align-middle text-sm">{methodDisplayName(invoice.provider)}</td>
@@ -803,8 +818,49 @@
 							</tbody>
 						</table>
 					</div>
+					<div class="flex flex-col sm:flex-row items-center justify-between gap-4 px-4 py-3 border-t border-border">
+						<p class="text-sm text-muted-foreground">
+							{totalFiltered === 0
+								? 'Sin resultados'
+								: `Mostrando ${rangeStart}–${rangeEnd} de ${totalFiltered}`}
+						</p>
+						<div class="flex items-center gap-4">
+							<label for="admin-billing-pagesize" class="text-sm text-muted-foreground">Mostrar</label>
+							<select
+								id="admin-billing-pagesize"
+								bind:value={pageSize}
+								on:change={() => (currentPage = 1)}
+								class="rounded-md border border-input bg-background px-2 py-1.5 text-sm"
+							>
+								{#each PAGE_SIZE_OPTIONS as size}
+									<option value={size}>{size}</option>
+								{/each}
+							</select>
+							<div class="flex items-center gap-1">
+								<button
+									type="button"
+									disabled={currentPage <= 1}
+									on:click={() => goToPage(currentPage - 1)}
+									class="rounded-md border border-input bg-background px-3 py-1.5 text-sm font-medium hover:bg-accent disabled:opacity-50 disabled:pointer-events-none"
+								>
+									Anterior
+								</button>
+								<span class="px-2 text-sm text-muted-foreground">
+									Página {currentPage} de {totalPages}
+								</span>
+								<button
+									type="button"
+									disabled={currentPage >= totalPages}
+									on:click={() => goToPage(currentPage + 1)}
+									class="rounded-md border border-input bg-background px-3 py-1.5 text-sm font-medium hover:bg-accent disabled:opacity-50 disabled:pointer-events-none"
+								>
+									Siguiente
+								</button>
+							</div>
+						</div>
+					</div>
 					<div class="md:hidden space-y-4">
-						{#each filteredInvoices as invoice}
+						{#each paginatedInvoices as invoice}
 							<div class="rounded-lg border bg-card text-card-foreground shadow-sm p-4 space-y-4">
 								<div class="flex justify-between items-start gap-4">
 									<div class="space-y-1">

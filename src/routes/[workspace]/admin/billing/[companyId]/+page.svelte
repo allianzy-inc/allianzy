@@ -165,14 +165,14 @@
 			.join('');
 	}
 
-	/** Texto para columna Proyecto: "Proyecto MDP" o "—" si no hay nombre. */
+	/** Texto para columna Proyecto: solo iniciales (ej. "MDP") o "—". El título de la columna es "Proyecto". */
 	function projectDisplay(inv: { linked_project_names?: string[]; projectName?: string | null }): string {
 		const name =
 			inv.linked_project_names && inv.linked_project_names.length > 0
 				? inv.linked_project_names[0]
 				: inv.projectName ?? null;
 		const initials = projectInitials(name);
-		return initials ? `Proyecto ${initials}` : '—';
+		return initials || '—';
 	}
 
 	/** Opciones del filtro: todas las cuentas (allAccounts) + las que aparecen en facturas, para que se vean todos los clientes Stripe aunque no tengan facturas. */

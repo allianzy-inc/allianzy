@@ -267,7 +267,7 @@ export const GET: RequestHandler = async (event) => {
 			const providerCodes = [...new Set(docs.map((d) => d.provider).filter(Boolean))];
 			const detailsMap = await getProviderDetailsMap(providerCodes);
 			const { codeMap: accountCodeMap, providerMap } = await getAccountMaps(docs);
-			const invoices: InvoiceRow[] = docs.map((d) => {
+			const fromDocs: InvoiceRow[] = docs.map((d) => {
 				const resolvedProvider = d.paymentAccountId ? providerMap[d.paymentAccountId] : undefined;
 				const providerForDetails = resolvedProvider ?? d.provider;
 				const meta = (d.metadata as { projectIds?: number[] }) ?? {};
@@ -283,12 +283,25 @@ export const GET: RequestHandler = async (event) => {
 				(shape as { linked_project_names?: string[] }).linked_project_names = linkedProjectNames(linkedIds, projectMap);
 				return shape as InvoiceRow;
 			});
+			/** Una sola fila por factura: deduplicar por id (provider_document_id o document id). */
+			const seenIds = new Set<string>();
+			const invoices: InvoiceRow[] = fromDocs.filter((row) => {
+				const key = row.id ?? (row as { documentId?: string }).documentId ?? '';
+				if (seenIds.has(key)) return false;
+				seenIds.add(key);
+				return true;
+			});
 			const stripe = getStripe();
 			if (stripe) {
 				for (const acc of ctx.accounts) {
 					if ((acc.provider ?? 'stripe') !== 'stripe' || !acc.customerId) continue;
 					const standalone = await getStandaloneChargeRows(stripe, acc.customerId);
-					invoices.push(...standalone);
+					for (const row of standalone) {
+						if (!seenIds.has(row.id)) {
+							seenIds.add(row.id);
+							invoices.push(row);
+						}
+					}
 				}
 				sortInvoicesByCreated(invoices);
 			}
@@ -331,7 +344,13 @@ export const GET: RequestHandler = async (event) => {
 			};
 		});
 		const standalone = await getStandaloneChargeRows(stripe, billing.stripeCustomerId ?? '');
-		invoices.push(...standalone);
+		const seenIds = new Set(invoices.map((r) => r.id));
+		for (const row of standalone) {
+			if (!seenIds.has(row.id)) {
+				seenIds.add(row.id);
+				invoices.push(row);
+			}
+		}
 		sortInvoicesByCreated(invoices);
 		return json({ linked: true, invoices });
 	} catch (err: any) {

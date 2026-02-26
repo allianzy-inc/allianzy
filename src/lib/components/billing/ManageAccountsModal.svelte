@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { X, Trash2, Star } from 'lucide-svelte';
+	import { X, Trash2, Star, Pencil } from 'lucide-svelte';
 
 	export type AccountItem = {
 		customerId: string;
@@ -19,13 +19,19 @@
 	export let onRemove: ((accountId: string) => Promise<void>) | null = null;
 	/** Establecer predeterminada: recibe paymentAccountId o customerId para Stripe legacy */
 	export let onSetDefault: ((accountId: string) => Promise<void>) | null = null;
-	/** Tras cambiar algo (añadir, quitar, predeterminada) para que el padre refresque la lista */
+	/** Editar cuenta: recibe paymentAccountId (uuid), payload con label y opcional customerId (Stripe). Solo si tiene paymentAccountId. */
+	export let onUpdate: ((paymentAccountId: string, payload: { label: string; customerId?: string }) => Promise<void>) | null = null;
+	/** Tras cambiar algo (añadir, quitar, predeterminada, editar) para que el padre refresque la lista */
 	export let onAfterChange: (() => void | Promise<void>) | undefined = undefined;
 
 	let stripeInput = '';
 	let setAsDefaultNew = false;
 	let saving = false;
 	let error: string | null = null;
+	/** ID de la cuenta en edición (paymentAccountId uuid). */
+	let editingId: string | null = null;
+	let editLabel = '';
+	let editCustomerId = '';
 
 	function providerLabel(provider: string | undefined): string {
 		if (!provider) return '—';
@@ -97,6 +103,50 @@
 			saving = false;
 		}
 	}
+
+	function startEdit(acc: AccountItem) {
+		const id = acc.paymentAccountId ?? null;
+		if (!id || !onUpdate) return;
+		editingId = id;
+		editLabel = acc.label ?? acc.customerId ?? '';
+		editCustomerId = (acc.provider ?? 'stripe') === 'stripe' ? (acc.customerId ?? '') : '';
+		error = null;
+	}
+
+	function cancelEdit() {
+		editingId = null;
+		editLabel = '';
+		editCustomerId = '';
+		error = null;
+	}
+
+	async function saveEdit() {
+		if (!editingId || !onUpdate) return;
+		const label = editLabel.trim();
+		if (!label) {
+			error = 'El nombre es obligatorio';
+			return;
+		}
+		const isStripe = editCustomerId.trim().startsWith('cus_');
+		if (editCustomerId.trim() && !isStripe) {
+			error = 'El ID de Stripe debe ser cus_...';
+			return;
+		}
+		error = null;
+		saving = true;
+		try {
+			await onUpdate(editingId, {
+				label,
+				...(isStripe ? { customerId: editCustomerId.trim() } : {})
+			});
+			cancelEdit();
+			if (onAfterChange) await onAfterChange();
+		} catch (err: any) {
+			error = err?.message ?? 'Error al guardar';
+		} finally {
+			saving = false;
+		}
+	}
 </script>
 
 {#if open}
@@ -121,7 +171,7 @@
 				</button>
 			</div>
 			<p class="text-sm text-muted-foreground px-6 pt-2 shrink-0">
-				Cuentas vinculadas a esta empresa (Stripe, MercadoPago, PayPal, etc.). Podés establecer una como predeterminada o eliminar.
+				Cuentas vinculadas a esta empresa (Stripe, MercadoPago, PayPal, etc.). Podés editar, establecer una como predeterminada o eliminar.
 			</p>
 			{#if error}
 				<p class="text-sm text-destructive px-6 py-2 shrink-0">{error}</p>
@@ -130,40 +180,95 @@
 				{#if accounts.length > 0}
 					<ul class="space-y-2">
 						{#each accounts as acc}
-							<li class="flex items-center justify-between gap-2 rounded-md border bg-muted/30 px-3 py-2 text-sm">
-								<div class="min-w-0 flex-1 flex items-center gap-2">
-									<span class="shrink-0 text-xs font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
-										{providerLabel(acc.provider)}
-									</span>
-									<span class="truncate font-mono text-xs" title={acc.customerId}>{acc.label || acc.customerId}</span>
-								</div>
-								<div class="flex items-center gap-1 shrink-0">
-									{#if acc.isDefault}
-										<span class="text-xs text-muted-foreground">Predeterminada</span>
-									{:else if onSetDefault && accountId(acc)}
-										<button
-											type="button"
-											on:click={() => setDefaultOne(acc)}
-											disabled={saving}
-											class="inline-flex items-center gap-1 text-xs text-primary hover:underline disabled:opacity-50"
-											title="Establecer como predeterminada"
-										>
-											<Star class="w-3.5 h-3.5" />
-											Predeterminada
-										</button>
-									{/if}
-									{#if onRemove && accountId(acc)}
-										<button
-											type="button"
-											on:click={() => removeOne(acc)}
-											disabled={saving}
-											class="p-1.5 text-destructive hover:bg-destructive/10 rounded"
-											aria-label="Eliminar cuenta"
-										>
-											<Trash2 class="w-4 h-4" />
-										</button>
-									{/if}
-								</div>
+							<li class="rounded-md border bg-muted/30 px-3 py-2 text-sm">
+								{#if acc.paymentAccountId && editingId === acc.paymentAccountId}
+									<form on:submit|preventDefault={saveEdit} class="space-y-2">
+										<div>
+											<label class="text-xs text-muted-foreground">Nombre</label>
+											<input
+												type="text"
+												bind:value={editLabel}
+												class="mt-0.5 w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm"
+												placeholder="Ej. Stripe principal"
+											/>
+										</div>
+										{#if (acc.provider ?? 'stripe') === 'stripe'}
+											<div>
+												<label class="text-xs text-muted-foreground">ID de cliente (cus_...)</label>
+												<input
+													type="text"
+													bind:value={editCustomerId}
+													class="mt-0.5 w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm font-mono"
+													placeholder="cus_..."
+												/>
+											</div>
+										{/if}
+										<div class="flex gap-2">
+											<button
+												type="submit"
+												disabled={saving}
+												class="px-3 py-1.5 text-sm font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+											>
+												{saving ? 'Guardando...' : 'Guardar'}
+											</button>
+											<button type="button" on:click={cancelEdit} disabled={saving} class="px-3 py-1.5 text-sm rounded-md border hover:bg-muted">
+												Cancelar
+											</button>
+										</div>
+									</form>
+								{:else}
+									<div class="flex items-center justify-between gap-2">
+										<div class="min-w-0 flex-1 flex flex-col gap-0.5">
+											<div class="flex items-center gap-2">
+												<span class="shrink-0 text-xs font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+													{providerLabel(acc.provider)}
+												</span>
+												<span class="truncate text-sm">{acc.label || acc.customerId}</span>
+											</div>
+											{#if (acc.provider ?? 'stripe') === 'stripe' && acc.customerId}
+												<span class="font-mono text-xs text-muted-foreground" title={acc.customerId}>{acc.customerId}</span>
+											{/if}
+										</div>
+										<div class="flex items-center gap-1 shrink-0">
+											{#if onUpdate && acc.paymentAccountId}
+												<button
+													type="button"
+													on:click={() => startEdit(acc)}
+													disabled={saving || editingId != null}
+													class="p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground rounded"
+													aria-label="Editar cuenta"
+												>
+													<Pencil class="w-4 h-4" />
+												</button>
+											{/if}
+											{#if acc.isDefault}
+												<span class="text-xs text-muted-foreground">Predeterminada</span>
+											{:else if onSetDefault && accountId(acc)}
+												<button
+													type="button"
+													on:click={() => setDefaultOne(acc)}
+													disabled={saving}
+													class="inline-flex items-center gap-1 text-xs text-primary hover:underline disabled:opacity-50"
+													title="Establecer como predeterminada"
+												>
+													<Star class="w-3.5 h-3.5" />
+													Predeterminada
+												</button>
+											{/if}
+											{#if onRemove && accountId(acc)}
+												<button
+													type="button"
+													on:click={() => removeOne(acc)}
+													disabled={saving}
+													class="p-1.5 text-destructive hover:bg-destructive/10 rounded"
+													aria-label="Eliminar cuenta"
+												>
+													<Trash2 class="w-4 h-4" />
+												</button>
+											{/if}
+										</div>
+									</div>
+								{/if}
 							</li>
 						{/each}
 					</ul>

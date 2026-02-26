@@ -109,6 +109,23 @@ export async function createPaymentAccount(input: CreatePaymentAccountInput) {
   return row ?? null;
 }
 
+export async function updatePaymentAccount(
+  id: string,
+  companyId: number,
+  data: { label?: string; externalId?: string | null }
+) {
+  const updates: Record<string, unknown> = { updatedAt: new Date() };
+  if (data.label != null) updates.label = data.label;
+  if (data.externalId !== undefined) updates.externalId = data.externalId;
+  if (Object.keys(updates).length === 1) return null;
+  const [row] = await db
+    .update(paymentAccounts)
+    .set(updates as any)
+    .where(and(eq(paymentAccounts.id, id), eq(paymentAccounts.companyId, companyId)))
+    .returning({ id: paymentAccounts.id });
+  return row ?? null;
+}
+
 export async function setDefaultPaymentAccount(companyId: number, accountId: string) {
   await db
     .update(paymentAccounts)

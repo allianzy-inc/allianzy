@@ -150,8 +150,14 @@
 		return providerCode.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 	}
 
+	/** Opciones del filtro: todas las cuentas (allAccounts) + las que aparecen en facturas, para que se vean todos los clientes Stripe aunque no tengan facturas. */
 	$: uniqueAccounts = (() => {
 		const set = new Set<string>();
+		for (const acc of allAccounts) {
+			const provider = acc.provider ?? 'stripe';
+			const code = provider === 'stripe' ? (acc.customerId ?? '') : (acc.paymentAccountId ?? '');
+			if (provider) set.add(`${provider}|${code}`);
+		}
 		for (const inv of allInvoices) {
 			if (inv.provider) set.add(`${inv.provider}|${inv.accountCode ?? ''}`);
 		}
@@ -317,6 +323,26 @@
 				const err = await res.json().catch(() => ({}));
 				throw new Error(err.error ?? 'Error al cambiar predeterminada');
 			}
+		}
+		await loadBilling();
+	}
+
+	/** Editar cuenta (label y opcional customerId Stripe). paymentAccountId es el uuid de la cuenta. */
+	async function handleUpdateAccount(paymentAccountId: string, payload: { label: string; customerId?: string }) {
+		const res = await fetch(`/${workspace}/api/billing/accounts`, {
+			method: 'PATCH',
+			headers: { 'Content-Type': 'application/json' },
+			credentials: 'include',
+			body: JSON.stringify({
+				companyId,
+				paymentAccountId,
+				label: payload.label,
+				...(payload.customerId != null ? { stripeCustomerId: payload.customerId } : {})
+			})
+		});
+		if (!res.ok) {
+			const err = await res.json().catch(() => ({}));
+			throw new Error(err.error ?? 'Error al actualizar');
 		}
 		await loadBilling();
 	}
@@ -525,14 +551,26 @@
 				</div>
 			</div>
 			{#if canManageBilling}
-				<button
-					type="button"
-					on:click={openManageAccountsModal}
-					class="shrink-0 inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-				>
-					<Settings2 class="w-4 h-4" />
-					Gestionar cuentas
-				</button>
+				<div class="flex flex-wrap gap-2 shrink-0">
+					<button
+						type="button"
+						on:click={openManageAccountsModal}
+						class="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+					>
+						<Settings2 class="w-4 h-4" />
+						Gestionar cuentas
+					</button>
+					{#if billingProviders.some((p) => !p.isAutomatic)}
+						<button
+							type="button"
+							on:click={openCreateManualDoc}
+							class="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
+						>
+							<Plus class="w-4 h-4" />
+							Crear facturación manual
+						</button>
+					{/if}
+				</div>
 			{/if}
 		</div>
 	{:else}
@@ -970,6 +1008,7 @@
 	onAddStripe={handleAddStripe}
 	onRemove={handleRemoveAccount}
 	onSetDefault={handleSetDefaultAccount}
+	onUpdate={handleUpdateAccount}
 	onAfterChange={loadBilling}
 />
 

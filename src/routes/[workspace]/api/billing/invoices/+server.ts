@@ -148,6 +148,8 @@ type InvoiceRow = {
 	amount_paid?: number;
 	status?: string;
 	created?: string;
+	due_date?: string;
+	paid_at?: string;
 	[key: string]: unknown;
 };
 
@@ -172,6 +174,7 @@ async function getStandaloneChargeRows(
 				amount_paid: ch.amount ?? 0,
 				status: 'paid',
 				due_date: undefined,
+				paid_at: ch.created ? new Date(ch.created * 1000).toISOString() : undefined,
 				hosted_invoice_url: undefined,
 				invoice_pdf: undefined,
 				receipt_url: (ch as { receipt_url?: string }).receipt_url ?? undefined,
@@ -307,6 +310,7 @@ export const GET: RequestHandler = async (event) => {
 		const invoices: InvoiceRow[] = (list.data ?? []).map((inv) => {
 			const charge = inv.charge as { receipt_url?: string | null } | string | null;
 			const receiptUrl = typeof charge === 'object' && charge?.receipt_url ? charge.receipt_url : undefined;
+			const statusTransitions = inv.status_transitions as { paid_at?: number } | undefined;
 			return {
 				id: inv.id,
 				documentId: null,
@@ -317,6 +321,7 @@ export const GET: RequestHandler = async (event) => {
 				amount_paid: inv.amount_paid ?? 0,
 				status: inv.status ?? undefined,
 				due_date: inv.due_date ? new Date(inv.due_date * 1000).toISOString() : undefined,
+				paid_at: statusTransitions?.paid_at ? new Date(statusTransitions.paid_at * 1000).toISOString() : undefined,
 				hosted_invoice_url: inv.hosted_invoice_url ?? undefined,
 				invoice_pdf: inv.invoice_pdf ?? undefined,
 				receipt_url: receiptUrl ?? undefined,

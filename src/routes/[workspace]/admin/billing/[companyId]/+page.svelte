@@ -108,6 +108,7 @@
 				currency: inv.currency ?? 'usd',
 				createdAt: inv.created ?? new Date().toISOString(),
 				dueAt: inv.due_date,
+				paidAt: inv.paid_at ?? null,
 				description: inv.description ?? inv.number,
 				projectName: inv.projectName,
 				serviceName: inv.serviceName,
@@ -153,6 +154,27 @@
 		return providerCode.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 	}
 
+	/** Iniciales del proyecto: primera letra de cada palabra en mayúscula (ej. "Modelo de Proyecto" → "MDP"). */
+	function projectInitials(projectName: string | null | undefined): string {
+		if (!projectName || !projectName.trim()) return '';
+		return projectName
+			.trim()
+			.split(/\s+/)
+			.map((w) => w[0]?.toUpperCase() ?? '')
+			.filter(Boolean)
+			.join('');
+	}
+
+	/** Texto para columna Proyecto: "Proyecto MDP" o "—" si no hay nombre. */
+	function projectDisplay(inv: { linked_project_names?: string[]; projectName?: string | null }): string {
+		const name =
+			inv.linked_project_names && inv.linked_project_names.length > 0
+				? inv.linked_project_names[0]
+				: inv.projectName ?? null;
+		const initials = projectInitials(name);
+		return initials ? `Proyecto ${initials}` : '—';
+	}
+
 	/** Opciones del filtro: todas las cuentas (allAccounts) + las que aparecen en facturas, para que se vean todos los clientes Stripe aunque no tengan facturas. */
 	$: uniqueAccounts = (() => {
 		const set = new Set<string>();
@@ -174,9 +196,11 @@
 	})();
 
 	$: filteredInvoices = (() => {
-		let list = [...allInvoices].sort(
-			(a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-		);
+		let list = [...allInvoices]
+			.filter((i) => i.amount > 0)
+			.sort(
+				(a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+			);
 		if (filterStatus) list = list.filter((i) => i.status === filterStatus);
 		if (filterByAccount) {
 			const [provider, accountCode] = filterByAccount.split('|');
@@ -716,9 +740,11 @@
 									<th class="h-12 px-4 align-middle font-medium text-muted-foreground">Concepto</th>
 									<th class="h-12 px-4 align-middle font-medium text-muted-foreground">Método de pago</th>
 									<th class="h-12 px-4 align-middle font-medium text-muted-foreground">Cuenta de pago</th>
-									<th class="h-12 px-4 align-middle font-medium text-muted-foreground">Proyecto / Servicio</th>
+									<th class="h-12 px-4 align-middle font-medium text-muted-foreground">Proyecto</th>
 									<th class="h-12 px-4 align-middle font-medium text-muted-foreground">Monto</th>
+									<th class="h-12 px-4 align-middle font-medium text-muted-foreground">Fecha factura</th>
 									<th class="h-12 px-4 align-middle font-medium text-muted-foreground">Vencimiento</th>
+									<th class="h-12 px-4 align-middle font-medium text-muted-foreground">Fecha pago</th>
 									<th class="h-12 px-4 align-middle font-medium text-muted-foreground">Estado</th>
 									<th class="h-12 px-4 align-middle font-medium text-right">Acciones</th>
 								</tr>
@@ -729,24 +755,35 @@
 										<td class="p-4 align-middle font-medium">{invoice.description ?? invoice.id}</td>
 										<td class="p-4 align-middle text-sm">{methodDisplayName(invoice.provider)}</td>
 										<td class="p-4 align-middle font-mono text-xs text-muted-foreground" title={invoice.accountCode ?? ''}>{invoice.accountCode ?? '—'}</td>
-										<td class="p-4 align-middle">
-											<div class="flex flex-col">
-												{#if invoice.linked_project_names && invoice.linked_project_names.length > 0}
-													<span>{invoice.linked_project_names.join(', ')}</span>
-												{:else}
-													<span>{invoice.projectName ?? '—'}</span>
-													{#if invoice.serviceName}
-														<span class="text-xs text-muted-foreground">{invoice.serviceName}</span>
-													{/if}
-												{/if}
-											</div>
+										<td class="p-4 align-middle" title={invoice.linked_project_names?.join(', ') ?? invoice.projectName ?? undefined}>
+											{projectDisplay(invoice)}
 										</td>
 										<td class="p-4 align-middle font-mono">{formatBillingAmount(invoice.amount, invoice.currency)}</td>
+										<td class="p-4 align-middle">
+											{#if invoice.createdAt}
+												<div class="flex items-center gap-2">
+													<Calendar class="h-3 w-3 text-muted-foreground" />
+													{new Date(invoice.createdAt).toLocaleDateString('es-ES')}
+												</div>
+											{:else}
+												—
+											{/if}
+										</td>
 										<td class="p-4 align-middle">
 											{#if invoice.dueAt}
 												<div class="flex items-center gap-2">
 													<Calendar class="h-3 w-3 text-muted-foreground" />
 													{new Date(invoice.dueAt).toLocaleDateString('es-ES')}
+												</div>
+											{:else}
+												—
+											{/if}
+										</td>
+										<td class="p-4 align-middle">
+											{#if invoice.paidAt}
+												<div class="flex items-center gap-2">
+													<Calendar class="h-3 w-3 text-muted-foreground" />
+													{new Date(invoice.paidAt).toLocaleDateString('es-ES')}
 												</div>
 											{:else}
 												—
@@ -869,23 +906,28 @@
 									<div class="space-y-1">
 										<h4 class="font-semibold leading-none tracking-tight">{invoice.description ?? invoice.id}</h4>
 										<p class="text-sm text-muted-foreground">{methodDisplayName(invoice.provider)} · {invoice.accountCode ?? '—'}</p>
-										{#if invoice.linked_project_names && invoice.linked_project_names.length > 0}
-											<p class="text-sm text-muted-foreground">{invoice.linked_project_names.join(', ')}</p>
-										{:else}
-											<p class="text-sm text-muted-foreground">{invoice.projectName ?? '—'}</p>
-											{#if invoice.serviceName}
-												<p class="text-xs text-muted-foreground">{invoice.serviceName}</p>
-											{/if}
-										{/if}
+										<p class="text-sm text-muted-foreground">{projectDisplay(invoice)}</p>
 									</div>
 									<div class="font-mono font-medium whitespace-nowrap">{formatBillingAmount(invoice.amount, invoice.currency)}</div>
 								</div>
 								<div class="flex items-center justify-between pt-2 border-t border-border">
 									<div class="space-y-2">
+										{#if invoice.createdAt}
+											<div class="flex items-center gap-2 text-sm text-muted-foreground">
+												<Calendar class="h-3 w-3" />
+												Factura: {new Date(invoice.createdAt).toLocaleDateString('es-ES')}
+											</div>
+										{/if}
 										{#if invoice.dueAt}
 											<div class="flex items-center gap-2 text-sm text-muted-foreground">
 												<Calendar class="h-3 w-3" />
-												{new Date(invoice.dueAt).toLocaleDateString('es-ES')}
+												Venc.: {new Date(invoice.dueAt).toLocaleDateString('es-ES')}
+											</div>
+										{/if}
+										{#if invoice.paidAt}
+											<div class="flex items-center gap-2 text-sm text-muted-foreground">
+												<Calendar class="h-3 w-3" />
+												Pago: {new Date(invoice.paidAt).toLocaleDateString('es-ES')}
 											</div>
 										{/if}
 										<span

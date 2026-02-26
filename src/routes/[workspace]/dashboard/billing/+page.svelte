@@ -65,27 +65,33 @@
 			linked = invData.linked ?? subData.linked ?? false;
 			const rawInvoices = invData.invoices ?? [];
 			const rawSubs = subData.subscriptions ?? [];
-			allInvoices = rawInvoices.map((inv: any) => ({
-				id: inv.id,
-				documentId: inv.documentId ?? null,
-				provider: inv.provider,
-				accountCode: inv.account_code ?? null,
-				providerDetails: inv.provider_details ?? undefined,
-				status: inv.status ?? 'open',
-				amount: inv.amount_due ?? inv.amount_paid ?? 0,
-				currency: inv.currency ?? 'usd',
-				createdAt: inv.created ?? new Date().toISOString(),
-				dueAt: inv.due_date,
-				description: inv.description ?? inv.number,
-				projectName: inv.projectName,
-				serviceName: inv.serviceName,
-				hostedInvoiceUrl: inv.hosted_invoice_url,
-				invoicePdfUrl: inv.invoice_pdf,
-				receiptUrl: inv.receipt_url,
-				proofUrl: inv.proof_url ?? null,
-				proofUploadedAt: inv.proof_uploaded_at ?? null,
-				proofFiles: inv.proof_files ?? (inv.proof_url ? [{ id: 'legacy', url: inv.proof_url, name: 'Comprobante', uploadedAt: inv.proof_uploaded_at ?? '' }] : [])
-			}));
+			allInvoices = rawInvoices.map((inv: any) => {
+				const due = inv.amount_due ?? 0;
+				const paid = inv.amount_paid ?? 0;
+				return {
+					id: inv.id,
+					documentId: inv.documentId ?? null,
+					provider: inv.provider,
+					accountCode: inv.account_code ?? null,
+					providerDetails: inv.provider_details ?? undefined,
+					status: inv.status ?? 'open',
+					amount: due + paid,
+					currency: inv.currency ?? 'usd',
+					createdAt: inv.created ?? new Date().toISOString(),
+					dueAt: inv.due_date,
+					paidAt: inv.paid_at ?? null,
+					description: inv.description ?? inv.number,
+					projectName: inv.projectName,
+					linked_project_names: Array.isArray(inv.linked_project_names) ? inv.linked_project_names : undefined,
+					serviceName: inv.serviceName,
+					hostedInvoiceUrl: inv.hosted_invoice_url,
+					invoicePdfUrl: inv.invoice_pdf,
+					receiptUrl: inv.receipt_url,
+					proofUrl: inv.proof_url ?? null,
+					proofUploadedAt: inv.proof_uploaded_at ?? null,
+					proofFiles: inv.proof_files ?? (inv.proof_url ? [{ id: 'legacy', url: inv.proof_url, name: 'Comprobante', uploadedAt: inv.proof_uploaded_at ?? '' }] : [])
+				};
+			});
 			allSubscriptions = rawSubs.map((sub: any) => ({
 				id: sub.id,
 				status: sub.status ?? 'active',
@@ -120,6 +126,27 @@
 		return providerCode.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 	}
 
+	/** Iniciales del proyecto: primera letra de cada palabra en mayúscula (ej. "Modelo de Proyecto" → "MDP"). */
+	function projectInitials(projectName: string | null | undefined): string {
+		if (!projectName || !projectName.trim()) return '';
+		return projectName
+			.trim()
+			.split(/\s+/)
+			.map((w) => w[0]?.toUpperCase() ?? '')
+			.filter(Boolean)
+			.join('');
+	}
+
+	/** Texto para columna Proyecto: "Proyecto MDP" o "—" si no hay nombre. */
+	function projectDisplay(inv: { linked_project_names?: string[]; projectName?: string | null }): string {
+		const name =
+			inv.linked_project_names && inv.linked_project_names.length > 0
+				? inv.linked_project_names[0]
+				: inv.projectName ?? null;
+		const initials = projectInitials(name);
+		return initials ? `Proyecto ${initials}` : '—';
+	}
+
 	/** Opciones del filtro: una por cada cuenta (mismo método puede aparecer varias veces con distinto cus_/código). */
 	$: uniqueAccounts = (() => {
 		const set = new Set<string>();
@@ -136,9 +163,11 @@
 	})();
 
 	$: filteredInvoices = (() => {
-		let list = [...allInvoices].sort(
-			(a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-		);
+		let list = [...allInvoices]
+			.filter((i) => i.amount > 0)
+			.sort(
+				(a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+			);
 		if (filterStatus) list = list.filter((i) => i.status === filterStatus);
 		if (filterByAccount) {
 			const [provider, accountCode] = filterByAccount.split('|');
@@ -158,6 +187,21 @@
 		}
 		return list;
 	})();
+
+	/** Paginación del historial (igual que en admin). */
+	const PAGE_SIZE_OPTIONS = [10, 25, 50] as const;
+	let pageSize = 25;
+	let currentPage = 1;
+	$: totalFiltered = filteredInvoices.length;
+	$: totalPages = Math.max(1, Math.ceil(totalFiltered / pageSize));
+	$: currentPage = totalFiltered === 0 ? 1 : Math.min(currentPage, totalPages);
+	$: paginatedInvoices = filteredInvoices.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+	$: rangeStart = totalFiltered === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+	$: rangeEnd = Math.min(currentPage * pageSize, totalFiltered);
+
+	function goToPage(page: number) {
+		currentPage = Math.max(1, Math.min(page, totalPages));
+	}
 
 	let drawerOpen = false;
 	let selectedInvoice: BillingInvoice | null = null;
@@ -365,33 +409,50 @@
 										<th class="h-12 px-4 align-middle font-medium text-muted-foreground">Concepto</th>
 										<th class="h-12 px-4 align-middle font-medium text-muted-foreground">Método de pago</th>
 										<th class="h-12 px-4 align-middle font-medium text-muted-foreground">Cuenta de pago</th>
-										<th class="h-12 px-4 align-middle font-medium text-muted-foreground">Proyecto / Servicio</th>
+										<th class="h-12 px-4 align-middle font-medium text-muted-foreground">Proyecto</th>
 										<th class="h-12 px-4 align-middle font-medium text-muted-foreground">Monto</th>
+										<th class="h-12 px-4 align-middle font-medium text-muted-foreground">Fecha factura</th>
 										<th class="h-12 px-4 align-middle font-medium text-muted-foreground">Vencimiento</th>
+										<th class="h-12 px-4 align-middle font-medium text-muted-foreground">Fecha pago</th>
 										<th class="h-12 px-4 align-middle font-medium text-muted-foreground">Estado</th>
 										<th class="h-12 px-4 align-middle font-medium text-right">Acciones</th>
 									</tr>
 								</thead>
 								<tbody class="[&_tr:last-child]:border-0">
-									{#each filteredInvoices as invoice}
+									{#each paginatedInvoices as invoice}
 										<tr class="border-b transition-colors hover:bg-muted/50">
 											<td class="p-4 align-middle font-medium">{invoice.description ?? invoice.id}</td>
 											<td class="p-4 align-middle text-sm">{methodDisplayName(invoice.provider)}</td>
 											<td class="p-4 align-middle font-mono text-xs text-muted-foreground" title={invoice.accountCode ?? ''}>{invoice.accountCode ?? '—'}</td>
-											<td class="p-4 align-middle">
-												<div class="flex flex-col">
-													<span>{invoice.projectName ?? '—'}</span>
-													{#if invoice.serviceName}
-														<span class="text-xs text-muted-foreground">{invoice.serviceName}</span>
-													{/if}
-												</div>
+											<td class="p-4 align-middle" title={invoice.projectName ?? undefined}>
+												{projectDisplay(invoice)}
 											</td>
 											<td class="p-4 align-middle font-mono">{formatBillingAmount(invoice.amount, invoice.currency)}</td>
+											<td class="p-4 align-middle">
+												{#if invoice.createdAt}
+													<div class="flex items-center gap-2">
+														<Calendar class="h-3 w-3 text-muted-foreground" />
+														{new Date(invoice.createdAt).toLocaleDateString('es-ES')}
+													</div>
+												{:else}
+													—
+												{/if}
+											</td>
 											<td class="p-4 align-middle">
 												{#if invoice.dueAt}
 													<div class="flex items-center gap-2">
 														<Calendar class="h-3 w-3 text-muted-foreground" />
 														{new Date(invoice.dueAt).toLocaleDateString('es-ES')}
+													</div>
+												{:else}
+													—
+												{/if}
+											</td>
+											<td class="p-4 align-middle">
+												{#if invoice.paidAt}
+													<div class="flex items-center gap-2">
+														<Calendar class="h-3 w-3 text-muted-foreground" />
+														{new Date(invoice.paidAt).toLocaleDateString('es-ES')}
 													</div>
 												{:else}
 													—
@@ -420,15 +481,55 @@
 								</tbody>
 							</table>
 						</div>
-
+						<div class="flex flex-col sm:flex-row items-center justify-between gap-4 px-4 py-3 border-t border-border">
+							<p class="text-sm text-muted-foreground">
+								{totalFiltered === 0
+									? 'Sin resultados'
+									: `Mostrando ${rangeStart}–${rangeEnd} de ${totalFiltered}`}
+							</p>
+							<div class="flex items-center gap-4">
+								<label for="billing-pagesize" class="text-sm text-muted-foreground">Mostrar</label>
+								<select
+									id="billing-pagesize"
+									bind:value={pageSize}
+									on:change={() => (currentPage = 1)}
+									class="rounded-md border border-input bg-background px-2 py-1.5 text-sm"
+								>
+									{#each PAGE_SIZE_OPTIONS as size}
+										<option value={size}>{size}</option>
+									{/each}
+								</select>
+								<div class="flex items-center gap-1">
+									<button
+										type="button"
+										disabled={currentPage <= 1}
+										on:click={() => goToPage(currentPage - 1)}
+										class="rounded-md border border-input bg-background px-3 py-1.5 text-sm font-medium hover:bg-accent disabled:opacity-50 disabled:pointer-events-none"
+									>
+										Anterior
+									</button>
+									<span class="px-2 text-sm text-muted-foreground">
+										Página {currentPage} de {totalPages}
+									</span>
+									<button
+										type="button"
+										disabled={currentPage >= totalPages}
+										on:click={() => goToPage(currentPage + 1)}
+										class="rounded-md border border-input bg-background px-3 py-1.5 text-sm font-medium hover:bg-accent disabled:opacity-50 disabled:pointer-events-none"
+									>
+										Siguiente
+									</button>
+								</div>
+							</div>
+						</div>
 						<div class="md:hidden space-y-4">
-							{#each filteredInvoices as invoice}
+							{#each paginatedInvoices as invoice}
 								<div class="rounded-lg border bg-card text-card-foreground shadow-sm p-4 space-y-4">
 									<div class="flex justify-between items-start gap-4">
 										<div class="space-y-1">
 											<h4 class="font-semibold leading-none tracking-tight">{invoice.description ?? invoice.id}</h4>
 											<p class="text-sm text-muted-foreground">{methodDisplayName(invoice.provider)} · {invoice.accountCode ?? '—'}</p>
-											<p class="text-sm text-muted-foreground">{invoice.projectName ?? '—'}</p>
+											<p class="text-sm text-muted-foreground">{projectDisplay(invoice)}</p>
 											{#if invoice.serviceName}
 												<p class="text-xs text-muted-foreground">{invoice.serviceName}</p>
 											{/if}
@@ -437,10 +538,22 @@
 									</div>
 									<div class="flex items-center justify-between pt-2 border-t border-border">
 										<div class="space-y-2">
+											{#if invoice.createdAt}
+												<div class="flex items-center gap-2 text-sm text-muted-foreground">
+													<Calendar class="h-3 w-3" />
+													Factura: {new Date(invoice.createdAt).toLocaleDateString('es-ES')}
+												</div>
+											{/if}
 											{#if invoice.dueAt}
 												<div class="flex items-center gap-2 text-sm text-muted-foreground">
 													<Calendar class="h-3 w-3" />
-													{new Date(invoice.dueAt).toLocaleDateString('es-ES')}
+													Venc.: {new Date(invoice.dueAt).toLocaleDateString('es-ES')}
+												</div>
+											{/if}
+											{#if invoice.paidAt}
+												<div class="flex items-center gap-2 text-sm text-muted-foreground">
+													<Calendar class="h-3 w-3" />
+													Pago: {new Date(invoice.paidAt).toLocaleDateString('es-ES')}
 												</div>
 											{/if}
 											<span

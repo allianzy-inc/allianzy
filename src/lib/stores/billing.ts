@@ -15,6 +15,8 @@ export interface BillingInvoice {
 	currency: string;
 	createdAt: string; // ISO
 	dueAt?: string;
+	/** Fecha de pago (ISO), cuando la factura pasó a estado pagado. */
+	paidAt?: string | null;
 	description?: string;
 	projectName?: string;
 	serviceName?: string;

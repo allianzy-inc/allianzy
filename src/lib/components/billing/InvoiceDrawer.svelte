@@ -225,14 +225,17 @@
 	/** Siempre mostrar en admin con empresa para que se pueda asociar proyecto a cualquier pago. */
 	$: showLinkProjectsSection = canManageBilling && companyId != null;
 
-	function toggleProjectLink(projectId: number) {
+	async function toggleProjectLink(projectId: number) {
 		const idx = linkedProjectIds.indexOf(projectId);
-		if (idx >= 0) linkedProjectIds = linkedProjectIds.filter((id) => id !== projectId);
-		else linkedProjectIds = [...linkedProjectIds, projectId];
+		const newIds = idx >= 0 ? linkedProjectIds.filter((id) => id !== projectId) : [...linkedProjectIds, projectId];
+		linkedProjectIds = newIds;
+		// Guardar al instante al marcar/desmarcar para que el cambio persista y se vea en la tabla
+		await saveLinkProjects(newIds);
 	}
 
-	async function saveLinkProjects() {
+	async function saveLinkProjects(projectIdsOverride?: number[]) {
 		if (!invoice || companyId == null) return;
+		const idsToSave = projectIdsOverride ?? linkedProjectIds;
 		linkProjectsSaving = true;
 		linkProjectsError = '';
 		try {
@@ -244,10 +247,10 @@
 			const method = !isUpcoming && invoice.documentId != null ? 'PATCH' : 'POST';
 			const body: Record<string, unknown> =
 				!isUpcoming && invoice.documentId != null
-					? { companyId, projectIds: linkedProjectIds }
+					? { companyId, projectIds: idsToSave }
 					: {
 							companyId,
-							projectIds: linkedProjectIds,
+							projectIds: idsToSave,
 							provider: invoice.provider ?? 'stripe',
 							providerDocumentId: invoice.id,
 							...(isUpcoming && {
@@ -344,7 +347,7 @@
 					<div class="rounded-lg border bg-muted/30 p-4 space-y-3">
 						<p class="text-sm font-medium">Vincular a proyectos</p>
 						<p class="text-sm text-muted-foreground">
-							Marcá los proyectos de la empresa a los que corresponde esta factura. Podés elegir uno o varios. El pago se verá en la pestaña Pagos de cada proyecto.
+							Marcá los proyectos de la empresa a los que corresponde esta factura. Podés elegir uno o varios. El pago se verá en la pestaña Pagos de cada proyecto. Los cambios se guardan solos al marcar o desmarcar.
 						</p>
 						{#if invoice?.id?.startsWith?.('upcoming_')}
 							<p class="text-sm text-muted-foreground mb-2">
@@ -372,17 +375,12 @@
 									</label>
 								{/each}
 							</div>
-							<button
-								type="button"
-								class="btn btn-primary btn-sm"
-								disabled={linkProjectsSaving}
-								on:click={saveLinkProjects}
-							>
-								{#if linkProjectsSaving}
+							{#if linkProjectsSaving}
+								<p class="text-sm text-muted-foreground flex items-center gap-2">
 									<Loader2 class="w-4 h-4 animate-spin" />
-								{/if}
-								Guardar vínculos
-							</button>
+									Guardando…
+								</p>
+							{/if}
 						{/if}
 					</div>
 				{/if}
@@ -544,9 +542,10 @@
 							target="_blank"
 							rel="noopener noreferrer"
 							class="inline-flex items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
+							title="Descargar factura (PDF)"
 						>
 							<Download class="w-4 h-4" />
-							Descargar factura
+							Factura
 						</a>
 					{/if}
 					{#if invoice.receiptUrl}
@@ -555,9 +554,10 @@
 							target="_blank"
 							rel="noopener noreferrer"
 							class="inline-flex items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
+							title="Descargar recibo"
 						>
 							<Receipt class="w-4 h-4" />
-							Descargar recibo
+							Recibo
 						</a>
 					{/if}
 					{#if canManageBilling && invoice.status === 'open' && invoice.hostedInvoiceUrl}

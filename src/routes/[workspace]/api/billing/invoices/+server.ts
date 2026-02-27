@@ -323,8 +323,9 @@ export const GET: RequestHandler = async (event) => {
 	// 1) Devolver todos los documentos de la empresa (Stripe + MercadoPago, etc.) cuando hay companyId
 	if (ctx.companyId) {
 		let docs = await billingDocsRepo.findBillingDocumentsByCompanyId(ctx.companyId, { limit: 100 });
-		// Sync Stripe si hay cuenta Stripe y no hay docs en DB
-		if (docs.length === 0 && ctx.accounts.some((a) => a.provider === 'stripe')) {
+		const hasStripeAccounts = ctx.accounts.some((a) => (a.provider ?? 'stripe') === 'stripe');
+		// Sync Stripe si hay cuenta Stripe y (no hay docs o queremos refrescar todas las cuentas, p. ej. gcus_ recién añadida)
+		if (hasStripeAccounts && docs.length === 0) {
 			try {
 				await syncStripeForCompany(ctx.companyId);
 				docs = await billingDocsRepo.findBillingDocumentsByCompanyId(ctx.companyId, { limit: 100 });
@@ -332,7 +333,8 @@ export const GET: RequestHandler = async (event) => {
 				console.error('[billing/invoices] sync error:', err?.message ?? err);
 			}
 		}
-		if (docs.length > 0) {
+		// Construir historial siempre que haya cuentas Stripe (aunque docs esté vacío: pagos sin factura / guest)
+		if (hasStripeAccounts || docs.length > 0) {
 			const allProjectIds = [...new Set(docs.flatMap((d) => {
 				const ids = [d.projectId].filter(Boolean) as number[];
 				const meta = (d.metadata as { projectIds?: number[] }) ?? {};
@@ -359,7 +361,6 @@ export const GET: RequestHandler = async (event) => {
 				(shape as { linked_project_names?: string[] }).linked_project_names = linkedProjectNames(linkedIds, projectMap);
 				return shape as InvoiceRow;
 			});
-			/** Una sola fila por factura: deduplicar por id (provider_document_id o document id). */
 			const seenIds = new Set<string>();
 			const invoices: InvoiceRow[] = fromDocs.filter((row) => {
 				const key = row.id ?? (row as { documentId?: string }).documentId ?? '';
@@ -371,15 +372,18 @@ export const GET: RequestHandler = async (event) => {
 			if (stripe) {
 				for (const acc of ctx.accounts) {
 					if ((acc.provider ?? 'stripe') !== 'stripe' || !acc.customerId) continue;
-					const standalone = await getStandaloneChargeRows(stripe, acc.customerId);
-					for (const row of standalone) {
-						if (!seenIds.has(row.id) && shouldAddStandaloneCharge(row, invoices)) {
-							seenIds.add(row.id);
-							invoices.push(row);
+					try {
+						const standalone = await getStandaloneChargeRows(stripe, acc.customerId);
+						for (const row of standalone) {
+							if (!seenIds.has(row.id) && shouldAddStandaloneCharge(row, invoices)) {
+								seenIds.add(row.id);
+								invoices.push(row);
+							}
 						}
+					} catch (e: any) {
+						console.error('[billing/invoices] standalone charges for', acc.customerId, e?.message ?? e);
 					}
 				}
-				// Próximas facturas por suscripción (preview Stripe)
 				try {
 					const subs = await subscriptionRecordsRepo.findSubscriptionRecordsByCompanyId(ctx.companyId!);
 					const accountCodeByPaymentId: Record<string, string> = Object.fromEntries(
@@ -394,11 +398,10 @@ export const GET: RequestHandler = async (event) => {
 							invoices.push(row);
 						}
 					}
-					// Enriquecer próximas con vínculos a proyectos (upcoming_invoice_project_links)
 					const upcomingLinks = await upcomingLinksRepo.findUpcomingLinksByCompanyId(ctx.companyId!);
 					if (upcomingLinks.length > 0) {
-						const allProjectIds = [...new Set(upcomingLinks.flatMap((l) => l.projectIds))];
-						const projectMap = await getProjectInfoMap(allProjectIds);
+						const upcomingProjectIds = [...new Set(upcomingLinks.flatMap((l) => l.projectIds))];
+						const upcomingProjectMap = await getProjectInfoMap(upcomingProjectIds);
 						const linkBySubId = Object.fromEntries(upcomingLinks.map((l) => [l.subscriptionId, l]));
 						for (const row of invoices) {
 							if (row.id?.startsWith?.('upcoming_')) {
@@ -407,7 +410,7 @@ export const GET: RequestHandler = async (event) => {
 								if (link) {
 									(row as InvoiceRow & { linked_project_ids?: number[]; linked_project_names?: string[] }).linked_project_ids = link.projectIds;
 									(row as InvoiceRow & { linked_project_ids?: number[]; linked_project_names?: string[] }).linked_project_names = link.projectIds.map(
-										(pid) => projectMap[pid]?.projectName ?? `Proyecto ${pid}`
+										(pid) => upcomingProjectMap[pid]?.projectName ?? `Proyecto ${pid}`
 									);
 								}
 							}

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
-	import { CreditCard, Calendar, Eye, History, Repeat, Link2, Settings2, ArrowLeft, Loader2, Plus, Pencil, Trash2, RefreshCw } from 'lucide-svelte';
+	import { CreditCard, Calendar, Eye, History, Repeat, Link2, Settings2, ArrowLeft, Loader2, Plus, Pencil, Trash2, RefreshCw, MoreVertical } from 'lucide-svelte';
 	import type { PageData } from './$types';
 	import type { BillingInvoice, BillingInvoiceOverlay } from '$lib/stores/billing';
 	import { formatBillingAmount, setOverlaysFromApi } from '$lib/stores/billing';
@@ -140,6 +140,20 @@
 
 	onMount(() => loadBilling());
 
+	function clickOutside(node: HTMLElement) {
+		const handleClick = (e: MouseEvent) => {
+			if (node && !node.contains(e.target as Node)) {
+				billingMenuOpen = false;
+			}
+		};
+		document.addEventListener('click', handleClick, true);
+		return {
+			destroy() {
+				document.removeEventListener('click', handleClick, true);
+			}
+		};
+	}
+
 	let syncLoading = false;
 	async function handleSync() {
 		if (!companyId || syncLoading) return;
@@ -261,6 +275,7 @@
 
 	// Modal crear/editar facturación manual
 	let manualDocModalOpen = false;
+	let billingMenuOpen = false;
 	let manualDocEditId: string | null = null;
 	let manualDocForm = { number: '', amountTotal: '', amountDue: '', currency: 'usd', dueDate: '', description: '', status: 'open', provider: 'mercadopago_ar' };
 	let manualDocSaving = false;
@@ -617,40 +632,68 @@
 				</div>
 			</div>
 			{#if canManageBilling}
-				<div class="flex flex-wrap gap-2 shrink-0">
+				<div class="relative shrink-0" use:clickOutside>
 					<button
 						type="button"
-						on:click={openManageAccountsModal}
-						class="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+						on:click={() => (billingMenuOpen = !billingMenuOpen)}
+						class="inline-flex items-center justify-center rounded-md border border-input bg-background p-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
+						aria-expanded={billingMenuOpen}
+						aria-haspopup="true"
+						aria-label="Opciones de facturación"
 					>
-						<Settings2 class="w-4 h-4" />
-						Gestionar cuentas
+						<MoreVertical class="h-5 w-5" />
 					</button>
-					{#if allAccounts.some((a) => (a.provider ?? 'stripe') === 'stripe')}
-						<button
-							type="button"
-							on:click={handleSync}
-							disabled={syncLoading}
-							class="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground disabled:opacity-50"
-							title="Actualizar facturas y suscripciones desde Stripe. Útil si agregaste otra cuenta o faltan pagos."
+					{#if billingMenuOpen}
+						<div
+							class="absolute right-0 top-full z-50 mt-1 min-w-[220px] rounded-md border bg-popover py-1 text-popover-foreground shadow-md"
+							role="menu"
 						>
-							{#if syncLoading}
-								<Loader2 class="w-4 h-4 animate-spin" />
-							{:else}
-								<RefreshCw class="w-4 h-4" />
+							<button
+								type="button"
+								role="menuitem"
+								on:click={() => {
+									billingMenuOpen = false;
+									openManageAccountsModal();
+								}}
+								class="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground"
+							>
+								<Settings2 class="h-4 w-4" />
+								Gestionar cuentas
+							</button>
+							{#if allAccounts.some((a) => (a.provider ?? 'stripe') === 'stripe')}
+								<button
+									type="button"
+									role="menuitem"
+									disabled={syncLoading}
+									on:click={() => {
+										billingMenuOpen = false;
+										handleSync();
+									}}
+									class="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground disabled:opacity-50"
+								>
+									{#if syncLoading}
+										<Loader2 class="h-4 w-4 animate-spin" />
+									{:else}
+										<RefreshCw class="h-4 w-4" />
+									{/if}
+									Sincronizar facturación
+								</button>
 							{/if}
-							Sincronizar facturación
-						</button>
-					{/if}
-					{#if billingProviders.some((p) => !p.isAutomatic)}
-						<button
-							type="button"
-							on:click={openCreateManualDoc}
-							class="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
-						>
-							<Plus class="w-4 h-4" />
-							Crear facturación manual
-						</button>
+							{#if billingProviders.some((p) => !p.isAutomatic)}
+								<button
+									type="button"
+									role="menuitem"
+									on:click={() => {
+										billingMenuOpen = false;
+										openCreateManualDoc();
+									}}
+									class="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground"
+								>
+									<Plus class="h-4 w-4" />
+									Crear facturación manual
+								</button>
+							{/if}
+						</div>
 					{/if}
 				</div>
 			{/if}
@@ -668,40 +711,68 @@
 							</p>
 						</div>
 					</div>
-					<div class="flex flex-wrap gap-2">
+					<div class="relative shrink-0" use:clickOutside>
 						<button
 							type="button"
-							on:click={openManageAccountsModal}
-							class="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
+							on:click={() => (billingMenuOpen = !billingMenuOpen)}
+							class="inline-flex items-center justify-center rounded-md border border-input bg-background p-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
+							aria-expanded={billingMenuOpen}
+							aria-haspopup="true"
+							aria-label="Opciones de facturación"
 						>
-							<Settings2 class="w-4 h-4" />
-							Gestionar cuentas
+							<MoreVertical class="h-5 w-5" />
 						</button>
-						{#if allAccounts.some((a) => (a.provider ?? 'stripe') === 'stripe')}
-							<button
-								type="button"
-								on:click={handleSync}
-								disabled={syncLoading}
-								class="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground disabled:opacity-50"
-								title="Actualizar facturas y suscripciones desde Stripe."
+						{#if billingMenuOpen}
+							<div
+								class="absolute right-0 top-full z-50 mt-1 min-w-[220px] rounded-md border bg-popover py-1 text-popover-foreground shadow-md"
+								role="menu"
 							>
-								{#if syncLoading}
-									<Loader2 class="w-4 h-4 animate-spin" />
-								{:else}
-									<RefreshCw class="w-4 h-4" />
+								<button
+									type="button"
+									role="menuitem"
+									on:click={() => {
+										billingMenuOpen = false;
+										openManageAccountsModal();
+									}}
+									class="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground"
+								>
+									<Settings2 class="h-4 w-4" />
+									Gestionar cuentas
+								</button>
+								{#if allAccounts.some((a) => (a.provider ?? 'stripe') === 'stripe')}
+									<button
+										type="button"
+										role="menuitem"
+										disabled={syncLoading}
+										on:click={() => {
+											billingMenuOpen = false;
+											handleSync();
+										}}
+										class="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground disabled:opacity-50"
+									>
+										{#if syncLoading}
+											<Loader2 class="h-4 w-4 animate-spin" />
+										{:else}
+											<RefreshCw class="h-4 w-4" />
+										{/if}
+										Sincronizar facturación
+									</button>
 								{/if}
-								Sincronizar facturación
-							</button>
-						{/if}
-						{#if billingProviders.some((p) => !p.isAutomatic)}
-							<button
-								type="button"
-								on:click={openCreateManualDoc}
-								class="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-							>
-								<Plus class="w-4 h-4" />
-								Crear facturación manual
-							</button>
+								{#if billingProviders.some((p) => !p.isAutomatic)}
+									<button
+										type="button"
+										role="menuitem"
+										on:click={() => {
+											billingMenuOpen = false;
+											openCreateManualDoc();
+										}}
+										class="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground"
+									>
+										<Plus class="h-4 w-4" />
+										Crear facturación manual
+									</button>
+								{/if}
+							</div>
 						{/if}
 					</div>
 				</div>

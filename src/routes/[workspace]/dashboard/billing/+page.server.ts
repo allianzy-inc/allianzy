@@ -28,6 +28,10 @@ export const load: PageServerLoad = async ({ locals, params }) => {
             canViewBilling = true;
             canManageBilling = true;
         }
+        if (userCompany?.permissions && (userCompany.permissions as Record<string, unknown>)._manageBilling === true) {
+            canViewBilling = true;
+            canManageBilling = true;
+        }
         if (userCompany && userCompany.permissions) {
             const perms = userCompany.permissions as Record<string, string[]>;
             for (const [pid, pList] of Object.entries(perms)) {

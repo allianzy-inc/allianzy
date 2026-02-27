@@ -196,7 +196,8 @@
         lastName: '',
         email: '',
         status: 'active',
-        projectPermissions: [] as ProjectPermission[]
+        projectPermissions: [] as ProjectPermission[],
+        manageBilling: false
     };
 
     function openUserDrawer(user: CompanyUser | null = null) {
@@ -229,7 +230,8 @@
                             proposals: projectPerms.includes('proposals')
                         }
                     };
-                })
+                }),
+                manageBilling: !!(userPerms && (userPerms as any)._manageBilling)
             };
         } else {
             selectedUser = null;
@@ -251,7 +253,8 @@
                         support: false,
                         proposals: false
                     }
-                }))
+                })),
+                manageBilling: false
             };
         }
         isUserDrawerOpen = true;
@@ -303,6 +306,7 @@
         });
         
         formData.append('permissions', JSON.stringify(permissions));
+        formData.append('manageBilling', userForm.manageBilling ? '1' : '0');
 
         try {
             const response = await fetch('?/saveUser', {
@@ -1216,6 +1220,25 @@
                      <div>
                         <h3 class="font-medium">{t.dashboard.page.settings.users.form?.permissions?.title || 'Permissions'}</h3>
                         <p class="text-sm text-muted-foreground">{t.dashboard.page.settings.users.form?.permissions?.desc || 'Configure project access and permissions.'}</p>
+                     </div>
+
+                     <!-- Gestionar pagos: Ver en Stripe, gestionar suscripciones, acciones de facturación -->
+                     <div class="rounded-lg border p-4 flex items-start gap-3">
+                        <input
+                            type="checkbox"
+                            id="user-manage-billing"
+                            bind:checked={userForm.manageBilling}
+                            class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary mt-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled={isMember}
+                        />
+                        <div>
+                            <label for="user-manage-billing" class="text-sm font-medium leading-none cursor-pointer">
+                                Gestionar pagos
+                            </label>
+                            <p class="text-sm text-muted-foreground mt-0.5">
+                                Permite ver en Stripe, gestionar suscripciones y usar las acciones de facturación (Ver factura, Recibo, Gestionar suscripción, etc.).
+                            </p>
+                        </div>
                      </div>
                      
                      <div class="space-y-6 max-h-[400px] overflow-y-auto pr-2">

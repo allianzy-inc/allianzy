@@ -167,12 +167,15 @@ export const actions: Actions = {
         const status = formData.get('status') as string || 'active';
         const permissionsJson = formData.get('permissions') as string;
         
-        let permissions = {};
+        let permissions: Record<string, unknown> = {};
         try {
-            permissions = JSON.parse(permissionsJson);
+            permissions = JSON.parse(permissionsJson) as Record<string, unknown>;
         } catch (e) {
             console.error('Error parsing permissions', e);
         }
+
+        const manageBilling = formData.get('manageBilling') === '1' || formData.get('manageBilling') === 'on';
+        const permissionsToSave = { ...permissions, _manageBilling: manageBilling };
 
         if (!email) {
             return fail(400, { message: 'Email is required', type: 'validation_error' });
@@ -187,9 +190,9 @@ export const actions: Actions = {
         }
 
         // Check if permissions are empty or invalid
-        // Requirement: At least one project must have at least one permission item selected
-        const hasValidPermissions = Object.values(permissions).some(
-            (perms: any) => Array.isArray(perms) && perms.length > 0
+        // Requirement: At least one project must have at least one permission item selected (_manageBilling is stored in same object but not a project)
+        const hasValidPermissions = Object.entries(permissions).some(
+            ([key, perms]) => key !== '_manageBilling' && Array.isArray(perms) && perms.length > 0
         );
 
         if (!hasValidPermissions) {
@@ -303,41 +306,38 @@ export const actions: Actions = {
 
                 // Check for permissions update
                 const oldPermissions = link.permissions as Record<string, any>;
-                const newPermissions = permissions as Record<string, any>;
+                const newPermissions = permissionsToSave as Record<string, any>;
                 
                 if (JSON.stringify(oldPermissions) !== JSON.stringify(newPermissions)) {
                     const companyName = locals.user.companyName || 'Allianzy';
                     
-                    // Identify which projects have changed
+                    // Identify which projects have changed (exclude _manageBilling)
                     const changedProjectIds = new Set<string>();
-                    
-                    // Check for added or modified projects
                     for (const [projectId, perms] of Object.entries(newPermissions)) {
+                        if (projectId === '_manageBilling') continue;
                         if (!oldPermissions[projectId] || JSON.stringify(oldPermissions[projectId]) !== JSON.stringify(perms)) {
                             changedProjectIds.add(projectId);
                         }
                     }
-                    
-                    // Check for removed projects
                     for (const projectId of Object.keys(oldPermissions)) {
-                        if (!newPermissions[projectId]) {
-                            changedProjectIds.add(projectId);
-                        }
+                        if (projectId === '_manageBilling') continue;
+                        if (!newPermissions[projectId]) changedProjectIds.add(projectId);
                     }
                     
-                    if (changedProjectIds.size > 0) {
-                        // Fetch project names
-                        const projectList = await db.select({ id: projects.id, name: projects.name })
-                            .from(projects)
-                            .where(inArray(projects.id, Array.from(changedProjectIds).map(id => parseInt(id))));
-                            
-                        const projectNames = projectList.map(p => p.name).join(', ');
-                        
+                    const numericProjectIds = Array.from(changedProjectIds).filter((id) => !Number.isNaN(parseInt(id, 10)));
+                    const projectNames = numericProjectIds.length > 0
+                        ? (await db.select({ name: projects.name }).from(projects).where(inArray(projects.id, numericProjectIds.map((id) => parseInt(id, 10))))).map((p) => p.name).join(', ')
+                        : '';
+                    const notificationMessage = projectNames
+                        ? `Your permissions for ${projectNames} have been updated.`
+                        : 'Your access permissions have been updated.';
+
+                    {
                         // 1. In-App Notification
                         await db.insert(notifications).values({
                             userId: targetUserId!,
                             title: 'Permissions Updated',
-                            message: `Your permissions for ${projectNames ? projectNames : 'projects'} have been updated.`,
+                            message: notificationMessage,
                             type: 'info',
                             link: `/${params.workspace}/dashboard`,
                             metadata: {
@@ -356,7 +356,7 @@ export const actions: Actions = {
                                         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
                                             <h2>Permissions Updated</h2>
                                             <p>Hello ${link.user.firstName || 'User'},</p>
-                                            <p>Your permissions for <strong>${projectNames ? projectNames : 'projects'}</strong> in ${companyName} have been updated by the administrator.</p>
+                                            <p>${projectNames ? `Your permissions for <strong>${projectNames}</strong> in ${companyName} have been updated by the administrator.` : `Your access permissions in ${companyName} have been updated by the administrator.`}</p>
                                             <p>Please check your dashboard to see the changes.</p>
                                             <div style="margin: 30px 0;">
                                                 <a href="${new URL(request.url).origin}/${params.workspace}/dashboard" style="display:inline-block;padding:12px 24px;background:#2563eb;color:white;text-decoration:none;border-radius:6px;font-weight:bold;">Go to Dashboard</a>
@@ -372,7 +372,7 @@ export const actions: Actions = {
                 }
 
                 await db.update(userCompanies)
-                    .set({ permissions, status })
+                    .set({ permissions: permissionsToSave, status })
                     .where(eq(userCompanies.id, link.id));
             }
         } else {
@@ -409,7 +409,7 @@ export const actions: Actions = {
                 if (link) {
                     // Update permissions if already linked
                     await db.update(userCompanies)
-                        .set({ permissions, status })
+                        .set({ permissions: permissionsToSave, status })
                         .where(eq(userCompanies.id, link.id));
                 } else {
                      await db.insert(userCompanies).values({
@@ -417,7 +417,7 @@ export const actions: Actions = {
                         companyId: locals.user!.companyId!,
                         role: 'member',
                         status: 'pending',
-                        permissions: permissions
+                        permissions: permissionsToSave
                     });
 
                     // Send Notification and Email for Existing User
@@ -481,7 +481,7 @@ export const actions: Actions = {
                     companyId: locals.user!.companyId!,
                     role: 'member',
                     status: 'pending',
-                    permissions: permissions
+                    permissions: permissionsToSave
                 });
 
                 // Create Invitation Notification

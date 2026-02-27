@@ -11,7 +11,9 @@ import { eq } from 'drizzle-orm';
 import type { RequestEvent } from '@sveltejs/kit';
 
 let stripeInstance: Stripe | null = null;
+let stripeLiveInstance: Stripe | null = null;
 
+/** Stripe con la clave por defecto (test si es sk_test_...). */
 export function getStripe(): Stripe | null {
 	const secret = env.STRIPE_SECRET_KEY;
 	if (!secret?.startsWith('sk_')) {
@@ -21,6 +23,27 @@ export function getStripe(): Stripe | null {
 		stripeInstance = new Stripe(secret);
 	}
 	return stripeInstance;
+}
+
+/** Stripe con la clave live (STRIPE_SECRET_KEY_LIVE). Devuelve null si no está configurada. */
+export function getStripeLive(): Stripe | null {
+	const secret = env.STRIPE_SECRET_KEY_LIVE;
+	if (!secret?.startsWith('sk_live_')) {
+		return null;
+	}
+	if (!stripeLiveInstance) {
+		stripeLiveInstance = new Stripe(secret);
+	}
+	return stripeLiveInstance;
+}
+
+/**
+ * Stripe para facturación: usa clave LIVE si está configurada, si no la clave por defecto.
+ * Así podés tener STRIPE_SECRET_KEY=sk_test_... y STRIPE_SECRET_KEY_LIVE=sk_live_...
+ * para ver pagos/facturas de la cuenta real (p. ej. clientes guest gcus_ en live).
+ */
+export function getStripeForBilling(): Stripe | null {
+	return getStripeLive() ?? getStripe();
 }
 
 /** Stripe customer IDs: cus_ (regular) or gcus_ (guest). */

@@ -3,7 +3,7 @@ import type { RequestHandler } from './$types';
 import { getBillingContext } from '$lib/server/billing-domain/resolve-context';
 import * as subscriptionRecordsRepo from '$lib/server/billing-domain/subscription-records.repository';
 import { syncStripeForCompany } from '$lib/server/billing-domain/stripe-sync.service';
-import { getStripe, getBillingCompany } from '$lib/server/billing';
+import { getStripeForBilling, getBillingCompany } from '$lib/server/billing';
 
 /** Forma compatible con la UI actual. Incluye account_code (cus_xxx o id cuenta) para identificar la cuenta. */
 function mapSubscriptionToShape(
@@ -60,7 +60,7 @@ export const GET: RequestHandler = async (event) => {
 	// 2) Legacy: Stripe directo
 	const billing = await getBillingCompany(event);
 	if (!billing) return json({ linked: false, subscriptions: [] });
-	const stripe = getStripe();
+	const stripe = getStripeForBilling();
 	if (!stripe) return json({ linked: true, subscriptions: [] });
 	try {
 		const list = await stripe.subscriptions.list({

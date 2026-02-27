@@ -7,7 +7,7 @@ import * as providerConfigRepo from '$lib/server/billing-domain/provider-config.
 import * as subscriptionRecordsRepo from '$lib/server/billing-domain/subscription-records.repository';
 import * as upcomingLinksRepo from '$lib/server/billing-domain/upcoming-invoice-project-links.repository';
 import { syncStripeForCompany } from '$lib/server/billing-domain/stripe-sync.service';
-import { getStripe, getBillingCompany } from '$lib/server/billing';
+import { getStripeForBilling, getBillingCompany } from '$lib/server/billing';
 import { db } from '$lib/server/db';
 import { projects, services } from '$lib/server/schema';
 import { eq, inArray } from 'drizzle-orm';
@@ -368,7 +368,7 @@ export const GET: RequestHandler = async (event) => {
 				seenIds.add(key);
 				return true;
 			});
-			const stripe = getStripe();
+			const stripe = getStripeForBilling();
 			if (stripe) {
 				for (const acc of ctx.accounts) {
 					if ((acc.provider ?? 'stripe') !== 'stripe' || !acc.customerId) continue;
@@ -428,7 +428,7 @@ export const GET: RequestHandler = async (event) => {
 	// 2) Legacy: sin payment_accounts en DB, llamar Stripe directo
 	const billing = await getBillingCompany(event);
 	if (!billing) return json({ linked: false, invoices: [] });
-	const stripe = getStripe();
+	const stripe = getStripeForBilling();
 	if (!stripe) return json({ linked: true, invoices: [] });
 	try {
 		const list = await stripe.invoices.list({

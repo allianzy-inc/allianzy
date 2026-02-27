@@ -5,7 +5,7 @@
  */
 
 import Stripe from 'stripe';
-import { getStripe } from '$lib/server/billing';
+import { getStripeForBilling } from '$lib/server/billing';
 import * as paymentAccountsRepo from './payment-accounts.repository';
 import * as billingDocsRepo from './billing-documents.repository';
 import * as subscriptionRecordsRepo from './subscription-records.repository';
@@ -26,7 +26,7 @@ const STRIPE_STATUS_TO_DOC: Record<string, BillingDocumentStatus> = {
 
 /** Sincroniza facturas y suscripciones de Stripe para una empresa (todas sus cuentas stripe activas). */
 export async function syncStripeForCompany(companyId: number): Promise<{ invoicesSynced: number; subscriptionsSynced: number; errors: string[] }> {
-	const stripe = getStripe();
+	const stripe = getStripeForBilling();
 	if (!stripe) {
 		return { invoicesSynced: 0, subscriptionsSynced: 0, errors: ['Stripe not configured'] };
 	}

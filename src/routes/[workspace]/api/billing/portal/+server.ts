@@ -1,6 +1,6 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { getStripe, getBillingCompany, isStripeCustomerId } from '$lib/server/billing';
+import { getStripeForBilling, getBillingCompany, isStripeCustomerId } from '$lib/server/billing';
 import { getBillingContext } from '$lib/server/billing-domain/resolve-context';
 
 export const POST: RequestHandler = async (event) => {
@@ -14,7 +14,7 @@ export const POST: RequestHandler = async (event) => {
 		return json({ error: 'No billing company or Stripe customer linked' }, { status: 400 });
 	}
 
-	const stripe = getStripe();
+	const stripe = getStripeForBilling();
 	if (!stripe) {
 		return json({ error: 'Stripe not configured' }, { status: 503 });
 	}

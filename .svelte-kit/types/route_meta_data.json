@@ -112,6 +112,9 @@
 	"/[workspace]/api/billing/accounts": [
 		"src/routes/[workspace]/api/billing/accounts/+server.ts"
 	],
+	"/[workspace]/api/billing/add-payment-by-id": [
+		"src/routes/[workspace]/api/billing/add-payment-by-id/+server.ts"
+	],
 	"/[workspace]/api/billing/documents": [
 		"src/routes/[workspace]/api/billing/documents/+server.ts"
 	],

@@ -16932,3 +16932,17 @@
 [2026-02-27T18:42:47.880Z] Serving file successfully
 [2026-02-27T18:43:48.352Z] Request: http://localhost:5173/api/public/files?url=https%3A%2F%2Ff005.backblazeb2.com%2Ffile%2Fallianzy%2Flogos%2F1771978171709-logo-iconos.webp&t=1772217823620&sig=92a4734b94b81a2fa4be761168b441c3df5ce739d700f0604c7350ded8e22e0c&w=allianzy
 [2026-02-27T18:43:49.058Z] Serving file successfully
+[2026-02-27T18:52:12.471Z] Request: http://localhost:5173/api/public/files?url=https%3A%2F%2Ff005.backblazeb2.com%2Ffile%2Fallianzy%2Flogos%2F1771978171709-logo-iconos.webp&t=1772218331335&sig=f217ecd5f6bc2cae2e49c64912e3dcad996c6a9371d9a23592efe8c8beb9936d&w=allianzy
+[2026-02-27T18:52:13.046Z] Serving file successfully
+[2026-02-27T18:52:16.544Z] Request: http://localhost:5173/api/public/files?url=https%3A%2F%2Ff005.backblazeb2.com%2Ffile%2Fallianzy%2Flogos%2F1771978171709-logo-iconos.webp&t=1772218335704&sig=9fb61485650510e4ab0bf39ff8c1a4075a8e49be257228c430d15c21f207f860&w=allianzy
+[2026-02-27T18:52:16.708Z] Serving file successfully
+[2026-02-27T18:52:22.031Z] Request: http://localhost:5173/api/public/files?url=https%3A%2F%2Ff005.backblazeb2.com%2Ffile%2Fallianzy%2Flogos%2F1771978171709-logo-iconos.webp&t=1772218340858&sig=05dd50288a63030b39f119e0c285df1daa54a76686463e1e533412566c5645e8&w=allianzy
+[2026-02-27T18:52:22.506Z] Serving file successfully
+[2026-02-27T18:52:24.027Z] Request: http://localhost:5173/api/public/files?url=https%3A%2F%2Ff005.backblazeb2.com%2Ffile%2Fallianzy%2Flogos%2F1771978171709-logo-iconos.webp&t=1772218343200&sig=179297a2996ccb80aa797c6ac9390567f69d5a121e961f52b90592264f48f18b&w=allianzy
+[2026-02-27T18:52:24.190Z] Serving file successfully
+[2026-02-27T18:52:33.637Z] Request: http://localhost:5173/api/public/files?url=https%3A%2F%2Ff005.backblazeb2.com%2Ffile%2Fallianzy%2Flogos%2F1771978171709-logo-iconos.webp&t=1772218352493&sig=b3123c74074117d8af786e4da9d13918cc13b76285ec17cc9828408092414a20&w=allianzy
+[2026-02-27T18:52:34.124Z] Serving file successfully
+[2026-02-27T18:53:02.424Z] Request: http://localhost:5173/api/public/files?url=https%3A%2F%2Ff005.backblazeb2.com%2Ffile%2Fallianzy%2Flogos%2F1771978171709-logo-iconos.webp&t=1772218381261&sig=7e4ccd11d460ccc6efea02d96ac96c9d507857642c48ab0c455238dac46996f4&w=allianzy
+[2026-02-27T18:53:02.921Z] Serving file successfully
+[2026-02-27T19:06:01.340Z] Request: http://localhost:5173/api/public/files?url=https%3A%2F%2Ff005.backblazeb2.com%2Ffile%2Fallianzy%2Flogos%2F1771978171709-logo-iconos.webp&t=1772219156703&sig=ec393816fcab9a54ee6185465fbf06a59d976555451c081c9882d85f4cd22b24&w=allianzy
+[2026-02-27T19:06:01.948Z] Serving file successfully

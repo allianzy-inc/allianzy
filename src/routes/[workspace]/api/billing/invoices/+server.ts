@@ -7,7 +7,7 @@ import * as providerConfigRepo from '$lib/server/billing-domain/provider-config.
 import * as subscriptionRecordsRepo from '$lib/server/billing-domain/subscription-records.repository';
 import * as upcomingLinksRepo from '$lib/server/billing-domain/upcoming-invoice-project-links.repository';
 import { syncStripeForCompany } from '$lib/server/billing-domain/stripe-sync.service';
-import { getStripeForBilling, getBillingCompany } from '$lib/server/billing';
+import { getStripeForBilling, getBillingCompany, getStripeBillingMode } from '$lib/server/billing';
 import { db } from '$lib/server/db';
 import { projects, services } from '$lib/server/schema';
 import { eq, inArray } from 'drizzle-orm';
@@ -409,19 +409,24 @@ export const GET: RequestHandler = async (event) => {
 				return true;
 			});
 			const stripe = getStripeForBilling();
+			let standaloneCountByCustomer: Record<string, number> = {};
 			if (stripe) {
 				for (const acc of ctx.accounts) {
 					if ((acc.provider ?? 'stripe') !== 'stripe' || !acc.customerId) continue;
 					try {
 						const standalone = await getStandaloneChargeRows(stripe, acc.customerId);
+						let added = 0;
 						for (const row of standalone) {
 							if (!seenIds.has(row.id) && shouldAddStandaloneCharge(row, invoices)) {
 								seenIds.add(row.id);
 								invoices.push(row);
+								added++;
 							}
 						}
+						standaloneCountByCustomer[acc.customerId] = added;
 					} catch (e: any) {
 						console.error('[billing/invoices] standalone charges for', acc.customerId, e?.message ?? e);
+						standaloneCountByCustomer[acc.customerId] = -1; // error
 					}
 				}
 				try {
@@ -461,7 +466,12 @@ export const GET: RequestHandler = async (event) => {
 				}
 				sortInvoicesByCreated(invoices);
 			}
-			return json({ linked: true, invoices });
+			const stripeMode = getStripeBillingMode();
+			return json({
+				linked: true,
+				invoices,
+				invoicesDebug: { stripeMode, standalonePerCustomer: standaloneCountByCustomer }
+			});
 		}
 	}
 

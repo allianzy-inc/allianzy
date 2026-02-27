@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
-	import { CreditCard, Calendar, Eye, History, Repeat, Link2, Settings2, ArrowLeft, Loader2, Plus, Pencil, Trash2, RefreshCw, MoreVertical } from 'lucide-svelte';
+	import { CreditCard, Calendar, Eye, History, Repeat, Link2, Settings2, ArrowLeft, Loader2, Plus, Pencil, Trash2, RefreshCw, MoreVertical, X } from 'lucide-svelte';
 	import type { PageData } from './$types';
 	import type { BillingInvoice, BillingInvoiceOverlay } from '$lib/stores/billing';
 	import { formatBillingAmount, setOverlaysFromApi } from '$lib/stores/billing';
@@ -51,6 +51,8 @@
 	/** ID de la cuenta Stripe cuya sesión de portal se está creando (solo ese botón muestra loading). */
 	let portalLoadingId: string | null = null;
 	let billingError: string | null = null;
+	/** Debug de facturación (modo Stripe y pagos por cuenta) para cuando no hay facturas. */
+	let invoicesDebug: { stripeMode: string; standalonePerCustomer: Record<string, number> } | undefined;
 
 	/** Query para suscripciones/portal: una cuenta Stripe (opcional). */
 	function subscriptionQuery() {
@@ -91,6 +93,7 @@
 			companyProjects = projectsData.projects ?? [];
 			linked = invData.linked ?? subData.linked ?? allAccounts.length > 0;
 			billingError = invData.error ?? subData.error ?? null;
+			invoicesDebug = invData.invoicesDebug;
 			const rawInvoices = invData.invoices ?? [];
 			const rawSubs = subData.subscriptions ?? [];
 			allInvoices = rawInvoices.map((inv: any) => {
@@ -283,6 +286,14 @@
 	let manualDocError: string | null = null;
 	let deleteConfirmId: string | null = null;
 	let deleteLoading = false;
+
+	// Modal añadir pago por Payment Intent / Charge ID
+	let addPaymentByIdModalOpen = false;
+	let addPaymentByIdInput = '';
+	let addPaymentByIdAccountId = '';
+	let addPaymentByIdSaving = false;
+	let addPaymentByIdError: string | null = null;
+	$: stripeAccountsWithId = stripeAccounts.filter((a) => a.paymentAccountId);
 
 	function openInvoiceDrawer(invoice: BillingInvoice) {
 		selectedInvoice = invoice;
@@ -596,6 +607,68 @@
 	function canEditDeleteInvoice(inv: BillingInvoice & { documentId?: string | null; provider?: string }) {
 		return inv.documentId && inv.provider && inv.provider !== 'stripe';
 	}
+
+	/** Acorta IDs largos (pi_..., ch_...) con puntos suspensivos. */
+	function truncateConcept(text: string | null | undefined, maxLen = 24): string {
+		const s = text ?? '';
+		if (s.length <= maxLen) return s;
+		return s.slice(0, 10) + '…' + s.slice(-8);
+	}
+
+	function openAddPaymentByIdModal() {
+		addPaymentByIdModalOpen = true;
+		addPaymentByIdInput = '';
+		addPaymentByIdError = null;
+		addPaymentByIdAccountId = stripeAccountsWithId.find((a) => a.isDefault)?.paymentAccountId ?? stripeAccountsWithId[0]?.paymentAccountId ?? '';
+	}
+
+	function closeAddPaymentByIdModal() {
+		addPaymentByIdModalOpen = false;
+		addPaymentByIdInput = '';
+		addPaymentByIdAccountId = '';
+		addPaymentByIdError = null;
+	}
+
+	async function handleAddPaymentById(e: Event) {
+		e.preventDefault();
+		const raw = addPaymentByIdInput.trim();
+		if (!raw) {
+			addPaymentByIdError = 'Ingresá un ID (pi_... o ch_...)';
+			return;
+		}
+		if (!raw.startsWith('pi_') && !raw.startsWith('ch_')) {
+			addPaymentByIdError = 'El ID debe ser un Payment Intent (pi_...) o un Charge (ch_...)';
+			return;
+		}
+		if (!addPaymentByIdAccountId) {
+			addPaymentByIdError = 'Elegí la cuenta Stripe a la que asociar el pago';
+			return;
+		}
+		addPaymentByIdError = null;
+		addPaymentByIdSaving = true;
+		try {
+			const body: { companyId: number; paymentAccountId: string; paymentIntentId?: string; chargeId?: string } = {
+				companyId,
+				paymentAccountId: addPaymentByIdAccountId
+			};
+			if (raw.startsWith('pi_')) body.paymentIntentId = raw;
+			else body.chargeId = raw;
+			const res = await fetch(`/${workspace}/api/billing/add-payment-by-id`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				credentials: 'include',
+				body: JSON.stringify(body)
+			});
+			const data = await res.json().catch(() => ({}));
+			if (!res.ok) throw new Error(data.error ?? res.statusText ?? 'Error');
+			closeAddPaymentByIdModal();
+			await loadBilling();
+		} catch (e: any) {
+			addPaymentByIdError = e?.message ?? 'Error al agregar';
+		} finally {
+			addPaymentByIdSaving = false;
+		}
+	}
 </script>
 
 <svelte:head>
@@ -759,6 +832,20 @@
 										Sincronizar facturación
 									</button>
 								{/if}
+								{#if stripeAccountsWithId.length > 0}
+									<button
+										type="button"
+										role="menuitem"
+										on:click={() => {
+											billingMenuOpen = false;
+											openAddPaymentByIdModal();
+										}}
+										class="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground"
+									>
+										<Plus class="h-4 w-4" />
+										Añadir pago Stripe vía ID
+									</button>
+								{/if}
 								{#if billingProviders.some((p) => !p.isAutomatic)}
 									<button
 										type="button"
@@ -860,6 +947,23 @@
 						<p class="text-muted-foreground mt-1">
 							No hay facturas que coincidan con los filtros o aún no hay historial para esta empresa.
 						</p>
+						{#if invoicesDebug?.standalonePerCustomer && Object.keys(invoicesDebug.standalonePerCustomer).length > 0}
+							<div class="mt-4 p-4 rounded-lg bg-muted/50 text-left max-w-md mx-auto text-sm">
+								<p class="font-medium text-muted-foreground">Diagnóstico:</p>
+								<p>Modo Stripe: <strong>{invoicesDebug.stripeMode}</strong></p>
+								<p class="mt-2">Pagos obtenidos por cuenta:</p>
+								<ul class="list-disc list-inside mt-1 space-y-0.5">
+									{#each Object.entries(invoicesDebug.standalonePerCustomer) as [customerId, count]}
+										<li><code class="text-xs">{customerId.slice(0, 20)}…</code>: {count === -1 ? 'error' : count}</li>
+									{/each}
+								</ul>
+								{#if invoicesDebug.stripeMode !== 'live'}
+									<p class="mt-2 text-amber-600 dark:text-amber-400">Para ver pagos de clientes guest (gcus_) en Stripe live, agregá <code class="text-xs">STRIPE_SECRET_KEY_LIVE=sk_live_…</code> en tu .env y reiniciá la app.</p>
+								{:else if Object.values(invoicesDebug.standalonePerCustomer).every((c) => c === 0 || c === -1)}
+									<p class="mt-2 text-amber-600 dark:text-amber-400">Stripe no devolvió pagos para estas cuentas. En el Dashboard de Stripe, los pagos guest a veces solo se agrupan por email/tarjeta; puede que no estén ligados al customer gcus_ en la API.</p>
+								{/if}
+							</div>
+						{/if}
 					</div>
 				{:else}
 					<div class="hidden md:block relative w-full overflow-auto">
@@ -880,7 +984,7 @@
 							<tbody class="[&_tr:last-child]:border-0">
 								{#each paginatedInvoices as invoice}
 									<tr class="border-b transition-colors hover:bg-muted/50">
-										<td class="p-4 align-middle font-medium">{invoice.description ?? invoice.id}</td>
+										<td class="p-4 align-middle font-medium" title={invoice.description ?? invoice.id ?? ''}>{truncateConcept(invoice.description ?? invoice.id)}</td>
 										<td class="p-4 align-middle text-sm">{methodDisplayName(invoice.provider)}</td>
 										<td class="p-4 align-middle font-mono text-xs text-muted-foreground" title={invoice.accountCode ?? ''}>{invoice.accountCode ?? '—'}</td>
 										<td class="p-4 align-middle" title={invoice.linked_project_names?.join(', ') ?? invoice.projectName ?? undefined}>
@@ -1022,7 +1126,7 @@
 							<div class="rounded-lg border bg-card text-card-foreground shadow-sm p-4 space-y-4">
 								<div class="flex justify-between items-start gap-4">
 									<div class="space-y-1">
-										<h4 class="font-semibold leading-none tracking-tight">{invoice.description ?? invoice.id}</h4>
+										<h4 class="font-semibold leading-none tracking-tight" title={invoice.description ?? invoice.id ?? ''}>{truncateConcept(invoice.description ?? invoice.id)}</h4>
 										<p class="text-sm text-muted-foreground">{methodDisplayName(invoice.provider)} · {invoice.accountCode ?? '—'}</p>
 										<p class="text-sm text-muted-foreground">{projectDisplay(invoice)}</p>
 									</div>
@@ -1337,6 +1441,67 @@
 					{manualDocEditId ? 'Guardar' : 'Crear'}
 				</button>
 			</div>
+		</div>
+	</div>
+{/if}
+
+{#if addPaymentByIdModalOpen}
+	<div
+		class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+		role="dialog"
+		aria-modal="true"
+		aria-labelledby="add-payment-by-id-title"
+	>
+		<div class="bg-card border rounded-lg shadow-lg max-w-md w-full p-6 space-y-4">
+			<div class="flex items-center justify-between">
+				<h2 id="add-payment-by-id-title" class="text-lg font-semibold">Añadir pago Stripe vía ID</h2>
+				<button type="button" on:click={closeAddPaymentByIdModal} class="p-2 hover:bg-muted rounded-full" aria-label="Cerrar">
+					<X class="h-5 w-5" />
+				</button>
+			</div>
+			<p class="text-sm text-muted-foreground">
+				Para pagos de clientes guest (gcus_) que no aparecen en el historial. Pegá el Payment Intent (pi_...) o el Charge (ch_...) de Stripe.
+			</p>
+			{#if addPaymentByIdError}
+				<p class="text-sm text-destructive">{addPaymentByIdError}</p>
+			{/if}
+			<form on:submit={handleAddPaymentById} class="space-y-4">
+				<div>
+					<label for="add-payment-account" class="block text-sm font-medium mb-1">Cuenta Stripe</label>
+					<select
+						id="add-payment-account"
+						bind:value={addPaymentByIdAccountId}
+						class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+						required
+					>
+						<option value="">Elegir cuenta...</option>
+						{#each stripeAccountsWithId as acc}
+							<option value={acc.paymentAccountId}>{acc.label ?? 'Stripe'} — {acc.customerId}</option>
+						{/each}
+					</select>
+				</div>
+				<div>
+					<label for="add-payment-id" class="block text-sm font-medium mb-1">Payment Intent o Charge ID</label>
+					<input
+						id="add-payment-id"
+						type="text"
+						bind:value={addPaymentByIdInput}
+						placeholder="pi_... o ch_..."
+						class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono"
+					/>
+				</div>
+				<div class="flex justify-end gap-2 pt-2">
+					<button type="button" on:click={closeAddPaymentByIdModal} class="rounded-md border px-4 py-2 text-sm font-medium hover:bg-accent">
+						Cancelar
+					</button>
+					<button type="submit" disabled={addPaymentByIdSaving} class="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 inline-flex items-center gap-2">
+						{#if addPaymentByIdSaving}
+							<Loader2 class="h-4 w-4 animate-spin" />
+						{/if}
+						Añadir
+					</button>
+				</div>
+			</form>
 		</div>
 	</div>
 {/if}

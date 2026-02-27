@@ -35,6 +35,7 @@ declare module '$env/static/private' {
 	export const B2_BUCKET_NAME: string;
 	export const RESEND_API_KEY: string;
 	export const STRIPE_SECRET_KEY: string;
+	export const STRIPE_SECRET_KEY_LIVE: string;
 	export const NVM_INC: string;
 	export const VSCODE_GIT_IPC_AUTH_TOKEN: string;
 	export const TERM_PROGRAM: string;
@@ -139,6 +140,7 @@ declare module '$env/dynamic/private' {
 		B2_BUCKET_NAME: string;
 		RESEND_API_KEY: string;
 		STRIPE_SECRET_KEY: string;
+		STRIPE_SECRET_KEY_LIVE: string;
 		NVM_INC: string;
 		VSCODE_GIT_IPC_AUTH_TOKEN: string;
 		TERM_PROGRAM: string;

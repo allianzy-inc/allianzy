@@ -46,6 +46,13 @@ export function getStripeForBilling(): Stripe | null {
 	return getStripeLive() ?? getStripe();
 }
 
+/** Indica si facturación está usando clave live (para depuración). */
+export function getStripeBillingMode(): 'live' | 'test' | 'none' {
+	if (getStripeLive()) return 'live';
+	if (getStripe()) return 'test';
+	return 'none';
+}
+
 /** Stripe customer IDs: cus_ (regular) or gcus_ (guest). */
 export function isStripeCustomerId(id: string | null | undefined): boolean {
 	const s = id?.trim() ?? '';

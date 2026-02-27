@@ -421,7 +421,6 @@
 										<th class="h-12 px-4 align-middle font-medium text-muted-foreground">Proyecto</th>
 										<th class="h-12 px-4 align-middle font-medium text-muted-foreground">Monto</th>
 										<th class="h-12 px-4 align-middle font-medium text-muted-foreground">Fecha factura</th>
-										<th class="h-12 px-4 align-middle font-medium text-muted-foreground">Vencimiento</th>
 										<th class="h-12 px-4 align-middle font-medium text-muted-foreground">Fecha pago</th>
 										<th class="h-12 px-4 align-middle font-medium text-muted-foreground">Estado</th>
 										<th class="h-12 px-4 align-middle font-medium text-right">Acciones</th>
@@ -442,16 +441,6 @@
 													<div class="flex items-center gap-2">
 														<Calendar class="h-3 w-3 text-muted-foreground" />
 														{new Date(invoice.createdAt).toLocaleDateString('es-ES')}
-													</div>
-												{:else}
-													—
-												{/if}
-											</td>
-											<td class="p-4 align-middle">
-												{#if invoice.dueAt}
-													<div class="flex items-center gap-2">
-														<Calendar class="h-3 w-3 text-muted-foreground" />
-														{new Date(invoice.dueAt).toLocaleDateString('es-ES')}
 													</div>
 												{:else}
 													—
@@ -551,12 +540,6 @@
 												<div class="flex items-center gap-2 text-sm text-muted-foreground">
 													<Calendar class="h-3 w-3" />
 													Factura: {new Date(invoice.createdAt).toLocaleDateString('es-ES')}
-												</div>
-											{/if}
-											{#if invoice.dueAt}
-												<div class="flex items-center gap-2 text-sm text-muted-foreground">
-													<Calendar class="h-3 w-3" />
-													Venc.: {new Date(invoice.dueAt).toLocaleDateString('es-ES')}
 												</div>
 											{/if}
 											{#if invoice.paidAt}

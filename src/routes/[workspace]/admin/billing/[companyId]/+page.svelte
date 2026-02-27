@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
-	import { CreditCard, Calendar, Eye, History, Repeat, Link2, Settings2, ArrowLeft, Loader2, Plus, Pencil, Trash2 } from 'lucide-svelte';
+	import { CreditCard, Calendar, Eye, History, Repeat, Link2, Settings2, ArrowLeft, Loader2, Plus, Pencil, Trash2, RefreshCw } from 'lucide-svelte';
 	import type { PageData } from './$types';
 	import type { BillingInvoice, BillingInvoiceOverlay } from '$lib/stores/billing';
 	import { formatBillingAmount, setOverlaysFromApi } from '$lib/stores/billing';
@@ -139,6 +139,25 @@
 	}
 
 	onMount(() => loadBilling());
+
+	let syncLoading = false;
+	async function handleSync() {
+		if (!companyId || syncLoading) return;
+		syncLoading = true;
+		try {
+			const res = await fetch(`/${workspace}/api/billing/sync?companyId=${companyId}`, {
+				method: 'POST',
+				credentials: 'include'
+			});
+			const data = await res.json().catch(() => ({}));
+			if (!res.ok) throw new Error(data.error ?? 'Error al sincronizar');
+			await loadBilling();
+		} catch (e) {
+			billingError = (e as Error)?.message ?? 'Error al sincronizar';
+		} finally {
+			syncLoading = false;
+		}
+	}
 
 	let filterStatus = '';
 	/** Valor: "" = todos, "provider|accountCode" = filtrar por esa cuenta de pago. */
@@ -607,6 +626,22 @@
 						<Settings2 class="w-4 h-4" />
 						Gestionar cuentas
 					</button>
+					{#if allAccounts.some((a) => (a.provider ?? 'stripe') === 'stripe')}
+						<button
+							type="button"
+							on:click={handleSync}
+							disabled={syncLoading}
+							class="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground disabled:opacity-50"
+							title="Actualizar facturas y suscripciones desde Stripe. Útil si agregaste otra cuenta o faltan pagos."
+						>
+							{#if syncLoading}
+								<Loader2 class="w-4 h-4 animate-spin" />
+							{:else}
+								<RefreshCw class="w-4 h-4" />
+							{/if}
+							Sincronizar facturación
+						</button>
+					{/if}
 					{#if billingProviders.some((p) => !p.isAutomatic)}
 						<button
 							type="button"
@@ -642,6 +677,22 @@
 							<Settings2 class="w-4 h-4" />
 							Gestionar cuentas
 						</button>
+						{#if allAccounts.some((a) => (a.provider ?? 'stripe') === 'stripe')}
+							<button
+								type="button"
+								on:click={handleSync}
+								disabled={syncLoading}
+								class="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground disabled:opacity-50"
+								title="Actualizar facturas y suscripciones desde Stripe."
+							>
+								{#if syncLoading}
+									<Loader2 class="w-4 h-4 animate-spin" />
+								{:else}
+									<RefreshCw class="w-4 h-4" />
+								{/if}
+								Sincronizar facturación
+							</button>
+						{/if}
 						{#if billingProviders.some((p) => !p.isAutomatic)}
 							<button
 								type="button"
@@ -749,7 +800,6 @@
 									<th class="h-12 px-4 align-middle font-medium text-muted-foreground">Proyecto</th>
 									<th class="h-12 px-4 align-middle font-medium text-muted-foreground">Monto</th>
 									<th class="h-12 px-4 align-middle font-medium text-muted-foreground">Fecha factura</th>
-									<th class="h-12 px-4 align-middle font-medium text-muted-foreground">Vencimiento</th>
 									<th class="h-12 px-4 align-middle font-medium text-muted-foreground">Fecha pago</th>
 									<th class="h-12 px-4 align-middle font-medium text-muted-foreground">Estado</th>
 									<th class="h-12 px-4 align-middle font-medium text-right">Acciones</th>
@@ -770,16 +820,6 @@
 												<div class="flex items-center gap-2">
 													<Calendar class="h-3 w-3 text-muted-foreground" />
 													{new Date(invoice.createdAt).toLocaleDateString('es-ES')}
-												</div>
-											{:else}
-												—
-											{/if}
-										</td>
-										<td class="p-4 align-middle">
-											{#if invoice.dueAt}
-												<div class="flex items-center gap-2">
-													<Calendar class="h-3 w-3 text-muted-foreground" />
-													{new Date(invoice.dueAt).toLocaleDateString('es-ES')}
 												</div>
 											{:else}
 												—
@@ -924,12 +964,6 @@
 												Factura: {new Date(invoice.createdAt).toLocaleDateString('es-ES')}
 											</div>
 										{/if}
-										{#if invoice.dueAt}
-											<div class="flex items-center gap-2 text-sm text-muted-foreground">
-												<Calendar class="h-3 w-3" />
-												Venc.: {new Date(invoice.dueAt).toLocaleDateString('es-ES')}
-											</div>
-										{/if}
 										{#if invoice.paidAt}
 											<div class="flex items-center gap-2 text-sm text-muted-foreground">
 												<Calendar class="h-3 w-3" />
@@ -984,11 +1018,6 @@
 							</span>
 						</div>
 						<div class="flex flex-wrap items-center gap-6 text-sm">
-							<div class="flex items-center gap-2">
-								<Calendar class="h-4 w-4 text-muted-foreground" />
-								<span class="text-muted-foreground">Renovación:</span>
-								<span>{sub.currentPeriodEnd}</span>
-							</div>
 							<div>
 								<span class="text-muted-foreground">Monto: </span>
 								<span class="font-mono font-medium">{formatBillingAmount(sub.amount, sub.currency)}</span>
@@ -1030,7 +1059,6 @@
 									<th class="h-12 px-4 align-middle font-medium text-muted-foreground">Cuenta Stripe</th>
 									<th class="h-12 px-4 align-middle font-medium text-muted-foreground">Servicio / Proyecto</th>
 									<th class="h-12 px-4 align-middle font-medium text-muted-foreground">Precio</th>
-									<th class="h-12 px-4 align-middle font-medium text-muted-foreground">Renovación</th>
 									<th class="h-12 px-4 align-middle font-medium text-muted-foreground">Estado</th>
 									<th class="h-12 px-4 align-middle font-medium text-right">Acciones</th>
 								</tr>
@@ -1049,12 +1077,6 @@
 											</div>
 										</td>
 										<td class="p-4 align-middle font-mono">{formatBillingAmount(sub.amount, sub.currency)}</td>
-										<td class="p-4 align-middle">
-											<div class="flex items-center gap-2">
-												<Calendar class="h-3 w-3 text-muted-foreground" />
-												{sub.currentPeriodEnd}
-											</div>
-										</td>
 										<td class="p-4 align-middle">
 											<span
 												class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold {subscriptionStatusBadgeClass(sub.status)}"
@@ -1099,10 +1121,6 @@
 									>
 										{subscriptionStatusLabel(sub.status)}
 									</span>
-								</div>
-								<div class="flex items-center gap-2 text-xs text-muted-foreground">
-									<Calendar class="h-3 w-3" />
-									Renovación: {sub.currentPeriodEnd}
 								</div>
 								{#if canManageBilling && sub.accountCode}
 									<button

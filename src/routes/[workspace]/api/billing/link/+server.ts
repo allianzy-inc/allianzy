@@ -89,17 +89,27 @@ export const POST: RequestHandler = async (event) => {
 	// Sincronizar payment_accounts (dominio nuevo) sin borrar datos en companies
 	if (action === 'add' && raw) {
 		const existing = await paymentAccountsRepo.findPaymentAccountByCompanyAndExternalId(companyId, 'stripe', raw);
+		const label = payload.length > 1 ? `Stripe ${payload.findIndex((a) => a.customerId === raw) + 1}` : 'Stripe principal';
+		const isDefault = payload.find((a) => a.customerId === raw)?.isDefault ?? false;
 		if (!existing) {
 			await paymentAccountsRepo.createPaymentAccount({
 				companyId,
 				provider: 'stripe',
-				label: payload.length > 1 ? `Stripe ${payload.findIndex((a) => a.customerId === raw) + 1}` : 'Stripe principal',
+				label,
 				externalId: raw,
 				status: 'active',
-				isDefault: payload.find((a) => a.customerId === raw)?.isDefault ?? false
+				isDefault
 			});
-		} else if (body.setAsDefault) {
-			await paymentAccountsRepo.setDefaultPaymentAccount(companyId, existing.id);
+		} else {
+			// Reactivar si estaba archivada (p. ej. la borraron y la vuelven a agregar)
+			if (existing.status === 'archived') {
+				await paymentAccountsRepo.updatePaymentAccount(existing.id, companyId, { status: 'active', label });
+			} else if (existing.label !== label) {
+				await paymentAccountsRepo.updatePaymentAccount(existing.id, companyId, { label });
+			}
+			if (body.setAsDefault || isDefault) {
+				await paymentAccountsRepo.setDefaultPaymentAccount(companyId, existing.id);
+			}
 		}
 	} else if (action === 'remove' && raw) {
 		const acc = await paymentAccountsRepo.findPaymentAccountByCompanyAndExternalId(companyId, 'stripe', raw);

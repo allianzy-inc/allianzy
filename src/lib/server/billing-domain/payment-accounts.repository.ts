@@ -112,11 +112,12 @@ export async function createPaymentAccount(input: CreatePaymentAccountInput) {
 export async function updatePaymentAccount(
   id: string,
   companyId: number,
-  data: { label?: string; externalId?: string | null }
+  data: { label?: string; externalId?: string | null; status?: 'active' | 'archived' }
 ) {
   const updates: Record<string, unknown> = { updatedAt: new Date() };
   if (data.label != null) updates.label = data.label;
   if (data.externalId !== undefined) updates.externalId = data.externalId;
+  if (data.status !== undefined) updates.status = data.status;
   if (Object.keys(updates).length === 1) return null;
   const [row] = await db
     .update(paymentAccounts)

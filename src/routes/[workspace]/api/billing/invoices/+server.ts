@@ -163,11 +163,13 @@ async function getStandaloneChargeRows(
 	customerId: string
 ): Promise<InvoiceRow[]> {
 	const rows: InvoiceRow[] = [];
+	const chargeIds = new Set<string>();
 	try {
 		const charges = await stripe.charges.list({ customer: customerId, limit: 100 });
 		for (const ch of charges.data ?? []) {
 			if (ch.status !== 'succeeded') continue;
 			if (ch.invoice) continue;
+			chargeIds.add(ch.id);
 			rows.push({
 				id: ch.id,
 				documentId: null,
@@ -189,6 +191,44 @@ async function getStandaloneChargeRows(
 		}
 	} catch (e) {
 		console.error('[billing/invoices] standalone charges error:', (e as Error)?.message);
+	}
+	// Clientes guest (gcus_): en la API los pagos suelen estar en Payment Intents, no en charges.list
+	if (customerId.startsWith('gcus_') || rows.length === 0) {
+		try {
+			const pis = await stripe.paymentIntents.list({
+				customer: customerId,
+				limit: 100,
+				expand: ['data.latest_charge']
+			});
+			for (const pi of pis.data ?? []) {
+				if (pi.status !== 'succeeded') continue;
+				const lc = pi.latest_charge;
+				const chargeId = lc && typeof lc === 'object' && 'id' in lc ? (lc as { id: string }).id : null;
+				if (chargeId && chargeIds.has(chargeId)) continue;
+				const amount = pi.amount ?? 0;
+				const created = pi.created ? new Date(pi.created * 1000).toISOString() : undefined;
+				rows.push({
+					id: pi.id,
+					documentId: null,
+					provider: 'stripe',
+					account_code: customerId,
+					number: undefined,
+					amount_due: 0,
+					amount_paid: amount,
+					status: 'paid',
+					due_date: undefined,
+					paid_at: created,
+					hosted_invoice_url: undefined,
+					invoice_pdf: undefined,
+					receipt_url: lc && typeof lc === 'object' && 'receipt_url' in lc ? (lc as { receipt_url?: string }).receipt_url : undefined,
+					currency: (pi.currency ?? 'usd').toLowerCase(),
+					created,
+					description: (pi.description as string) ?? 'Pago único'
+				});
+			}
+		} catch (e) {
+			console.error('[billing/invoices] payment intents for customer error:', (e as Error)?.message);
+		}
 	}
 	return rows;
 }

@@ -48,7 +48,8 @@
 		/** Cuenta Stripe (cus_xxx) a la que pertenece la suscripción */
 		accountCode?: string | null;
 	}> = [];
-	let portalLoading = false;
+	/** ID de la cuenta Stripe cuya sesión de portal se está creando (solo ese botón muestra loading). */
+	let portalLoadingId: string | null = null;
 	let billingError: string | null = null;
 
 	/** Query para suscripciones/portal: una cuenta Stripe (opcional). */
@@ -426,14 +427,14 @@
 	/** Abre el portal de Stripe para la empresa. Si se pasa stripeCustomerId (p. ej. de una suscripción), se usa esa cuenta. */
 	async function handleManageSubscription(stripeCustomerId?: string | null) {
 		const cusId = stripeCustomerId ?? selectedStripeCustomerId;
-		portalLoading = true;
+		portalLoadingId = cusId ?? '';
 		try {
 			const q = cusId ? `&stripeCustomerId=${encodeURIComponent(cusId)}` : '';
 			const res = await fetch(`/${workspace}/api/billing/portal?companyId=${companyId}${q}`, { method: 'POST', credentials: 'include' });
 			const data = await res.json().catch(() => ({}));
 			if (data.url) window.location.href = data.url;
 		} finally {
-			portalLoading = false;
+			portalLoadingId = null;
 		}
 	}
 
@@ -1106,10 +1107,10 @@
 							<button
 								type="button"
 								on:click={() => handleManageSubscription(sub.accountCode)}
-								disabled={portalLoading}
+								disabled={portalLoadingId != null}
 								class="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
 							>
-								{#if portalLoading}
+								{#if portalLoadingId === sub.accountCode}
 									<Loader2 class="w-4 h-4 animate-spin" />
 								{:else}
 									<Settings2 class="w-4 h-4" />
@@ -1168,10 +1169,10 @@
 												<button
 													type="button"
 													on:click={() => handleManageSubscription(sub.accountCode)}
-													disabled={portalLoading}
+													disabled={portalLoadingId != null}
 													class="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
 												>
-													{#if portalLoading}
+													{#if portalLoadingId === sub.accountCode}
 														<Loader2 class="w-4 h-4 animate-spin" />
 													{:else}
 														<Settings2 class="w-4 h-4" />
@@ -1205,10 +1206,10 @@
 									<button
 										type="button"
 										on:click={() => handleManageSubscription(sub.accountCode)}
-										disabled={portalLoading}
+										disabled={portalLoadingId != null}
 										class="w-full inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
 									>
-										{#if portalLoading}
+										{#if portalLoadingId === sub.accountCode}
 											<Loader2 class="w-4 h-4 animate-spin" />
 										{:else}
 											<Settings2 class="w-4 h-4" />

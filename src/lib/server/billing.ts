@@ -23,6 +23,12 @@ export function getStripe(): Stripe | null {
 	return stripeInstance;
 }
 
+/** Stripe customer IDs: cus_ (regular) or gcus_ (guest). */
+export function isStripeCustomerId(id: string | null | undefined): boolean {
+	const s = id?.trim() ?? '';
+	return s.startsWith('cus_') || s.startsWith('gcus_');
+}
+
 export interface StripeAccountEntry {
 	customerId: string;
 	isDefault: boolean;
@@ -46,13 +52,13 @@ function normalizeStripeAccounts(
 	const entries: StripeAccountEntry[] = valid.map((x) => ({
 		customerId: String((x as any).customerId).trim(),
 		isDefault: Boolean((x as any).isDefault)
-	})).filter((e) => e.customerId.startsWith('cus_'));
+	})).filter((e) => isStripeCustomerId(e.customerId));
 	if (entries.length > 0) {
 		const hasDefault = entries.some((e) => e.isDefault);
 		if (!hasDefault) entries[0].isDefault = true;
 		return entries;
 	}
-	if (legacyCustomerId?.trim().startsWith('cus_')) {
+	if (isStripeCustomerId(legacyCustomerId)) {
 		return [{ customerId: legacyCustomerId.trim(), isDefault: true }];
 	}
 	return [];

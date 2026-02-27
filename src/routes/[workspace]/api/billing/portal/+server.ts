@@ -1,16 +1,16 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { getStripe, getBillingCompany } from '$lib/server/billing';
+import { getStripe, getBillingCompany, isStripeCustomerId } from '$lib/server/billing';
 import { getBillingContext } from '$lib/server/billing-domain/resolve-context';
 
 export const POST: RequestHandler = async (event) => {
 	const ctx = await getBillingContext(event);
 	let customerId: string | null = ctx?.selectedCustomerId ?? null;
-	if (!customerId?.startsWith('cus_')) {
+	if (!isStripeCustomerId(customerId)) {
 		const billing = await getBillingCompany(event);
 		customerId = billing?.stripeCustomerId ?? null;
 	}
-	if (!customerId?.startsWith('cus_')) {
+	if (!isStripeCustomerId(customerId)) {
 		return json({ error: 'No billing company or Stripe customer linked' }, { status: 400 });
 	}
 

@@ -4,6 +4,7 @@ import { db } from '$lib/server/db';
 import { companies } from '$lib/server/schema';
 import { eq } from 'drizzle-orm';
 import { getBillingContext } from '$lib/server/billing-domain/resolve-context';
+import { isStripeCustomerId } from '$lib/server/billing';
 import * as paymentAccountsRepo from '$lib/server/billing-domain/payment-accounts.repository';
 
 /** GET: list of payment accounts for the billing company (DB first; fallback legacy). Incluye provider y label para mostrar Stripe, MercadoPago, etc. */
@@ -90,7 +91,7 @@ export const PATCH: RequestHandler = async (event) => {
 	const isStripe = (account.provider ?? 'stripe') === 'stripe';
 	if (isStripe && body.stripeCustomerId != null) {
 		const next = String(body.stripeCustomerId).trim();
-		if (!next.startsWith('cus_')) return json({ error: 'stripeCustomerId must be cus_...' }, { status: 400 });
+		if (!isStripeCustomerId(next)) return json({ error: 'stripeCustomerId must be cus_... or gcus_...' }, { status: 400 });
 		updates.externalId = next;
 	}
 	if (Object.keys(updates).length === 0) return json({ error: 'Provide label and/or stripeCustomerId' }, { status: 400 });

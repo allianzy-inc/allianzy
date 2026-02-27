@@ -3,7 +3,7 @@ import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
 import { companies } from '$lib/server/schema';
 import { eq } from 'drizzle-orm';
-import type { StripeAccountEntry } from '$lib/server/billing';
+import { type StripeAccountEntry, isStripeCustomerId } from '$lib/server/billing';
 import * as paymentAccountsRepo from '$lib/server/billing-domain/payment-accounts.repository';
 
 /** Admin only: add / remove / set default Stripe account for a company. */
@@ -43,13 +43,13 @@ export const POST: RequestHandler = async (event) => {
 					typeof x === 'object' && x !== null && typeof (x as any).customerId === 'string'
 		  )
 		: [];
-	if (accounts.length === 0 && legacy?.startsWith('cus_')) {
-		accounts = [{ customerId: legacy, isDefault: true }];
+	if (accounts.length === 0 && isStripeCustomerId(legacy)) {
+		accounts = [{ customerId: legacy!, isDefault: true }];
 	}
 	accounts = accounts.map((x) => ({
 		customerId: String((x as any).customerId).trim(),
 		isDefault: Boolean((x as any).isDefault)
-	})).filter((a) => a.customerId.startsWith('cus_'));
+	})).filter((a) => isStripeCustomerId(a.customerId));
 
 	if (action === 'remove') {
 		if (!raw) return json({ error: 'stripeCustomerId required to remove' }, { status: 400 });
@@ -57,12 +57,12 @@ export const POST: RequestHandler = async (event) => {
 		if (accounts.length > 0 && !accounts.some((a) => a.isDefault)) accounts[0].isDefault = true;
 	} else if (action === 'setDefault') {
 		if (!raw) return json({ error: 'stripeCustomerId required' }, { status: 400 });
-		if (!raw.startsWith('cus_')) return json({ error: 'stripeCustomerId must be cus_...' }, { status: 400 });
+		if (!isStripeCustomerId(raw)) return json({ error: 'stripeCustomerId must be cus_... or gcus_...' }, { status: 400 });
 		const idx = accounts.findIndex((a) => a.customerId === raw);
 		if (idx === -1) return json({ error: 'Account not found in list' }, { status: 400 });
 		accounts.forEach((a) => (a.isDefault = a.customerId === raw));
 	} else if (action === 'add' || (!action && raw)) {
-		if (!raw.startsWith('cus_')) return json({ error: 'stripeCustomerId must be a Stripe customer ID (cus_...)' }, { status: 400 });
+		if (!isStripeCustomerId(raw)) return json({ error: 'stripeCustomerId must be a Stripe customer ID (cus_... or gcus_...)' }, { status: 400 });
 		const existing = accounts.findIndex((a) => a.customerId === raw);
 		if (existing >= 0) {
 			if (body.setAsDefault) accounts.forEach((a) => (a.isDefault = a.customerId === raw));

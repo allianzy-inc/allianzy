@@ -24,11 +24,16 @@
 	let error: string | null = null;
 	$: if (open) inputValue = initialValue ?? '';
 
+	function isStripeCustomerId(id: string): boolean {
+		const s = id.trim();
+		return s.startsWith('cus_') || s.startsWith('gcus_');
+	}
+
 	async function handleSubmit(e: Event) {
 		e.preventDefault();
 		const trimmed = inputValue.trim();
-		if (!trimmed || (!trimmed.startsWith('cus_') && trimmed.length <= 5)) {
-			error = 'Ingresa un ID de cliente de Stripe (cus_...)';
+		if (!trimmed || !isStripeCustomerId(trimmed) || trimmed.length <= 5) {
+			error = 'Ingresa un ID de cliente de Stripe (cus_... o gcus_... para guest)';
 			return;
 		}
 		error = null;
@@ -112,8 +117,8 @@
 				</button>
 			</div>
 			<p class="text-sm text-muted-foreground mb-4">
-				Ingresa el ID de cliente de Stripe (por ejemplo <code class="bg-muted px-1 rounded">cus_xxxxx</code>). 
-				Puedes vincular varias cuentas y elegir una como predeterminada.
+				Ingresa el ID de cliente de Stripe (<code class="bg-muted px-1 rounded">cus_xxxxx</code> o <code class="bg-muted px-1 rounded">gcus_xxxxx</code> para guest).
+				Podés vincular varias cuentas y elegir una como predeterminada.
 			</p>
 			{#if error}
 				<p class="text-sm text-destructive mb-4">{error}</p>
@@ -164,7 +169,7 @@
 						id="stripe-customer-id"
 						type="text"
 						bind:value={inputValue}
-						placeholder="cus_..."
+						placeholder="cus_... o gcus_..."
 						class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 					/>
 				</div>

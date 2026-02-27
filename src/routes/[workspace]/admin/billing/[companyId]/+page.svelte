@@ -348,9 +348,9 @@
 		await loadBilling();
 	}
 
-	/** Eliminar cuenta: id es customerId (cus_xxx) para Stripe o paymentAccountId (uuid) para el resto. */
+	/** Eliminar cuenta: id es customerId (cus_/gcus_xxx) para Stripe o paymentAccountId (uuid) para el resto. */
 	async function handleRemoveAccount(id: string) {
-		if (id.startsWith('cus_')) {
+		if (id.startsWith('cus_') || id.startsWith('gcus_')) {
 			const res = await fetch(`/${workspace}/api/billing/link`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
@@ -376,9 +376,9 @@
 		await loadBilling();
 	}
 
-	/** Establecer predeterminada: id es customerId (Stripe) o paymentAccountId (uuid). */
+	/** Establecer predeterminada: id es customerId (cus_/gcus_ Stripe) o paymentAccountId (uuid). */
 	async function handleSetDefaultAccount(id: string) {
-		if (id.startsWith('cus_')) {
+		if (id.startsWith('cus_') || id.startsWith('gcus_')) {
 			const res = await fetch(`/${workspace}/api/billing/link`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },

@@ -2,9 +2,14 @@
 import { db } from '$lib/server/db';
 import { cases, requestComments, caseComments, requirementComments, proposalComments, users, userCompanies } from '$lib/server/schema';
 import { uploadFile, getSignedUrlForFile } from '$lib/server/storage';
+import { sendSupportNotification } from '$lib/server/email';
 import { eq, asc, sql } from 'drizzle-orm';
 import { fail } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
+
+function escapeHtml(s: string) {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
 
 export const load = async ({ params, url }: Parameters<PageServerLoad>[0]) => {
     // Fetch comments for selected case
@@ -177,7 +182,7 @@ export const actions = {
         }
 
         try {
-            await db.insert(cases).values({
+            const [inserted] = await db.insert(cases).values({
                 projectId,
                 title,
                 description,
@@ -185,6 +190,13 @@ export const actions = {
                 priority,
                 status,
                 files: uploadedFiles
+            }).returning({ id: cases.id });
+            const caseId = inserted?.id;
+            const safeTitle = escapeHtml(title);
+            const safeDesc = description ? escapeHtml(description.slice(0, 500)) + (description.length > 500 ? '…' : '') : '';
+            await sendSupportNotification({
+                subject: `[Soporte] Nueva consulta desde proyecto: ${title}`,
+                html: `<p>Un cliente ha creado una nueva consulta de soporte desde el proyecto.</p><p><strong>Título:</strong> ${safeTitle}</p>${safeDesc ? `<p><strong>Descripción:</strong> ${safeDesc}</p>` : ''}<p><strong>Prioridad:</strong> ${priority || 'medium'}</p><p>Ticket #${caseId ?? '—'} · Proyecto ID: ${projectId}</p>`
             });
             return { success: true };
         } catch (err) {
@@ -193,7 +205,7 @@ export const actions = {
         }
     },
 
-    addCaseComment: async ({ request, locals }: import('./$types').RequestEvent) => {
+    addCaseComment: async ({ request, locals, params }: import('./$types').RequestEvent) => {
         const formData = await request.formData();
         const caseId = Number(formData.get('caseId'));
         const content = formData.get('content') as string;
@@ -228,6 +240,11 @@ export const actions = {
                 subject,
                 content,
                 files: uploadedFiles
+            });
+            const safeContent = content ? escapeHtml(content.slice(0, 500)) + (content.length > 500 ? '…' : '') : '';
+            await sendSupportNotification({
+                subject: `[Soporte] Nuevo mensaje en ticket #${caseId}: ${subject || 'Sin asunto'}`,
+                html: `<p><strong>${escapeHtml(authorName)}</strong> ha enviado un mensaje en el ticket #${caseId}.</p><p><strong>Asunto:</strong> ${subject ? escapeHtml(subject) : '—'}</p><p><strong>Mensaje:</strong></p><p>${safeContent}</p>`
             });
             return { success: true };
         } catch (err) {
@@ -272,6 +289,11 @@ export const actions = {
                 content,
                 files: uploadedFiles
             });
+            const safeContent = content ? escapeHtml(content.slice(0, 500)) + (content.length > 500 ? '…' : '') : '';
+            await sendSupportNotification({
+                subject: `[Soporte] Nuevo mensaje en solicitud #${requestId}: ${subject || 'Sin asunto'}`,
+                html: `<p><strong>${escapeHtml(authorName)}</strong> ha enviado un mensaje en la solicitud #${requestId}.</p><p><strong>Asunto:</strong> ${subject ? escapeHtml(subject) : '—'}</p><p><strong>Mensaje:</strong></p><p>${safeContent}</p>`
+            });
             return { success: true };
         } catch (err) {
             console.error('Error adding request comment:', err);
@@ -315,6 +337,11 @@ export const actions = {
                 content,
                 files: uploadedFiles
             });
+            const safeContent = content ? escapeHtml(content.slice(0, 500)) + (content.length > 500 ? '…' : '') : '';
+            await sendSupportNotification({
+                subject: `[Soporte] Nuevo mensaje en requerimiento #${requirementId}: ${subject || 'Sin asunto'}`,
+                html: `<p><strong>${escapeHtml(authorName)}</strong> ha enviado un mensaje en el requerimiento #${requirementId}.</p><p><strong>Asunto:</strong> ${subject ? escapeHtml(subject) : '—'}</p><p><strong>Mensaje:</strong></p><p>${safeContent}</p>`
+            });
             return { success: true };
         } catch (err) {
             console.error('Error adding requirement comment:', err);
@@ -357,6 +384,11 @@ export const actions = {
                 subject,
                 content,
                 files: uploadedFiles
+            });
+            const safeContent = content ? escapeHtml(content.slice(0, 500)) + (content.length > 500 ? '…' : '') : '';
+            await sendSupportNotification({
+                subject: `[Soporte] Nuevo mensaje en propuesta #${proposalId}: ${subject || 'Sin asunto'}`,
+                html: `<p><strong>${escapeHtml(authorName)}</strong> ha enviado un mensaje en la propuesta #${proposalId}.</p><p><strong>Asunto:</strong> ${subject ? escapeHtml(subject) : '—'}</p><p><strong>Mensaje:</strong></p><p>${safeContent}</p>`
             });
             return { success: true };
         } catch (err) {

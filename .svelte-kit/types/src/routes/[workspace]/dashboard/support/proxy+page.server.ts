@@ -5,7 +5,7 @@ import { eq, desc, or, and, sql, asc, isNull, inArray } from 'drizzle-orm';
 import type { PageServerLoad, Actions } from './$types';
 import { error, fail } from '@sveltejs/kit';
 import { uploadFile, getSignedUrlForFile } from '$lib/server/storage';
-import { sendEmail } from '$lib/server/email';
+import { sendEmail, sendSupportNotification, SUPPORT_EMAIL } from '$lib/server/email';
 import { env } from '$env/dynamic/private';
 
 export const load = async ({ locals, url, params }: Parameters<PageServerLoad>[0]) => {
@@ -262,30 +262,27 @@ export const actions = {
                             });
                         }
                     }
+                    const escape = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+                    const baseUrl = (env.PUBLIC_APP_URL || env.APP_BASE_URL || '').replace(/\/$/, '');
+                    const supportPath = `/${workspaceSlug}/admin/support?caseId=${caseId}`;
+                    const projectPathFull = `/${workspaceSlug}/admin/projects/${projectId}`;
+                    const supportLinkAbs = baseUrl ? `${baseUrl}${supportPath}` : supportPath;
+                    const projectLink = baseUrl ? `${baseUrl}${projectPathFull}` : projectPathFull;
+                    const subject = `Nueva consulta de soporte: ${title}`;
+                    const safeTitle = escape(title);
+                    const safeDesc = description ? escape(description.slice(0, 500)) + (description.length > 500 ? '…' : '') : '';
+                    const html = `
+                        <p>Un cliente ha creado una nueva consulta de soporte.</p>
+                        <p><strong>Título:</strong> ${safeTitle}</p>
+                        ${safeDesc ? `<p><strong>Descripción:</strong> ${safeDesc}</p>` : ''}
+                        <p><strong>Prioridad:</strong> ${priority || 'medium'}</p>
+                        <p>Accede al panel de administración para ver y responder el ticket:</p>
+                        <p><a href="${supportLinkAbs}">Ver Soporte</a> · <a href="${projectLink}">Ver en el proyecto</a></p>
+                    `;
                     if (adminEmails.length > 0) {
-                        const escape = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-                        const baseUrl = (env.PUBLIC_APP_URL || env.APP_BASE_URL || '').replace(/\/$/, '');
-                        const supportPath = `/${workspaceSlug}/admin/support?caseId=${caseId}`;
-                        const projectPath = `/${workspaceSlug}/admin/projects/${projectId}`;
-                        const supportLinkAbs = baseUrl ? `${baseUrl}${supportPath}` : supportPath;
-                        const projectPathFull = `/${workspaceSlug}/admin/projects/${projectId}`;
-                        const projectLink = baseUrl ? `${baseUrl}${projectPathFull}` : projectPathFull;
-                        const subject = `Nueva consulta de soporte: ${title}`;
-                        const safeTitle = escape(title);
-                        const safeDesc = description ? escape(description.slice(0, 500)) + (description.length > 500 ? '…' : '') : '';
-                        const html = `
-                            <p>Un cliente ha creado una nueva consulta de soporte.</p>
-                            <p><strong>Título:</strong> ${safeTitle}</p>
-                            ${safeDesc ? `<p><strong>Descripción:</strong> ${safeDesc}</p>` : ''}
-                            <p><strong>Prioridad:</strong> ${priority || 'medium'}</p>
-                            <p>Accede al panel de administración para ver y responder el ticket:</p>
-                            <p><a href="${supportLinkAbs}">Ver Soporte</a> · <a href="${projectLink}">Ver en el proyecto</a></p>
-                        `;
-                        await sendEmail({
-                            to: adminEmails,
-                            subject,
-                            html
-                        });
+                        await sendEmail({ to: [...adminEmails, SUPPORT_EMAIL], subject, html });
+                    } else {
+                        await sendSupportNotification({ subject, html });
                     }
                 }
             }
@@ -333,6 +330,11 @@ export const actions = {
                 content,
                 files: uploadedFiles
             });
+            const escape = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+            const safeContent = content ? escape(content.slice(0, 500)) + (content.length > 500 ? '…' : '') : '';
+            const notifSubject = `[Soporte] Nuevo mensaje en ticket #${caseId}: ${subject || 'Sin asunto'}`;
+            const notifHtml = `<p><strong>${escape(authorName)}</strong> ha enviado un mensaje en el ticket #${caseId}.</p><p><strong>Asunto:</strong> ${subject ? escape(subject) : '—'}</p><p><strong>Mensaje:</strong></p><p>${safeContent}</p>`;
+            await sendSupportNotification({ subject: notifSubject, html: notifHtml });
             return { success: true };
         } catch (err) {
             console.error('Error adding comment:', err);

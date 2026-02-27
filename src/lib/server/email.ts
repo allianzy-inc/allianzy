@@ -15,6 +15,8 @@ export interface EmailOptions {
     text?: string;
 }
 
+export const SUPPORT_EMAIL = 'support@allianzy.us';
+
 export async function sendEmail({ from = 'Allianzy <no-reply@updates.allianzy.us>', to, subject, html, text }: EmailOptions) {
     try {
         const data = await resend.emails.send({
@@ -30,4 +32,15 @@ export async function sendEmail({ from = 'Allianzy <no-reply@updates.allianzy.us
         console.error('Error sending email:', error);
         return { success: false, error };
     }
+}
+
+export interface SupportNotificationOptions {
+    subject: string;
+    html: string;
+    text?: string;
+}
+
+/** Sends a copy of the notification to support@allianzy.us (e.g. new case, client message, intake contact). */
+export async function sendSupportNotification({ subject, html, text }: SupportNotificationOptions) {
+    return sendEmail({ to: SUPPORT_EMAIL, subject, html, text });
 }

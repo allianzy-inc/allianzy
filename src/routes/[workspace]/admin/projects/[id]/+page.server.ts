@@ -1,6 +1,7 @@
 import { db } from '$lib/server/db';
 import { projects, services, users, requirements, projectMilestones, cases, proposals, payments, requests, caseComments, requestComments, requirementComments, proposalComments, projectPayments as projectPaymentsTable, notifications, userCompanies, companies } from '$lib/server/schema';
 import { uploadFile, getSignedUrlForFile, deleteFile } from '$lib/server/storage';
+import { sendSupportNotification } from '$lib/server/email';
 import * as billingService from '$lib/server/billing-domain/billing.service';
 import * as paymentAccountsRepo from '$lib/server/billing-domain/payment-accounts.repository';
 import * as providerConfigRepo from '$lib/server/billing-domain/provider-config.repository';
@@ -1406,6 +1407,14 @@ export const actions: Actions = {
                 });
             }
 
+            const escape = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+            const safeTitle = escape(title);
+            const safeDesc = description ? escape((description || '').slice(0, 500)) + ((description?.length ?? 0) > 500 ? '…' : '') : '';
+            await sendSupportNotification({
+                subject: `[Admin] Nuevo ticket creado: ${title}`,
+                html: `<p>Se ha creado un nuevo ticket de soporte desde el panel admin.</p><p><strong>Título:</strong> ${safeTitle}</p>${safeDesc ? `<p><strong>Descripción:</strong> ${safeDesc}</p>` : ''}<p>Ticket #${newCase.id} · Proyecto ID: ${projectId}</p>`
+            });
+
             return { success: true };
         } catch (err) {
             console.error('Error creating case:', err);
@@ -1535,6 +1544,13 @@ export const actions: Actions = {
                 }
             }
 
+            const escape = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+            const safeContent = content ? escape(content.slice(0, 500)) + (content.length > 500 ? '…' : '') : '';
+            await sendSupportNotification({
+                subject: `[Admin] Nuevo mensaje en ticket #${caseId}: ${subject || 'Sin asunto'}`,
+                html: `<p><strong>Admin</strong> ha respondido en el ticket #${caseId}.</p><p><strong>Asunto:</strong> ${subject ? escape(subject) : '—'}</p><p><strong>Mensaje:</strong></p><p>${safeContent}</p>`
+            });
+
             return { success: true };
         } catch (err) {
             console.error('Error adding comment:', err);
@@ -1641,6 +1657,13 @@ export const actions: Actions = {
                 }
             }
 
+            const escape = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+            const safeContent = content ? escape(content.slice(0, 500)) + (content.length > 500 ? '…' : '') : '';
+            await sendSupportNotification({
+                subject: `[Admin] Nuevo mensaje en solicitud #${requestId}: ${subject || 'Sin asunto'}`,
+                html: `<p><strong>Admin</strong> ha respondido en la solicitud #${requestId}.</p><p><strong>Asunto:</strong> ${subject ? escape(subject) : '—'}</p><p><strong>Mensaje:</strong></p><p>${safeContent}</p>`
+            });
+
             return { success: true };
         } catch (err) {
             console.error('Error adding request comment:', err);
@@ -1700,6 +1723,13 @@ export const actions: Actions = {
                 }
             }
 
+            const escape = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+            const safeContent = content ? escape(content.slice(0, 500)) + (content.length > 500 ? '…' : '') : '';
+            await sendSupportNotification({
+                subject: `[Admin] Nuevo mensaje en requerimiento #${requirementId}: ${subject || 'Sin asunto'}`,
+                html: `<p><strong>Admin</strong> ha respondido en el requerimiento #${requirementId}.</p><p><strong>Asunto:</strong> ${subject ? escape(subject) : '—'}</p><p><strong>Mensaje:</strong></p><p>${safeContent}</p>`
+            });
+
             return { success: true };
         } catch (err) {
             console.error('Error adding requirement comment:', err);
@@ -1758,6 +1788,13 @@ export const actions: Actions = {
                     });
                 }
             }
+
+            const escape = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+            const safeContent = content ? escape(content.slice(0, 500)) + (content.length > 500 ? '…' : '') : '';
+            await sendSupportNotification({
+                subject: `[Admin] Nuevo mensaje en propuesta #${proposalId}: ${subject || 'Sin asunto'}`,
+                html: `<p><strong>Admin</strong> ha respondido en la propuesta #${proposalId}.</p><p><strong>Asunto:</strong> ${subject ? escape(subject) : '—'}</p><p><strong>Mensaje:</strong></p><p>${safeContent}</p>`
+            });
 
             return { success: true };
         } catch (err) {

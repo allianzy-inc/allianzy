@@ -13,7 +13,7 @@
 	export let onClose: () => void;
 	/** Todas las cuentas (Stripe, MercadoPago, PayPal, etc.) */
 	export let accounts: AccountItem[] = [];
-	/** Añadir cuenta Stripe (cus_xxx). Se llama desde el formulario Stripe. */
+	/** Añadir cuenta Stripe (cus_xxx o gcus_xxx para guest). Se llama desde el formulario Stripe. */
 	export let onAddStripe: ((stripeCustomerId: string, setAsDefault?: boolean) => Promise<void>) | null = null;
 	/** Eliminar cuenta: recibe paymentAccountId (uuid) o customerId (cus_xxx) para Stripe legacy */
 	export let onRemove: ((accountId: string) => Promise<void>) | null = null;
@@ -41,11 +41,16 @@
 		return provider.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 	}
 
+	function isStripeCustomerId(id: string): boolean {
+		const s = id.trim();
+		return s.startsWith('cus_') || s.startsWith('gcus_');
+	}
+
 	async function handleAddStripe(e: Event) {
 		e.preventDefault();
 		const trimmed = stripeInput.trim();
-		if (!trimmed || (!trimmed.startsWith('cus_') && trimmed.length <= 5)) {
-			error = 'Ingresa un ID de cliente de Stripe (cus_...)';
+		if (!trimmed || !isStripeCustomerId(trimmed) || trimmed.length <= 5) {
+			error = 'Ingresa un ID de cliente de Stripe (cus_... o gcus_... para guest)';
 			return;
 		}
 		error = null;
@@ -127,9 +132,9 @@
 			error = 'El nombre es obligatorio';
 			return;
 		}
-		const isStripe = editCustomerId.trim().startsWith('cus_');
+		const isStripe = isStripeCustomerId(editCustomerId);
 		if (editCustomerId.trim() && !isStripe) {
-			error = 'El ID de Stripe debe ser cus_...';
+			error = 'El ID de Stripe debe ser cus_... o gcus_...';
 			return;
 		}
 		error = null;
@@ -194,12 +199,12 @@
 										</div>
 										{#if (acc.provider ?? 'stripe') === 'stripe'}
 											<div>
-												<label class="text-xs text-muted-foreground">ID de cliente (cus_...)</label>
+												<label class="text-xs text-muted-foreground">ID de cliente (cus_... o gcus_...)</label>
 												<input
 													type="text"
 													bind:value={editCustomerId}
 													class="mt-0.5 w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm font-mono"
-													placeholder="cus_..."
+													placeholder="cus_... o gcus_..."
 												/>
 											</div>
 										{/if}
@@ -283,7 +288,7 @@
 							<input
 								type="text"
 								bind:value={stripeInput}
-								placeholder="ID de cliente (cus_...)"
+								placeholder="ID de cliente (cus_... o gcus_...)"
 								class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 							/>
 							<label class="flex items-center gap-2 text-sm">

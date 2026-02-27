@@ -6,6 +6,7 @@
 import type { RequestEvent } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { companies } from '$lib/server/schema';
+import { isStripeCustomerId } from '$lib/server/billing';
 import { eq } from 'drizzle-orm';
 import * as paymentAccountsRepo from './payment-accounts.repository';
 
@@ -35,12 +36,12 @@ function normalizeLegacyAccounts(raw: unknown, legacyCustomerId: string | null):
 	const entries = valid.map((x) => ({
 		customerId: String((x as any).customerId).trim(),
 		isDefault: Boolean((x as any).isDefault)
-	})).filter((e) => e.customerId.startsWith('cus_'));
+	})).filter((e) => isStripeCustomerId(e.customerId));
 	if (entries.length > 0) {
 		if (!entries.some((e) => e.isDefault)) entries[0].isDefault = true;
 		return entries;
 	}
-	if (legacyCustomerId?.trim().startsWith('cus_')) {
+	if (isStripeCustomerId(legacyCustomerId)) {
 		return [{ customerId: legacyCustomerId.trim(), isDefault: true }];
 	}
 	return [];

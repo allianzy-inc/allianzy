@@ -6,6 +6,7 @@ import { fail } from '@sveltejs/kit';
 import { getSignedUrlForFile } from '$lib/server/storage';
 import { uploadFile } from '$lib/server/storage';
 import { notifications } from '$lib/server/schema';
+import { sendSupportNotification } from '$lib/server/email';
 
 export const load: PageServerLoad = async ({ params, url }) => {
     const rows = await db
@@ -141,6 +142,12 @@ export const actions: Actions = {
                     });
                 }
             }
+            const escape = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+            const safeContent = content ? escape(content.slice(0, 500)) + (content.length > 500 ? '…' : '') : '';
+            await sendSupportNotification({
+                subject: `[Admin Soporte] Nuevo mensaje en ticket #${caseId}: ${subject || 'Sin asunto'}`,
+                html: `<p><strong>Admin</strong> ha respondido en el ticket #${caseId}.</p><p><strong>Asunto:</strong> ${subject ? escape(subject) : '—'}</p><p><strong>Mensaje:</strong></p><p>${safeContent}</p>`
+            });
             return { success: true };
         } catch (err) {
             console.error('Error adding comment:', err);

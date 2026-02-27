@@ -1,6 +1,7 @@
 import type { Actions, PageServerLoad } from './$types';
 import { db } from '$lib/server/db';
 import { intakeCases, intakeCaseContacts } from '$lib/server/schema';
+import { sendSupportNotification } from '$lib/server/email';
 import { and, eq } from 'drizzle-orm';
 import { error, fail } from '@sveltejs/kit';
 import { z } from 'zod';
@@ -87,6 +88,12 @@ export const actions: Actions = {
                 updatedAt: new Date()
             })
             .where(eq(intakeCases.id, caseId));
+
+        const safe = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        await sendSupportNotification({
+            subject: `[Intake] Nuevo contacto - ${full_name} (${company})`,
+            html: `<p>Se ha enviado información de contacto desde el intake.</p><p><strong>Nombre:</strong> ${safe(full_name)}</p><p><strong>Email:</strong> ${safe(email)}</p><p><strong>Empresa:</strong> ${safe(company)}</p>${role_title ? `<p><strong>Cargo:</strong> ${safe(role_title)}</p>` : ''}<p><strong>Caso intake:</strong> #${caseId}</p>`
+        });
 
         return {
             success: true,

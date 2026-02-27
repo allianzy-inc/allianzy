@@ -993,6 +993,14 @@
 			</div>
 		</div>
 	{:else}
+		{#if allAccounts.some((a) => (a.provider ?? 'stripe') === 'stripe')}
+			<div class="rounded-lg border border-blue-500/30 bg-blue-500/5 p-4 mb-4 text-sm text-blue-700 dark:text-blue-300">
+				<p class="font-medium">¿Falta alguna suscripción (ej. 12,50 US$)?</p>
+				<p class="mt-1 text-muted-foreground">
+					Cada suscripción puede estar en una cuenta Stripe distinta. Agregá la otra cuenta en <strong>Gestionar cuentas</strong> (el ID <code class="text-xs bg-muted px-1 rounded">cus_...</code> que ves en Stripe) y hacé clic en <strong>Sincronizar facturación</strong> para que aparezcan todas.
+				</p>
+			</div>
+		{/if}
 		{#if allSubscriptions.length > 0}
 			<div class="space-y-4">
 				{#each allSubscriptions as sub}

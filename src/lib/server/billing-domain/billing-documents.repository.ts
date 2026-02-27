@@ -103,6 +103,9 @@ export async function createBillingDocument(input: CreateBillingDocumentInput) {
 export async function upsertBillingDocument(input: CreateBillingDocumentInput & { providerDocumentId: string }) {
   const existing = await findBillingDocumentByProviderId(input.companyId, input.provider, input.providerDocumentId);
   if (existing) {
+    const existingMeta = (existing.metadata ?? {}) as Record<string, unknown>;
+    const inputMeta = (input.metadata ?? {}) as Record<string, unknown>;
+    const mergedMetadata = { ...existingMeta, ...inputMeta };
     const [updated] = await db
       .update(billingDocuments)
       .set({
@@ -113,7 +116,7 @@ export async function upsertBillingDocument(input: CreateBillingDocumentInput & 
         issuedAt: input.issuedAt ?? null,
         description: input.description ?? existing.description,
         number: input.number ?? existing.number,
-        metadata: input.metadata ?? existing.metadata,
+        metadata: mergedMetadata,
         updatedAt: new Date()
       })
       .where(eq(billingDocuments.id, existing.id))

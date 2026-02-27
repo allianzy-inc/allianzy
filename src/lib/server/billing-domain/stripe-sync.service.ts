@@ -78,6 +78,8 @@ async function syncInvoicesForCustomer(
 		for (const inv of list.data) {
 			const status = STRIPE_STATUS_TO_DOC[inv.status ?? ''] ?? 'draft';
 			const receiptUrl = typeof inv.charge === 'object' && inv.charge?.receipt_url ? inv.charge.receipt_url : undefined;
+			const statusTransitions = inv.status_transitions as { paid_at?: number } | undefined;
+			const paidAtIso = statusTransitions?.paid_at ? new Date(statusTransitions.paid_at * 1000).toISOString() : undefined;
 			const doc = await billingDocsRepo.upsertBillingDocument({
 				companyId,
 				type: 'invoice',
@@ -98,7 +100,8 @@ async function syncInvoicesForCustomer(
 				metadata: {
 					hosted_invoice_url: inv.hosted_invoice_url,
 					invoice_pdf: inv.invoice_pdf,
-					receipt_url: receiptUrl
+					receipt_url: receiptUrl,
+					...(paidAtIso && { paid_at: paidAtIso })
 				}
 			});
 			count++;

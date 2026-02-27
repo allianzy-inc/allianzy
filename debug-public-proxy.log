@@ -16752,3 +16752,11 @@
 [2026-02-27T00:05:41.523Z] Serving file successfully
 [2026-02-27T00:05:43.902Z] Request: http://localhost:5173/api/public/files?url=https%3A%2F%2Ff005.backblazeb2.com%2Ffile%2Fallianzy%2Favatars%2F1770214904685-Frame_1171274949.png&t=1772150742344&sig=ace2420a1dff3a92fa3d18e9272463e99b32d170c7ed04e6805d6e4ccbbd2851&w=allianzy
 [2026-02-27T00:05:44.385Z] Serving file successfully
+[2026-02-27T00:31:49.550Z] Request: http://localhost:5173/api/public/files?url=https%3A%2F%2Ff005.backblazeb2.com%2Ffile%2Fallianzy%2Favatars%2F1770214904685-Frame_1171274949.png&t=1772152306691&sig=d58f19e1f208364a88a0507737e24d7e9c9f9b869cb9c6da0d63f1ef3fe0aac6&w=allianzy
+[2026-02-27T00:31:50.095Z] Serving file successfully
+[2026-02-27T00:31:55.555Z] Request: http://localhost:5173/api/public/files?url=https%3A%2F%2Ff005.backblazeb2.com%2Ffile%2Fallianzy%2Favatars%2F1770214904685-Frame_1171274949.png&t=1772152313683&sig=e426f004509e1c25cf79aadd635686e00f324dec713704bc4598619866967ae5&w=allianzy
+[2026-02-27T00:31:56.156Z] Serving file successfully
+[2026-02-27T00:31:57.625Z] Request: http://localhost:5173/api/public/files?url=https%3A%2F%2Ff005.backblazeb2.com%2Ffile%2Fallianzy%2Favatars%2F1770214904685-Frame_1171274949.png&t=1772152316058&sig=714c60c7171591fcba7a98f66871bfe1c6e471dc5f8eebea0d298f295ee4dd88&w=allianzy
+[2026-02-27T00:31:58.097Z] Serving file successfully
+[2026-02-27T00:32:19.075Z] Request: http://localhost:5173/api/public/files?url=https%3A%2F%2Ff005.backblazeb2.com%2Ffile%2Fallianzy%2Favatars%2F1770214904685-Frame_1171274949.png&t=1772152336779&sig=5677cffc489ab6def36b186182fa850a2817e918a42bd824081a1ac088bd69d6&w=allianzy
+[2026-02-27T00:32:19.558Z] Serving file successfully

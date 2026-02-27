@@ -57,6 +57,7 @@ function mapDocumentToInvoiceShape(
 		proof_uploaded_at?: string;
 		proof_files?: { id: string; url: string; name: string; uploadedAt: string }[];
 		projectIds?: number[];
+		paid_at?: string;
 	};
 	const linkedProjectIds = Array.isArray(meta.projectIds) ? meta.projectIds : (doc.projectId ? [doc.projectId] : []);
 	const proofFiles = Array.isArray(meta.proof_files) && meta.proof_files.length > 0
@@ -86,7 +87,8 @@ function mapDocumentToInvoiceShape(
 		description: doc.description ?? undefined,
 		projectName: projectInfo?.projectName,
 		serviceName: projectInfo?.serviceName,
-		linked_project_ids: linkedProjectIds
+		linked_project_ids: linkedProjectIds,
+		paid_at: meta.paid_at ?? undefined
 	};
 }
 

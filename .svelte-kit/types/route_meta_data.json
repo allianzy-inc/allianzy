@@ -124,6 +124,9 @@
 	"/[workspace]/api/billing/invoices": [
 		"src/routes/[workspace]/api/billing/invoices/+server.ts"
 	],
+	"/[workspace]/api/billing/link-projects": [
+		"src/routes/[workspace]/api/billing/link-projects/+server.ts"
+	],
 	"/[workspace]/api/billing/link": [
 		"src/routes/[workspace]/api/billing/link/+server.ts"
 	],

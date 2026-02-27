@@ -1,5 +1,6 @@
 import { db } from '$lib/server/db';
 import { projects, services, users, requirements, projectMilestones, cases, proposals, payments, requests, workspaces, projectPayments as projectPaymentsTable, userCompanies } from '$lib/server/schema';
+import * as upcomingLinksRepo from '$lib/server/billing-domain/upcoming-invoice-project-links.repository';
 import { getSignedUrlForFile } from '$lib/server/storage';
 import { eq, asc, desc, sql, and, or, isNull, getTableColumns, inArray } from 'drizzle-orm';
 import { error } from '@sveltejs/kit';
@@ -198,6 +199,9 @@ export const load: LayoutServerLoad = async ({ params, locals }) => {
             documentUrl: await getSignedUrlForFile(p.documentUrl, params.workspace)
         })));
 
+        // Próximos pagos (facturas próximas vinculadas a este proyecto)
+        const upcomingPayments = await upcomingLinksRepo.findUpcomingLinksByProjectId(projectId);
+
         // 7. Fetch Requests
         const rawRequests = await db.select()
             .from(requests)
@@ -237,6 +241,7 @@ export const load: LayoutServerLoad = async ({ params, locals }) => {
             supportCases,
             proposals: projectProposals,
             payments: projectPayments,
+            upcomingPayments,
             requests: projectRequests,
             user: locals.user,
             permissions: effectivePermissions

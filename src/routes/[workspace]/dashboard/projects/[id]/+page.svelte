@@ -10,7 +10,7 @@
 
     export let data: PageData;
 
-    $: ({ project, requirements, milestones, supportCases, proposals, payments, requests, selectedCaseComments, selectedRequestComments, selectedRequirementComments, selectedProposalComments, user, permissions } = data);
+    $: ({ project, requirements, milestones, supportCases, proposals, payments, upcomingPayments = [], requests, selectedCaseComments, selectedRequestComments, selectedRequirementComments, selectedProposalComments, user, permissions } = data);
 
     // Polling for real-time updates
     let pollInterval: ReturnType<typeof setInterval>;
@@ -700,6 +700,29 @@
                                         {/if}
                                     </div>
                                 {/each}
+                            </div>
+                        {/if}
+                        {#if upcomingPayments && upcomingPayments.length > 0}
+                            <div class="mt-6 pt-4 border-t">
+                                <h4 class="font-medium text-sm text-muted-foreground mb-2">Próximos pagos</h4>
+                                <div class="space-y-3">
+                                    {#each upcomingPayments as up}
+                                        {@const amount = (up.amountCents ?? 0) / 100}
+                                        {@const curr = (up.currency ?? 'usd').toUpperCase()}
+                                        <div class="flex items-center justify-between p-4 border border-dashed rounded-lg bg-muted/20">
+                                            <div>
+                                                <span class="font-medium text-sm">Próxima factura</span>
+                                                <div class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-xs text-muted-foreground">
+                                                    <span>{amount.toFixed(2)} {curr}</span>
+                                                    {#if up.dueDate}
+                                                        <span class="flex items-center gap-1"><Calendar class="w-3 h-3" /> Vence: {formatDate(up.dueDate)}</span>
+                                                    {/if}
+                                                </div>
+                                            </div>
+                                            <span class="px-2 py-0.5 rounded text-[10px] border bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800">Próximo</span>
+                                        </div>
+                                    {/each}
+                                </div>
                             </div>
                         {/if}
                     </div>

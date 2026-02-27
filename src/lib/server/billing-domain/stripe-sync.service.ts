@@ -9,6 +9,10 @@ import { getStripe } from '$lib/server/billing';
 import * as paymentAccountsRepo from './payment-accounts.repository';
 import * as billingDocsRepo from './billing-documents.repository';
 import * as subscriptionRecordsRepo from './subscription-records.repository';
+import * as upcomingLinksRepo from './upcoming-invoice-project-links.repository';
+import { db } from '$lib/server/db';
+import { payments, projectPayments } from '$lib/server/schema';
+import { eq } from 'drizzle-orm';
 import type { BillingDocumentStatus } from './types';
 
 const STRIPE_STATUS_TO_DOC: Record<string, BillingDocumentStatus> = {
@@ -74,7 +78,7 @@ async function syncInvoicesForCustomer(
 		for (const inv of list.data) {
 			const status = STRIPE_STATUS_TO_DOC[inv.status ?? ''] ?? 'draft';
 			const receiptUrl = typeof inv.charge === 'object' && inv.charge?.receipt_url ? inv.charge.receipt_url : undefined;
-			await billingDocsRepo.upsertBillingDocument({
+			const doc = await billingDocsRepo.upsertBillingDocument({
 				companyId,
 				type: 'invoice',
 				provider: 'stripe',
@@ -98,6 +102,48 @@ async function syncInvoicesForCustomer(
 				}
 			});
 			count++;
+			// Aplicar vínculos de factura próxima si esta factura viene de una suscripción que tenía link pendiente
+			const subId = typeof inv.subscription === 'string' ? inv.subscription : (inv.subscription as { id?: string } | null)?.id;
+			if (subId && doc) {
+				try {
+					const link = await upcomingLinksRepo.findUpcomingLinkBySubscription(companyId, 'stripe', subId);
+					if (link && Array.isArray(link.projectIds) && link.projectIds.length > 0) {
+						const existing = (doc.metadata as Record<string, unknown>) ?? {};
+						await billingDocsRepo.updateBillingDocument(doc.id, { metadata: { ...existing, projectIds: link.projectIds } });
+						let paymentId = doc.paymentId;
+						if (paymentId == null) {
+							const amountMajor = doc.amountTotal / 100;
+							const currency = (doc.currency ?? 'USD').toUpperCase();
+							const amountText = `${amountMajor.toFixed(2)} ${currency}`;
+							const [newPayment] = await db
+								.insert(payments)
+								.values({
+									title: doc.number ?? doc.description ?? 'Pago desde facturación',
+									amount: amountText,
+									status: doc.status === 'paid' ? 'paid' : 'pending',
+									dueDate: doc.dueDate ?? null,
+									amountOriginal: String(amountMajor),
+									currencyOriginal: currency,
+									amountPaid: String(amountMajor),
+									currencyPaid: currency,
+									amountUsd: currency === 'USD' ? String(amountMajor) : null
+								})
+								.returning({ id: payments.id });
+							paymentId = newPayment?.id ?? null;
+							if (paymentId != null) await billingDocsRepo.updateBillingDocument(doc.id, { paymentId });
+						}
+						if (paymentId != null) {
+							await db.delete(projectPayments).where(eq(projectPayments.paymentId, paymentId));
+							for (const projectId of link.projectIds) {
+								await db.insert(projectPayments).values({ projectId, paymentId });
+							}
+						}
+						await upcomingLinksRepo.deleteUpcomingLinkBySubscription(companyId, 'stripe', subId);
+					}
+				} catch (e: any) {
+					console.error('[stripe-sync] apply upcoming link:', e?.message ?? e);
+				}
+			}
 		}
 
 		hasMore = list.has_more && list.data.length > 0;

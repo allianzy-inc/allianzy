@@ -9,7 +9,7 @@
 
     export let data: PageData;
 
-    $: ({ project, requirements, milestones, supportCases, proposals, payments, requests, selectedCaseComments, selectedRequestComments, selectedRequirementComments, selectedProposalComments } = data);
+    $: ({ project, requirements, milestones, supportCases, proposals, payments, upcomingPayments = [], requests, selectedCaseComments, selectedRequestComments, selectedRequirementComments, selectedProposalComments } = data);
     $: allClients = data.allClients; // Destructure allClients
     $: allServices = data.allServices; // Destructure allServices
 
@@ -1017,6 +1017,37 @@
                                         {/each}
                                     </tbody>
                                 </table>
+                            </div>
+                        {/if}
+                        {#if upcomingPayments && upcomingPayments.length > 0}
+                            <div class="mt-6 pt-4 border-t">
+                                <h4 class="font-medium text-sm text-muted-foreground mb-2">Próximos pagos</h4>
+                                <div class="border rounded-lg overflow-hidden">
+                                    <table class="w-full text-sm">
+                                        <thead class="bg-muted/50 text-left">
+                                            <tr>
+                                                <th class="p-3 font-medium">Concepto</th>
+                                                <th class="p-3 font-medium">Vencimiento</th>
+                                                <th class="p-3 font-medium">Monto</th>
+                                                <th class="p-3 font-medium text-right">Estado</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y">
+                                            {#each upcomingPayments as up}
+                                                {@const amount = (up.amountCents ?? 0) / 100}
+                                                {@const curr = (up.currency ?? 'usd').toUpperCase()}
+                                                <tr class="hover:bg-muted/30">
+                                                    <td class="p-3 font-medium">Próxima factura</td>
+                                                    <td class="p-3 text-muted-foreground">{up.dueDate ? formatDate(up.dueDate) : '—'}</td>
+                                                    <td class="p-3 font-medium">{amount.toFixed(2)} {curr}</td>
+                                                    <td class="p-3 text-right">
+                                                        <span class="inline-flex px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">Próximo</span>
+                                                    </td>
+                                                </tr>
+                                            {/each}
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         {/if}
                     </div>

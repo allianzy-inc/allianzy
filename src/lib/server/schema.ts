@@ -355,6 +355,21 @@ export const billingDocuments = pgTable('billing_documents', {
     statusIdx: index('billing_documents_status_idx').on(t.status),
 }));
 
+/** Vínculos de facturas próximas (aún no emitidas) a proyectos. Al sincronizar Stripe se aplican al documento real y se borra la fila. */
+export const upcomingInvoiceProjectLinks = pgTable('upcoming_invoice_project_links', {
+	id: uuid('id').primaryKey().defaultRandom(),
+	companyId: integer('company_id').references(() => companies.id, { onDelete: 'cascade' }).notNull(),
+	provider: text('provider').notNull(),
+	subscriptionId: text('subscription_id').notNull(),
+	projectIds: jsonb('project_ids').$type<number[]>().notNull(),
+	amountCents: integer('amount_cents'),
+	dueDate: timestamp('due_date', { withTimezone: true }),
+	currency: text('currency'),
+	updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (t) => ({
+	companyProviderSubIdx: index('upcoming_invoice_project_links_company_provider_sub_idx').on(t.companyId, t.provider, t.subscriptionId),
+}));
+
 /** Líneas de detalle por documento (itemización interna + provider). */
 export const billingLineItems = pgTable('billing_line_items', {
     id: uuid('id').primaryKey().defaultRandom(),

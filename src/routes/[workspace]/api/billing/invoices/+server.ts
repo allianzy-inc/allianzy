@@ -4,6 +4,8 @@ import { getBillingContext } from '$lib/server/billing-domain/resolve-context';
 import * as billingDocsRepo from '$lib/server/billing-domain/billing-documents.repository';
 import * as paymentAccountsRepo from '$lib/server/billing-domain/payment-accounts.repository';
 import * as providerConfigRepo from '$lib/server/billing-domain/provider-config.repository';
+import * as subscriptionRecordsRepo from '$lib/server/billing-domain/subscription-records.repository';
+import * as upcomingLinksRepo from '$lib/server/billing-domain/upcoming-invoice-project-links.repository';
 import { syncStripeForCompany } from '$lib/server/billing-domain/stripe-sync.service';
 import { getStripe, getBillingCompany } from '$lib/server/billing';
 import { db } from '$lib/server/db';
@@ -189,12 +191,84 @@ async function getStandaloneChargeRows(
 	return rows;
 }
 
+/** Ordena por fecha relevante: due_date (próximas) o created (pasadas), desc. */
 function sortInvoicesByCreated(invoices: InvoiceRow[]): void {
 	invoices.sort((a, b) => {
-		const ta = a.created ?? '';
-		const tb = b.created ?? '';
+		const ta = a.due_date ?? a.created ?? '';
+		const tb = b.due_date ?? b.created ?? '';
 		return tb.localeCompare(ta);
 	});
+}
+
+/** Devuelve la fecha en formato YYYY-MM-DD para comparar "mismo día". */
+function toDateOnly(isoOrUndefined: string | undefined): string {
+	if (!isoOrUndefined) return '';
+	const d = isoOrUndefined.slice(0, 10);
+	return d.length === 10 ? d : '';
+}
+
+/** Total pagado + pendiente de una fila (minor units). */
+function rowTotal(row: InvoiceRow): number {
+	const due = Number(row.amount_due ?? 0);
+	const paid = Number(row.amount_paid ?? 0);
+	return due + paid;
+}
+
+/** True si el charge (standalone) representa el mismo pago que una fila ya existente (factura). */
+function isSamePayment(chargeRow: InvoiceRow, existingRow: InvoiceRow): boolean {
+	const accountMatch =
+		(chargeRow.account_code ?? '') === (existingRow.account_code ?? '');
+	const amountCharge = Number(chargeRow.amount_paid ?? 0) + Number(chargeRow.amount_due ?? 0);
+	const amountExisting = rowTotal(existingRow);
+	const amountMatch = amountCharge === amountExisting;
+	const dateCharge = toDateOnly(chargeRow.created ?? chargeRow.paid_at);
+	const dateExisting = toDateOnly(existingRow.paid_at ?? existingRow.created);
+	const dateMatch = dateCharge && dateExisting && dateCharge === dateExisting;
+	return accountMatch && amountMatch && dateMatch;
+}
+
+/** No añadir un standalone charge si ya hay una fila en la lista que sea el mismo pago. */
+function shouldAddStandaloneCharge(chargeRow: InvoiceRow, existingList: InvoiceRow[]): boolean {
+	return !existingList.some((existing) => isSamePayment(chargeRow, existing));
+}
+
+/** Próximas facturas de Stripe por suscripción (preview). Incluye status 'upcoming' para la UI. */
+async function getUpcomingInvoiceRows(
+	stripe: import('stripe').Stripe,
+	subscriptionRecords: { provider: string; providerSubscriptionId: string | null; paymentAccountId: string | null }[],
+	accountCodeByPaymentId: Record<string, string>
+): Promise<InvoiceRow[]> {
+	const rows: InvoiceRow[] = [];
+	const stripeSubs = subscriptionRecords.filter(
+		(s) => (s.provider ?? 'stripe') === 'stripe' && s.providerSubscriptionId
+	);
+	for (const sub of stripeSubs) {
+		try {
+			const inv = await stripe.invoices.retrieve('upcoming', {
+				subscription: sub.providerSubscriptionId!
+			});
+			const accountCode = sub.paymentAccountId ? accountCodeByPaymentId[sub.paymentAccountId] : undefined;
+			rows.push({
+				id: `upcoming_${sub.providerSubscriptionId}`,
+				documentId: null,
+				provider: 'stripe',
+				account_code: accountCode,
+				number: undefined,
+				amount_due: inv.amount_due ?? 0,
+				amount_paid: 0,
+				status: 'upcoming',
+				due_date: inv.due_date ? new Date(inv.due_date * 1000).toISOString() : undefined,
+				paid_at: undefined,
+				currency: (inv.currency ?? 'usd').toLowerCase(),
+				created: inv.created ? new Date(inv.created * 1000).toISOString() : undefined,
+				description: inv.description ?? 'Próxima factura'
+			});
+		} catch (e) {
+			// Sin próxima (suscripción cancelada, etc.)
+			console.debug('[billing/invoices] upcoming for sub', sub.providerSubscriptionId, (e as Error)?.message);
+		}
+	}
+	return rows;
 }
 
 export const GET: RequestHandler = async (event) => {
@@ -297,11 +371,48 @@ export const GET: RequestHandler = async (event) => {
 					if ((acc.provider ?? 'stripe') !== 'stripe' || !acc.customerId) continue;
 					const standalone = await getStandaloneChargeRows(stripe, acc.customerId);
 					for (const row of standalone) {
+						if (!seenIds.has(row.id) && shouldAddStandaloneCharge(row, invoices)) {
+							seenIds.add(row.id);
+							invoices.push(row);
+						}
+					}
+				}
+				// Próximas facturas por suscripción (preview Stripe)
+				try {
+					const subs = await subscriptionRecordsRepo.findSubscriptionRecordsByCompanyId(ctx.companyId!);
+					const accountCodeByPaymentId: Record<string, string> = Object.fromEntries(
+						ctx.accounts
+							.filter((a) => (a.provider ?? 'stripe') === 'stripe' && a.customerId)
+							.map((a) => [a.paymentAccountId, a.customerId!])
+					);
+					const upcoming = await getUpcomingInvoiceRows(stripe, subs, accountCodeByPaymentId);
+					for (const row of upcoming) {
 						if (!seenIds.has(row.id)) {
 							seenIds.add(row.id);
 							invoices.push(row);
 						}
 					}
+					// Enriquecer próximas con vínculos a proyectos (upcoming_invoice_project_links)
+					const upcomingLinks = await upcomingLinksRepo.findUpcomingLinksByCompanyId(ctx.companyId!);
+					if (upcomingLinks.length > 0) {
+						const allProjectIds = [...new Set(upcomingLinks.flatMap((l) => l.projectIds))];
+						const projectMap = await getProjectInfoMap(allProjectIds);
+						const linkBySubId = Object.fromEntries(upcomingLinks.map((l) => [l.subscriptionId, l]));
+						for (const row of invoices) {
+							if (row.id?.startsWith?.('upcoming_')) {
+								const subId = row.id.slice(9);
+								const link = linkBySubId[subId];
+								if (link) {
+									(row as InvoiceRow & { linked_project_ids?: number[]; linked_project_names?: string[] }).linked_project_ids = link.projectIds;
+									(row as InvoiceRow & { linked_project_ids?: number[]; linked_project_names?: string[] }).linked_project_names = link.projectIds.map(
+										(pid) => projectMap[pid]?.projectName ?? `Proyecto ${pid}`
+									);
+								}
+							}
+						}
+					}
+				} catch (e) {
+					console.error('[billing/invoices] upcoming error:', (e as Error)?.message);
 				}
 				sortInvoicesByCreated(invoices);
 			}
@@ -346,10 +457,46 @@ export const GET: RequestHandler = async (event) => {
 		const standalone = await getStandaloneChargeRows(stripe, billing.stripeCustomerId ?? '');
 		const seenIds = new Set(invoices.map((r) => r.id));
 		for (const row of standalone) {
-			if (!seenIds.has(row.id)) {
+			if (!seenIds.has(row.id) && shouldAddStandaloneCharge(row, invoices)) {
 				seenIds.add(row.id);
 				invoices.push(row);
 			}
+		}
+		// Próximas facturas (legacy: una cuenta Stripe)
+		try {
+			const subList = await stripe.subscriptions.list({
+				customer: billing.stripeCustomerId!,
+				status: 'active',
+				limit: 100
+			});
+			for (const sub of subList.data ?? []) {
+				try {
+					const inv = await stripe.invoices.retrieve('upcoming', {
+						subscription: sub.id
+					});
+					const row: InvoiceRow = {
+						id: `upcoming_${sub.id}`,
+						documentId: null,
+						provider: 'stripe',
+						account_code: billing.stripeCustomerId ?? undefined,
+						amount_due: inv.amount_due ?? 0,
+						amount_paid: 0,
+						status: 'upcoming',
+						due_date: inv.due_date ? new Date(inv.due_date * 1000).toISOString() : undefined,
+						currency: (inv.currency ?? 'usd').toLowerCase(),
+						created: inv.created ? new Date(inv.created * 1000).toISOString() : undefined,
+						description: inv.description ?? 'Próxima factura'
+					};
+					if (!seenIds.has(row.id)) {
+						seenIds.add(row.id);
+						invoices.push(row);
+					}
+				} catch (_) {
+					// sin próxima para esta suscripción
+				}
+			}
+		} catch (_) {
+			// ignorar error próximas en legacy
 		}
 		sortInvoicesByCreated(invoices);
 		return json({ linked: true, invoices });

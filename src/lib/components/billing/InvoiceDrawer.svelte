@@ -222,10 +222,8 @@
 		);
 	}
 
-	$: showLinkProjectsSection =
-		canManageBilling &&
-		companyId != null &&
-		invoice?.documentId;
+	/** Siempre mostrar en admin con empresa para que se pueda asociar proyecto a cualquier pago. */
+	$: showLinkProjectsSection = canManageBilling && companyId != null;
 
 	function toggleProjectLink(projectId: number) {
 		const idx = linkedProjectIds.indexOf(projectId);
@@ -234,15 +232,35 @@
 	}
 
 	async function saveLinkProjects() {
-		if (!invoice?.documentId || companyId == null) return;
+		if (!invoice || companyId == null) return;
 		linkProjectsSaving = true;
 		linkProjectsError = '';
 		try {
-			const res = await fetch(`/${workspace}/api/billing/documents/${invoice.documentId}`, {
-				method: 'PATCH',
+			const isUpcoming = invoice.id?.startsWith?.('upcoming_');
+			const url =
+				!isUpcoming && invoice.documentId != null
+					? `/${workspace}/api/billing/documents/${invoice.documentId}`
+					: `/${workspace}/api/billing/link-projects`;
+			const method = !isUpcoming && invoice.documentId != null ? 'PATCH' : 'POST';
+			const body: Record<string, unknown> =
+				!isUpcoming && invoice.documentId != null
+					? { companyId, projectIds: linkedProjectIds }
+					: {
+							companyId,
+							projectIds: linkedProjectIds,
+							provider: invoice.provider ?? 'stripe',
+							providerDocumentId: invoice.id,
+							...(isUpcoming && {
+								amountCents: invoice.amount,
+								dueDate: invoice.dueAt ?? undefined,
+								currency: invoice.currency ?? undefined
+							})
+						};
+			const res = await fetch(url, {
+				method,
 				credentials: 'include',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ companyId, projectIds: linkedProjectIds })
+				body: JSON.stringify(body)
 			});
 			const data = await res.json().catch(() => ({}));
 			if (!res.ok) throw new Error(data.error ?? 'Error al guardar vínculos');
@@ -328,6 +346,11 @@
 						<p class="text-sm text-muted-foreground">
 							Marcá los proyectos de la empresa a los que corresponde esta factura. Podés elegir uno o varios. El pago se verá en la pestaña Pagos de cada proyecto.
 						</p>
+						{#if invoice?.id?.startsWith?.('upcoming_')}
+							<p class="text-sm text-muted-foreground mb-2">
+								Factura próxima (aún no emitida). Vinculá a proyectos para que cuando se emita aparezca en la pestaña Pagos de cada proyecto.
+							</p>
+						{/if}
 						{#if linkProjectsError}
 							<p class="text-sm text-destructive">{linkProjectsError}</p>
 						{/if}

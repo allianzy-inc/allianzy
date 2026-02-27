@@ -389,10 +389,12 @@
 		await loadBilling();
 	}
 
-	async function handleManageSubscription() {
+	/** Abre el portal de Stripe para la empresa. Si se pasa stripeCustomerId (p. ej. de una suscripción), se usa esa cuenta. */
+	async function handleManageSubscription(stripeCustomerId?: string | null) {
+		const cusId = stripeCustomerId ?? selectedStripeCustomerId;
 		portalLoading = true;
 		try {
-			const q = selectedStripeCustomerId ? `&stripeCustomerId=${encodeURIComponent(selectedStripeCustomerId)}` : '';
+			const q = cusId ? `&stripeCustomerId=${encodeURIComponent(cusId)}` : '';
 			const res = await fetch(`/${workspace}/api/billing/portal?companyId=${companyId}${q}`, { method: 'POST', credentials: 'include' });
 			const data = await res.json().catch(() => ({}));
 			if (data.url) window.location.href = data.url;
@@ -405,6 +407,8 @@
 		switch (status) {
 			case 'paid':
 				return 'bg-green-500/20 text-green-600 dark:text-green-400 border-green-500/30';
+			case 'upcoming':
+				return 'bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-500/30';
 			case 'open':
 			case 'draft':
 				return 'bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/30';
@@ -420,6 +424,7 @@
 	function invoiceStatusLabel(status: string): string {
 		const map: Record<string, string> = {
 			paid: 'Pagado',
+			upcoming: 'Próxima factura',
 			open: 'Pendiente',
 			draft: 'Borrador',
 			void: 'Anulada',
@@ -716,6 +721,7 @@
 						class="rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 					>
 						<option value="">Todos los estados</option>
+						<option value="upcoming">Próxima factura</option>
 						<option value="paid">Pagado</option>
 						<option value="open">Pendiente</option>
 						<option value="void">Anulada</option>
@@ -954,51 +960,57 @@
 		</div>
 	{:else}
 		{#if allSubscriptions.length > 0}
-			{@const primary = allSubscriptions[0]}
-			<div class="rounded-lg border bg-card p-6 space-y-4">
-				<div class="flex flex-wrap items-center justify-between gap-4">
-					<div>
-						<h3 class="text-lg font-semibold">{primary.planName}</h3>
-						<p class="text-sm text-muted-foreground mt-0.5">
-							{#if primary.projectName || primary.serviceName}
-								{primary.projectName ?? ''}{primary.projectName && primary.serviceName ? ' · ' : ''}{primary.serviceName ?? ''}
-							{:else}
-								Suscripción activa
-							{/if}
-						</p>
-					</div>
-					<span
-						class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium {subscriptionStatusBadgeClass(primary.status)}"
-					>
-						{subscriptionStatusLabel(primary.status)}
-					</span>
-				</div>
-				<div class="flex flex-wrap items-center gap-6 text-sm">
-					<div class="flex items-center gap-2">
-						<Calendar class="h-4 w-4 text-muted-foreground" />
-						<span class="text-muted-foreground">Renovación:</span>
-						<span>{primary.currentPeriodEnd}</span>
-					</div>
-					<div>
-						<span class="text-muted-foreground">Monto: </span>
-						<span class="font-mono font-medium">{formatBillingAmount(primary.amount, primary.currency)}</span>
-					</div>
-				</div>
-				{#if canManageBilling}
-					<button
-						type="button"
-						on:click={handleManageSubscription}
-						disabled={portalLoading}
-						class="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-					>
-						{#if portalLoading}
-							<Loader2 class="w-4 h-4 animate-spin" />
-						{:else}
-							<Settings2 class="w-4 h-4" />
+			<div class="space-y-4">
+				{#each allSubscriptions as sub}
+					<div class="rounded-lg border bg-card p-6 space-y-4">
+						<div class="flex flex-wrap items-center justify-between gap-4">
+							<div>
+								<h3 class="text-lg font-semibold">{sub.planName}</h3>
+								<p class="text-sm text-muted-foreground mt-0.5">
+									{#if sub.projectName || sub.serviceName}
+										{sub.projectName ?? ''}{sub.projectName && sub.serviceName ? ' · ' : ''}{sub.serviceName ?? ''}
+									{:else}
+										Suscripción activa
+									{/if}
+								</p>
+								{#if sub.accountCode}
+									<p class="text-xs font-mono text-muted-foreground mt-1">{sub.accountCode}</p>
+								{/if}
+							</div>
+							<span
+								class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium {subscriptionStatusBadgeClass(sub.status)}"
+							>
+								{subscriptionStatusLabel(sub.status)}
+							</span>
+						</div>
+						<div class="flex flex-wrap items-center gap-6 text-sm">
+							<div class="flex items-center gap-2">
+								<Calendar class="h-4 w-4 text-muted-foreground" />
+								<span class="text-muted-foreground">Renovación:</span>
+								<span>{sub.currentPeriodEnd}</span>
+							</div>
+							<div>
+								<span class="text-muted-foreground">Monto: </span>
+								<span class="font-mono font-medium">{formatBillingAmount(sub.amount, sub.currency)}</span>
+							</div>
+						</div>
+						{#if canManageBilling && sub.accountCode}
+							<button
+								type="button"
+								on:click={() => handleManageSubscription(sub.accountCode)}
+								disabled={portalLoading}
+								class="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+							>
+								{#if portalLoading}
+									<Loader2 class="w-4 h-4 animate-spin" />
+								{:else}
+									<Settings2 class="w-4 h-4" />
+								{/if}
+								Gestionar suscripción
+							</button>
 						{/if}
-						Gestionar suscripción
-					</button>
-				{/if}
+					</div>
+				{/each}
 			</div>
 		{/if}
 		<div class="rounded-md border bg-card">
@@ -1020,6 +1032,7 @@
 									<th class="h-12 px-4 align-middle font-medium text-muted-foreground">Precio</th>
 									<th class="h-12 px-4 align-middle font-medium text-muted-foreground">Renovación</th>
 									<th class="h-12 px-4 align-middle font-medium text-muted-foreground">Estado</th>
+									<th class="h-12 px-4 align-middle font-medium text-right">Acciones</th>
 								</tr>
 							</thead>
 							<tbody class="[&_tr:last-child]:border-0">
@@ -1049,6 +1062,23 @@
 												{subscriptionStatusLabel(sub.status)}
 											</span>
 										</td>
+										<td class="p-4 align-middle text-right">
+											{#if canManageBilling && sub.accountCode}
+												<button
+													type="button"
+													on:click={() => handleManageSubscription(sub.accountCode)}
+													disabled={portalLoading}
+													class="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+												>
+													{#if portalLoading}
+														<Loader2 class="w-4 h-4 animate-spin" />
+													{:else}
+														<Settings2 class="w-4 h-4" />
+													{/if}
+													Gestionar
+												</button>
+											{/if}
+										</td>
 									</tr>
 								{/each}
 							</tbody>
@@ -1074,6 +1104,21 @@
 									<Calendar class="h-3 w-3" />
 									Renovación: {sub.currentPeriodEnd}
 								</div>
+								{#if canManageBilling && sub.accountCode}
+									<button
+										type="button"
+										on:click={() => handleManageSubscription(sub.accountCode)}
+										disabled={portalLoading}
+										class="w-full inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+									>
+										{#if portalLoading}
+											<Loader2 class="w-4 h-4 animate-spin" />
+										{:else}
+											<Settings2 class="w-4 h-4" />
+										{/if}
+										Gestionar suscripción
+									</button>
+								{/if}
 							</div>
 						{/each}
 					</div>

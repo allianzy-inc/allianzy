@@ -5,6 +5,7 @@ import { uploadFile, getSignedUrlForFile, deleteFile } from '$lib/server/storage
 import * as billingService from '$lib/server/billing-domain/billing.service';
 import * as paymentAccountsRepo from '$lib/server/billing-domain/payment-accounts.repository';
 import * as providerConfigRepo from '$lib/server/billing-domain/provider-config.repository';
+import * as upcomingLinksRepo from '$lib/server/billing-domain/upcoming-invoice-project-links.repository';
 import { eq, asc, desc, sql, getTableColumns, inArray } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import { error, fail } from '@sveltejs/kit';
@@ -347,6 +348,8 @@ export const load = async ({ params, url }: Parameters<PageServerLoad>[0]) => {
             };
         }));
 
+        const upcomingPayments = await upcomingLinksRepo.findUpcomingLinksByProjectId(projectId);
+
         // 7. Fetch Requests
         const rawRequests = await db.select()
             .from(requests)
@@ -379,6 +382,7 @@ export const load = async ({ params, url }: Parameters<PageServerLoad>[0]) => {
             supportCases,
             proposals: projectProposals,
             payments: projectPayments,
+            upcomingPayments,
             requests: projectRequests,
             selectedCaseComments,
             selectedRequestComments,

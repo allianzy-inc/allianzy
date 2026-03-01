@@ -432,6 +432,56 @@ export const notifications = pgTable('notifications', {
     userIdIdx: index('notifications_user_id_idx').on(t.userId),
 }));
 
+// ========== Admin Finance (transactions, categories, attachments) ==========
+
+/** Categorías de finanzas por workspace (ingresos, gastos, etc.). */
+export const financeCategories = pgTable('finance_categories', {
+    id: serial('id').primaryKey(),
+    workspaceId: integer('workspace_id').references(() => workspaces.id, { onDelete: 'cascade' }).notNull(),
+    name: text('name').notNull(),
+    group: text('group').notNull().default('expense'), // income, expense, tax, fees, operations, other
+    createdAt: timestamp('created_at').defaultNow(),
+}, (t) => ({
+    workspaceIdx: index('finance_categories_workspace_id_idx').on(t.workspaceId),
+}));
+
+/** Transacciones financieras del administrador (no de clientes). */
+export const financeTransactions = pgTable('finance_transactions', {
+    id: serial('id').primaryKey(),
+    workspaceId: integer('workspace_id').references(() => workspaces.id, { onDelete: 'cascade' }).notNull(),
+    date: timestamp('date', { withTimezone: true }).notNull(),
+    status: text('status').notNull().default('pending'), // pending, paid, reconciled, overdue
+    description: text('description').notNull(),
+    amount: numeric('amount', { precision: 14, scale: 2 }).notNull(),
+    currency: text('currency').notNull().default('USD'),
+    type: text('type').notNull(), // income, expense
+    categoryId: integer('category_id').references(() => financeCategories.id, { onDelete: 'set null' }),
+    bank: text('bank'), // nombre del banco o institución
+    paymentMethod: text('payment_method').notNull().default('bank'), // bank, card, wire, cash, other
+    cardLabel: text('card_label'), // ej. "Visa ****1234" o "Cuenta corriente"
+    /** Empresa o persona de la que se recibe o a la que se hace el pago (opcional). */
+    counterparty: text('counterparty'),
+    createdBy: integer('created_by').references(() => users.id, { onDelete: 'set null' }),
+    createdAt: timestamp('created_at').defaultNow(),
+    updatedAt: timestamp('updated_at').defaultNow(),
+}, (t) => ({
+    workspaceIdx: index('finance_transactions_workspace_id_idx').on(t.workspaceId),
+    dateIdx: index('finance_transactions_date_idx').on(t.date),
+}));
+
+/** Archivos adjuntos a una transacción (factura, recibo, transferencia, etc.) con descripción. */
+export const financeTransactionAttachments = pgTable('finance_transaction_attachments', {
+    id: serial('id').primaryKey(),
+    transactionId: integer('transaction_id').references(() => financeTransactions.id, { onDelete: 'cascade' }).notNull(),
+    fileUrl: text('file_url').notNull(),
+    fileName: text('file_name').notNull(),
+    description: text('description'), // descripción del archivo
+    kind: text('kind').notNull().default('other'), // invoice, receipt, transfer, other
+    createdAt: timestamp('created_at').defaultNow(),
+}, (t) => ({
+    transactionIdx: index('finance_transaction_attachments_transaction_id_idx').on(t.transactionId),
+}));
+
 export const usersRelations = relations(users, ({ many }) => ({
     userCompanies: many(userCompanies),
     notifications: many(notifications),
@@ -519,4 +569,20 @@ export const paymentTransactionsRelations = relations(paymentTransactions, ({ on
 export const subscriptionRecordsRelations = relations(subscriptionRecords, ({ one }) => ({
     company: one(companies, { fields: [subscriptionRecords.companyId], references: [companies.id] }),
     paymentAccount: one(paymentAccounts, { fields: [subscriptionRecords.paymentAccountId], references: [paymentAccounts.id] }),
+}));
+
+// Admin finance relations
+export const financeCategoriesRelations = relations(financeCategories, ({ one }) => ({
+    workspace: one(workspaces, { fields: [financeCategories.workspaceId], references: [workspaces.id] }),
+}));
+
+export const financeTransactionsRelations = relations(financeTransactions, ({ one, many }) => ({
+    workspace: one(workspaces, { fields: [financeTransactions.workspaceId], references: [workspaces.id] }),
+    category: one(financeCategories, { fields: [financeTransactions.categoryId], references: [financeCategories.id] }),
+    createdByUser: one(users, { fields: [financeTransactions.createdBy], references: [users.id] }),
+    attachments: many(financeTransactionAttachments),
+}));
+
+export const financeTransactionAttachmentsRelations = relations(financeTransactionAttachments, ({ one }) => ({
+    transaction: one(financeTransactions, { fields: [financeTransactionAttachments.transactionId], references: [financeTransactions.id] }),
 }));

@@ -16946,3 +16946,13 @@
 [2026-02-27T18:53:02.921Z] Serving file successfully
 [2026-02-27T19:06:01.340Z] Request: http://localhost:5173/api/public/files?url=https%3A%2F%2Ff005.backblazeb2.com%2Ffile%2Fallianzy%2Flogos%2F1771978171709-logo-iconos.webp&t=1772219156703&sig=ec393816fcab9a54ee6185465fbf06a59d976555451c081c9882d85f4cd22b24&w=allianzy
 [2026-02-27T19:06:01.948Z] Serving file successfully
+[2026-03-01T17:34:56.979Z] Request: http://localhost:5173/api/public/files?url=https%3A%2F%2Ff005.backblazeb2.com%2Ffile%2Fallianzy%2Ffinance-transactions%2F1772386486198-ACo329wCj8CPKJq65JXID02jzbpm_7ZAOWFWSA15Nv3AOxHpu58nbMVxsiUovjTMbPhNgxZnrlmOJ0y-BNnP-JobIxEFU0A89a-HCvMcUgeUmt2fM2epZE0_.pdf&t=1772386489513&sig=003482ff6363b47d64c63c414795571b17ff2578237f7fa0c22d4da1fafd30a7&w=allianzy
+[2026-03-01T17:34:57.511Z] Serving file successfully
+[2026-03-01T17:38:49.908Z] Request: http://localhost:5173/api/public/files?url=https%3A%2F%2Ff005.backblazeb2.com%2Ffile%2Fallianzy%2Ffinance-transactions%2F1772386706235-Receipt-2657-5089.pdf&t=1772386726270&sig=d03fcb91377c3d02b5226affc40f539516b239343710c3a9e9642b10bdaba8bc&w=allianzy
+[2026-03-01T17:38:50.388Z] Serving file successfully
+[2026-03-01T17:38:51.096Z] Request: http://localhost:5173/api/public/files?url=https%3A%2F%2Ff005.backblazeb2.com%2Ffile%2Fallianzy%2Ffinance-transactions%2F1772386706235-Receipt-2657-5089.pdf&t=1772386726270&sig=d03fcb91377c3d02b5226affc40f539516b239343710c3a9e9642b10bdaba8bc&w=allianzy
+[2026-03-01T17:38:51.272Z] Serving file successfully
+[2026-03-01T17:42:07.159Z] Request: http://localhost:5173/api/public/files?url=https%3A%2F%2Ff005.backblazeb2.com%2Ffile%2Fallianzy%2Ffinance-transactions%2F1772386486198-ACo329wCj8CPKJq65JXID02jzbpm_7ZAOWFWSA15Nv3AOxHpu58nbMVxsiUovjTMbPhNgxZnrlmOJ0y-BNnP-JobIxEFU0A89a-HCvMcUgeUmt2fM2epZE0_.pdf&t=1772386864191&sig=afbbb7191a89d10fbfb1a8cec1518a08dfc23afcc8d743d34831ade1aebbe14d&w=allianzy
+[2026-03-01T17:42:07.860Z] Serving file successfully
+[2026-03-01T17:42:08.567Z] Request: http://localhost:5173/api/public/files?url=https%3A%2F%2Ff005.backblazeb2.com%2Ffile%2Fallianzy%2Ffinance-transactions%2F1772386486198-ACo329wCj8CPKJq65JXID02jzbpm_7ZAOWFWSA15Nv3AOxHpu58nbMVxsiUovjTMbPhNgxZnrlmOJ0y-BNnP-JobIxEFU0A89a-HCvMcUgeUmt2fM2epZE0_.pdf&t=1772386864191&sig=afbbb7191a89d10fbfb1a8cec1518a08dfc23afcc8d743d34831ade1aebbe14d&w=allianzy
+[2026-03-01T17:42:08.732Z] Serving file successfully

@@ -64,6 +64,7 @@
 		"src/routes/[workspace]/+layout.server.ts"
 	],
 	"/[workspace]/admin/finance/transactions": [
+		"src/routes/[workspace]/admin/finance/transactions/+page.server.ts",
 		"src/routes/[workspace]/admin/+layout.server.ts",
 		"src/routes/[workspace]/+layout.server.ts"
 	],

@@ -67,7 +67,7 @@ export const dictionary = {
 		"/[workspace]/admin/finance/forecast": [16,[2,3,4]],
 		"/[workspace]/admin/finance/obligations": [17,[2,3,4]],
 		"/[workspace]/admin/finance/recurring": [18,[2,3,4]],
-		"/[workspace]/admin/finance/transactions": [19,[2,3,4]],
+		"/[workspace]/admin/finance/transactions": [~19,[2,3,4]],
 		"/[workspace]/admin/finance/vendors": [20,[2,3,4]],
 		"/[workspace]/admin/profile": [21,[2,3]],
 		"/[workspace]/admin/projects": [~22,[2,3]],

@@ -13,6 +13,8 @@
     let isLoading = false;
     let error = '';
     let success = '';
+    /** Cuando hay 403 por redirect URL, guardamos la URL que hay que añadir en Neon para mostrarla copiable. */
+    let redirectUrlToAdd = '';
 
     $: lang = $currentLang;
 
@@ -26,13 +28,15 @@
         error = '';
         success = '';
 
+        const redirectUrl = browser
+            ? (import.meta.env.VITE_PASSWORD_RESET_REDIRECT_URL?.trim() ||
+                `${window.location.origin}/${workspace}/auth/reset-password`)
+            : '';
+
         try {
             const payload: { email: string; redirectTo?: string } = { email };
-
-            // El enlace del correo lleva al servidor Neon; Neon redirige aquí con ?token=xxx para que el usuario pueda cambiar la contraseña.
-            // Si Neon devuelve 403 "Invalid redirectURL", añade esta URL en Neon Console → Auth → Configure domains / Allowed redirect URLs.
-            if (browser) {
-                payload.redirectTo = `${window.location.origin}/${workspace}/auth/reset-password`;
+            if (browser && redirectUrl) {
+                payload.redirectTo = redirectUrl;
             }
 
             const { error: resetError } = await authClient.requestPasswordReset(payload);
@@ -46,23 +50,32 @@
         } catch (e: any) {
             console.error('Request password reset error:', e);
 
-            if (e?.body?.message) {
-                error = e.body.message;
-            } else if (e?.message) {
-                error = e.message;
-            } else if (e?.code) {
-                error = e.code;
-            } else if (typeof e === 'string') {
-                error = e;
-            } else {
+            const is403Redirect = e?.status === 403 || (e?.message && e.message.includes('redirectURL'));
+            if (is403Redirect) {
+                redirectUrlToAdd = redirectUrl;
                 error =
                     lang === 'es'
-                        ? 'No pudimos iniciar el proceso de restablecimiento. Verifica el correo o inténtalo más tarde.'
-                        : 'We could not start the password reset process. Please check the email or try again later.';
-            }
-
-            if (e?.status) {
-                error += ` (Status: ${e.status})`;
+                        ? 'Neon Auth rechazó la URL de redirección. Añade exactamente la URL de abajo en Neon Console → tu proyecto → Auth → Allowed redirect URLs (o Configure domains).'
+                        : 'Neon Auth rejected the redirect URL. Add the URL below in Neon Console → your project → Auth → Allowed redirect URLs (or Configure domains).';
+            } else {
+                redirectUrlToAdd = '';
+                if (e?.body?.message) {
+                    error = e.body.message;
+                } else if (e?.message) {
+                    error = e.message;
+                } else if (e?.code) {
+                    error = e.code;
+                } else if (typeof e === 'string') {
+                    error = e;
+                } else {
+                    error =
+                        lang === 'es'
+                            ? 'No pudimos iniciar el proceso de restablecimiento. Verifica el correo o inténtalo más tarde.'
+                            : 'We could not start the password reset process. Please check the email or try again later.';
+                }
+                if (e?.status) {
+                    error += ` (Status: ${e.status})`;
+                }
             }
         } finally {
             isLoading = false;
@@ -120,9 +133,14 @@
 
         {#if error}
             <div
-                class="mb-6 p-3 text-sm text-red-600 bg-red-50 dark:bg-red-900/20 dark:text-red-400 rounded-lg border border-red-100 dark:border-red-900/30 text-center animate-in fade-in slide-in-from-top-2"
+                class="mb-6 p-3 text-sm text-red-600 bg-red-50 dark:bg-red-900/20 dark:text-red-400 rounded-lg border border-red-100 dark:border-red-900/30 animate-in fade-in slide-in-from-top-2"
             >
-                {error}
+                <p class="text-center">{error}</p>
+                {#if redirectUrlToAdd}
+                    <p class="mt-2 text-xs text-left font-mono bg-black/10 dark:bg-white/10 px-2 py-2 rounded break-all select-all" title="Copiar">
+                        {redirectUrlToAdd}
+                    </p>
+                {/if}
             </div>
         {/if}
 

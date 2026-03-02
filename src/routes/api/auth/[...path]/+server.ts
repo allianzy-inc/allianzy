@@ -34,22 +34,15 @@ async function proxy(request: Request, path: string) {
     const authUrlObj = new URL(AUTH_URL);
     const requestUrl = new URL(request.url);
     const origin = headers.get('origin');
-    
-    // Normalize Origin for production (www -> root) and localhost
+
+    // No reescribir www → sin www: Neon valida redirectTo y Origin contra trusted domains;
+    // si el usuario está en https://www.allianzy.com y redirectTo es esa misma base, Origin debe ser www también.
     if (origin) {
-        if (origin.startsWith('https://www.')) {
-            headers.set('origin', origin.replace('https://www.', 'https://'));
-        } else if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
-            // Spoof Origin for localhost to match Auth Server expectation
+        if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
             headers.set('origin', authUrlObj.origin);
         }
     } else {
-         headers.set('origin', requestUrl.origin);
-    }
-
-    const referer = headers.get('referer');
-    if (referer && referer.startsWith('https://www.')) {
-        headers.set('referer', referer.replace('https://www.', 'https://'));
+        headers.set('origin', requestUrl.origin);
     }
 
     headers.set('host', authUrlObj.host);

@@ -10,12 +10,19 @@ export const actions = {
 		const formData = await request.formData();
 		const email = formData.get('email')?.toString()?.trim();
 		let redirectTo = formData.get('redirectTo')?.toString()?.trim();
-		if (!redirectTo && request.url) {
-			try {
-				const u = new URL(request.url);
-				redirectTo = `${u.origin}/${params.workspace}/auth/reset-password`;
-			} catch {
-				// ignore
+		if (!redirectTo) {
+			// En producción el request puede ser interno; usar origen público desde headers si existe.
+			const forwardedHost = request.headers.get('x-forwarded-host');
+			const forwardedProto = request.headers.get('x-forwarded-proto');
+			if (forwardedHost && forwardedProto) {
+				redirectTo = `${forwardedProto}://${forwardedHost.split(',')[0].trim()}/${params.workspace}/auth/reset-password`;
+			} else if (request.url) {
+				try {
+					const u = new URL(request.url);
+					redirectTo = `${u.origin}/${params.workspace}/auth/reset-password`;
+				} catch {
+					// ignore
+				}
 			}
 		}
 

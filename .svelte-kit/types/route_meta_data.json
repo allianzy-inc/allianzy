@@ -156,6 +156,7 @@
 		"src/routes/[workspace]/api/billing/sync/+server.ts"
 	],
 	"/[workspace]/auth/forgot-password": [
+		"src/routes/[workspace]/auth/forgot-password/+page.server.ts",
 		"src/routes/[workspace]/+layout.server.ts"
 	],
 	"/[workspace]/auth/login": [

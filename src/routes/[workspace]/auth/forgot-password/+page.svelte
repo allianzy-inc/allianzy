@@ -1,7 +1,7 @@
 <script lang="ts">
     import { page } from '$app/stores';
-    import { authClient } from '$lib/auth-client';
     import { goto } from '$app/navigation';
+    import { enhance } from '$app/forms';
     import { Mail, ArrowLeft } from 'lucide-svelte';
     import logoLight from '$lib/assets/brand/allianzy/logo-light.svg';
     import logoDark from '$lib/assets/brand/allianzy/logo-dark.svg';
@@ -10,77 +10,21 @@
 
     const workspace = $page.params.workspace;
     let email = $page.url.searchParams.get('email') || '';
-    let isLoading = false;
     let error = '';
     let success = '';
-    /** Cuando hay 403 por redirect URL, guardamos la URL que hay que añadir en Neon para mostrarla copiable. */
     let redirectUrlToAdd = '';
+    let isSubmitting = false;
 
     $: lang = $currentLang;
+    $: redirectTo =
+        browser ?
+            (import.meta.env.VITE_PASSWORD_RESET_REDIRECT_URL?.trim() ||
+                `${window.location.origin}/${workspace}/auth/reset-password`)
+        :   '';
 
     function goBackToLogin() {
         const loginUrl = `/${workspace}/auth/login${email ? `?email=${encodeURIComponent(email)}` : ''}`;
         goto(loginUrl);
-    }
-
-    async function handleSubmit() {
-        isLoading = true;
-        error = '';
-        success = '';
-
-        // URL que debe estar en Neon Auth → Domains (ya tienes la de reset-password).
-        const redirectUrl = browser
-            ? (import.meta.env.VITE_PASSWORD_RESET_REDIRECT_URL?.trim() ||
-                `${window.location.origin}/${workspace}/auth/reset-password`)
-            : '';
-
-        try {
-            const payload: { email: string; redirectTo?: string } = { email };
-            if (browser && redirectUrl) {
-                payload.redirectTo = redirectUrl;
-            }
-
-            const { error: resetError } = await authClient.requestPasswordReset(payload);
-
-            if (resetError) throw resetError;
-
-            success =
-                lang === 'es'
-                    ? 'Si ese correo existe en nuestro sistema, recibirás un email desde auth@mail.myneon.app con el enlace para restablecer tu contraseña.'
-                    : "If that email exists in our system, you'll receive an email from auth@mail.myneon.app with a link to reset your password.";
-        } catch (e: any) {
-            console.error('Request password reset error:', e);
-
-            const is403Redirect = e?.status === 403 || (e?.message && e.message.includes('redirectURL'));
-            if (is403Redirect) {
-                redirectUrlToAdd = redirectUrl;
-                error =
-                    lang === 'es'
-                        ? 'Neon Auth rechazó la URL. Añade en Neon Console → Auth → Domains la URL de abajo. Si ya está, abre DevTools → Red → petición "request-password-reset" y revisa el body y el header Origin.'
-                        : 'Neon Auth rejected the URL. Add the URL below in Neon Console → Auth → Domains. If it\'s already there, open DevTools → Network → "request-password-reset" and check the request body and Origin header.';
-            } else {
-                redirectUrlToAdd = '';
-                if (e?.body?.message) {
-                    error = e.body.message;
-                } else if (e?.message) {
-                    error = e.message;
-                } else if (e?.code) {
-                    error = e.code;
-                } else if (typeof e === 'string') {
-                    error = e;
-                } else {
-                    error =
-                        lang === 'es'
-                            ? 'No pudimos iniciar el proceso de restablecimiento. Verifica el correo o inténtalo más tarde.'
-                            : 'We could not start the password reset process. Please check the email or try again later.';
-                }
-                if (e?.status) {
-                    error += ` (Status: ${e.status})`;
-                }
-            }
-        } finally {
-            isLoading = false;
-        }
     }
 </script>
 
@@ -153,7 +97,33 @@
             </div>
         {/if}
 
-        <form on:submit|preventDefault={handleSubmit} class="space-y-5">
+        <form
+            method="POST"
+            action="?"
+            class="space-y-5"
+            use:enhance={() => {
+                error = '';
+                success = '';
+                redirectUrlToAdd = '';
+                isSubmitting = true;
+                return async ({ result, update }) => {
+                    await update();
+                    isSubmitting = false;
+                    if (result.type === 'success' && result.data) {
+                        if (result.data.success) {
+                            success = result.data.message ?? (lang === 'es' ? 'Revisa tu correo.' : 'Check your email.');
+                        } else if (result.data.error) {
+                            error = result.data.error;
+                            redirectUrlToAdd = result.data.redirectUrl ?? '';
+                        }
+                    } else if (result.type === 'failure' && result.data) {
+                        error = result.data.error ?? (lang === 'es' ? 'Error al enviar.' : 'Failed to send.');
+                        redirectUrlToAdd = result.data.redirectUrl ?? '';
+                    }
+                };
+            }}
+        >
+            <input type="hidden" name="redirectTo" value={redirectTo} />
             <div class="space-y-2">
                     <label
                         class="text-xs font-medium uppercase tracking-wider text-muted-foreground ml-1"
@@ -166,6 +136,7 @@
                     />
                     <input
                         type="email"
+                        name="email"
                         bind:value={email}
                         required
                         class="flex h-11 w-full rounded-xl border border-input bg-white/50 dark:bg-black/20 px-10 py-2 text-sm ring-offset-background placeholder:text-muted-foreground/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:border-primary transition-all shadow-sm"
@@ -176,10 +147,10 @@
 
             <button
                 type="submit"
-                disabled={isLoading}
+                disabled={isSubmitting}
                 class="w-full h-11 mt-4 bg-primary text-primary-foreground rounded-xl font-semibold hover:opacity-90 transition-all active:scale-[0.98] shadow-lg shadow-primary/20 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-                {#if isLoading}
+                {#if isSubmitting}
                     <div
                         class="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin"
                     ></div>

@@ -77,7 +77,7 @@ export const dictionary = {
 		"/[workspace]/admin/support": [~26,[2,3]],
 		"/[workspace]/admin/users": [~27,[2,3]],
 		"/[workspace]/admin/users/[id]": [~28,[2,3]],
-		"/[workspace]/auth/forgot-password": [29,[2]],
+		"/[workspace]/auth/forgot-password": [~29,[2]],
 		"/[workspace]/auth/login": [30,[2]],
 		"/[workspace]/auth/reset-password": [31,[2]],
 		"/[workspace]/config": [32,[2]],

@@ -3,6 +3,8 @@ import type { Actions } from './$types';
 import { env } from '$env/dynamic/private';
 
 const AUTH_URL = import.meta.env.VITE_NEON_AUTH_URL || env.VITE_NEON_AUTH_URL || process.env.VITE_NEON_AUTH_URL;
+// En producción: si Neon sigue rechazando, define PASSWORD_RESET_REDIRECT_URL con la URL exacta (ej. https://www.allianzy.com/allianzy/auth/reset-password)
+const ENV_REDIRECT_URL = env.PASSWORD_RESET_REDIRECT_URL?.trim() || '';
 
 export const actions: Actions = {
 	default: async ({ request, params }) => {
@@ -10,12 +12,32 @@ export const actions: Actions = {
 		const email = formData.get('email')?.toString()?.trim();
 		let redirectTo = formData.get('redirectTo')?.toString()?.trim();
 		if (!redirectTo) {
-			// En producción el request puede ser interno; usar origen público desde headers si existe.
-			const forwardedHost = request.headers.get('x-forwarded-host');
-			const forwardedProto = request.headers.get('x-forwarded-proto');
-			if (forwardedHost && forwardedProto) {
-				redirectTo = `${forwardedProto}://${forwardedHost.split(',')[0].trim()}/${params.workspace}/auth/reset-password`;
-			} else if (request.url) {
+			// 1) Variable de entorno explícita (producción)
+			if (ENV_REDIRECT_URL) {
+				redirectTo = ENV_REDIRECT_URL.replace('{workspace}', params.workspace);
+			}
+			// 2) Origen público desde headers (proxy/Vercel)
+			if (!redirectTo) {
+				const forwardedHost = request.headers.get('x-forwarded-host');
+				const forwardedProto = request.headers.get('x-forwarded-proto');
+				if (forwardedHost && forwardedProto) {
+					redirectTo = `${forwardedProto}://${forwardedHost.split(',')[0].trim()}/${params.workspace}/auth/reset-password`;
+				}
+			}
+			// 3) Referer (petición desde el navegador)
+			if (!redirectTo) {
+				const referer = request.headers.get('referer');
+				if (referer) {
+					try {
+						const u = new URL(referer);
+						redirectTo = `${u.origin}/${params.workspace}/auth/reset-password`;
+					} catch {
+						// ignore
+					}
+				}
+			}
+			// 4) request.url
+			if (!redirectTo && request.url) {
 				try {
 					const u = new URL(request.url);
 					redirectTo = `${u.origin}/${params.workspace}/auth/reset-password`;
@@ -42,7 +64,9 @@ export const actions: Actions = {
 
 		const headers: Record<string, string> = {
 			'Content-Type': 'application/json',
-			...(origin && { Origin: origin })
+			'User-Agent': request.headers.get('user-agent') || 'Mozilla/5.0 (compatible; Allianzy/1.0)',
+			...(origin && { Origin: origin }),
+			...(origin && { Referer: `${origin}/` })
 		};
 
 		try {

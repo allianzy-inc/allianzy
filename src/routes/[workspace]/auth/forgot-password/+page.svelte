@@ -85,6 +85,11 @@
                     <p class="mt-2 text-xs text-left font-mono bg-black/10 dark:bg-white/10 px-2 py-2 rounded break-all select-all" title="Copiar">
                         {redirectUrlToAdd}
                     </p>
+                    <p class="mt-2 text-xs text-muted-foreground">
+                        {lang === 'es'
+                            ? 'En producción, añade en tu hosting (Vercel, etc.) la variable PASSWORD_RESET_REDIRECT_URL con esta URL exacta y redeploy.'
+                            : 'In production, add PASSWORD_RESET_REDIRECT_URL with this exact URL in your hosting (Vercel, etc.) and redeploy.'}
+                    </p>
                 {/if}
             </div>
         {/if}

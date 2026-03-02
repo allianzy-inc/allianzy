@@ -125,14 +125,11 @@ export const handle: Handle = async ({ event, resolve }) => {
         }
     }
 
-    // 4. RBAC Placeholder (To be fully implemented with Server Auth)
-    // If we had event.locals.user populated, we would check roles here.
-    // Example:
-    /*
-    if (event.url.pathname.includes('/admin') && event.locals.user?.role !== 'admin') {
+    // 4. RBAC: rutas /admin solo para usuarios con rol admin
+    const pathname = event.url.pathname;
+    if (allowedWorkspace && pathname.includes('/admin') && String(event.locals.user?.role ?? '').toLowerCase() !== 'admin') {
         throw redirect(303, `/${allowedWorkspace}/dashboard`);
     }
-    */
 
     const response = await resolve(event);
 

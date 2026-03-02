@@ -11,7 +11,11 @@ import type { PageServerLoad, Actions } from './$types';
 import { fail, redirect } from '@sveltejs/kit';
 import { uploadFile, getSignedUrlForFile } from '$lib/server/storage';
 
-export const load = async ({ params }: Parameters<PageServerLoad>[0]) => {
+export const load = async ({ params, locals }: Parameters<PageServerLoad>[0]) => {
+	if (!locals.user?.id || String(locals.user.role ?? '').toLowerCase() !== 'admin') {
+		throw redirect(303, `/${params.workspace}/auth/login`);
+	}
+
 	const workspace = await db.query.workspaces.findFirst({
 		where: eq(workspaces.slug, params.workspace)
 	});
@@ -104,8 +108,18 @@ export const load = async ({ params }: Parameters<PageServerLoad>[0]) => {
 	};
 };
 
+function requireAdmin(
+	locals: { user?: { id?: string; role?: string } },
+	workspace: string
+) {
+	if (!locals.user?.id || String(locals.user.role ?? '').toLowerCase() !== 'admin') {
+		throw redirect(303, `/${workspace}/auth/login`);
+	}
+}
+
 export const actions = {
 	createTransaction: async ({ request, params, locals }: import('./$types').RequestEvent) => {
+		requireAdmin(locals, params.workspace);
 		try {
 			const formData = await request.formData();
 			const date = formData.get('date') as string;
@@ -193,6 +207,7 @@ export const actions = {
 	},
 
 	updateTransaction: async ({ request, params, locals }: import('./$types').RequestEvent) => {
+		requireAdmin(locals, params.workspace);
 		const formData = await request.formData();
 		const idRaw = formData.get('id') as string;
 		const id = idRaw ? parseInt(idRaw, 10) : NaN;
@@ -277,7 +292,8 @@ export const actions = {
 		return { update: { success: true } };
 	},
 
-	deleteTransaction: async ({ request, params }: import('./$types').RequestEvent) => {
+	deleteTransaction: async ({ request, params, locals }: import('./$types').RequestEvent) => {
+		requireAdmin(locals, params.workspace);
 		const formData = await request.formData();
 		const idRaw = formData.get('id') as string;
 		const id = idRaw ? parseInt(idRaw, 10) : NaN;
@@ -299,7 +315,8 @@ export const actions = {
 		throw redirect(303, `/${params.workspace}/admin/finance/transactions`);
 	},
 
-	deleteAttachment: async ({ request, params }: import('./$types').RequestEvent) => {
+	deleteAttachment: async ({ request, params, locals }: import('./$types').RequestEvent) => {
+		requireAdmin(locals, params.workspace);
 		const formData = await request.formData();
 		const attachmentIdRaw = formData.get('attachmentId') as string;
 		const attachmentId = attachmentIdRaw ? parseInt(attachmentIdRaw, 10) : NaN;

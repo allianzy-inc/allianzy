@@ -28,6 +28,7 @@
         error = '';
         success = '';
 
+        // URL que debe estar en Neon Auth → Domains (ya tienes la de reset-password).
         const redirectUrl = browser
             ? (import.meta.env.VITE_PASSWORD_RESET_REDIRECT_URL?.trim() ||
                 `${window.location.origin}/${workspace}/auth/reset-password`)
@@ -55,8 +56,8 @@
                 redirectUrlToAdd = redirectUrl;
                 error =
                     lang === 'es'
-                        ? 'Neon Auth rechazó la URL de redirección. Añade exactamente la URL de abajo en Neon Console → tu proyecto → Auth → Allowed redirect URLs (o Configure domains).'
-                        : 'Neon Auth rejected the redirect URL. Add the URL below in Neon Console → your project → Auth → Allowed redirect URLs (or Configure domains).';
+                        ? 'Neon Auth rechazó la URL. Añade en Neon Console → Auth → Domains la URL de abajo. Si ya está, abre DevTools → Red → petición "request-password-reset" y revisa el body y el header Origin.'
+                        : 'Neon Auth rejected the URL. Add the URL below in Neon Console → Auth → Domains. If it\'s already there, open DevTools → Network → "request-password-reset" and check the request body and Origin header.';
             } else {
                 redirectUrlToAdd = '';
                 if (e?.body?.message) {

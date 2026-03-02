@@ -1,7 +1,6 @@
 <script lang="ts">
     import { page } from '$app/stores';
     import { goto } from '$app/navigation';
-    import { enhance } from '$app/forms';
     import { Mail, ArrowLeft } from 'lucide-svelte';
     import logoLight from '$lib/assets/brand/allianzy/logo-light.svg';
     import logoDark from '$lib/assets/brand/allianzy/logo-dark.svg';
@@ -22,9 +21,46 @@
                 `${window.location.origin}/${workspace}/auth/reset-password`)
         :   '';
 
+    const NEON_AUTH_URL = import.meta.env.VITE_NEON_AUTH_URL?.replace(/\/$/, '') || '';
+
     function goBackToLogin() {
         const loginUrl = `/${workspace}/auth/login${email ? `?email=${encodeURIComponent(email)}` : ''}`;
         goto(loginUrl);
+    }
+
+    /** Petición directa desde el navegador a Neon para que el Origin sea el real (Neon suele rechazar peticiones servidor→Neon). */
+    async function handleSubmit(e: Event) {
+        e.preventDefault();
+        if (!email?.trim() || !NEON_AUTH_URL) return;
+        isSubmitting = true;
+        error = '';
+        success = '';
+        redirectUrlToAdd = '';
+        const url = `${NEON_AUTH_URL}/request-password-reset`;
+        const body = JSON.stringify({ email: email.trim(), redirectTo: redirectTo || undefined });
+        try {
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                const msg = data?.message || `Error ${res.status}`;
+                const isRedirect = res.status === 403 || String(msg).toLowerCase().includes('redirect');
+                error = msg;
+                if (isRedirect && redirectTo) redirectUrlToAdd = redirectTo;
+                return;
+            }
+            success =
+                lang === 'es'
+                    ? 'Si ese correo existe en nuestro sistema, recibirás un email con el enlace para restablecer tu contraseña.'
+                    : "If that email exists in our system, you'll receive an email with the link to reset your password.";
+        } catch (err: unknown) {
+            error = err instanceof Error ? err.message : (lang === 'es' ? 'Error de conexión' : 'Connection error');
+        } finally {
+            isSubmitting = false;
+        }
     }
 </script>
 
@@ -87,8 +123,8 @@
                     </p>
                     <p class="mt-2 text-xs text-muted-foreground">
                         {lang === 'es'
-                            ? 'En producción, añade en tu hosting (Vercel, etc.) la variable PASSWORD_RESET_REDIRECT_URL con esta URL exacta y redeploy.'
-                            : 'In production, add PASSWORD_RESET_REDIRECT_URL with this exact URL in your hosting (Vercel, etc.) and redeploy.'}
+                            ? 'Comprueba que esta URL esté en Neon Console → Auth → Domains (sin barra final).'
+                            : 'Ensure this URL is in Neon Console → Auth → Domains (no trailing slash).'}
                     </p>
                 {/if}
             </div>
@@ -102,33 +138,7 @@
             </div>
         {/if}
 
-        <form
-            method="POST"
-            action="?"
-            class="space-y-5"
-            use:enhance={() => {
-                error = '';
-                success = '';
-                redirectUrlToAdd = '';
-                isSubmitting = true;
-                return async ({ result, update }) => {
-                    await update();
-                    isSubmitting = false;
-                    if (result.type === 'success' && result.data) {
-                        if (result.data.success) {
-                            success = result.data.message ?? (lang === 'es' ? 'Revisa tu correo.' : 'Check your email.');
-                        } else if (result.data.error) {
-                            error = result.data.error;
-                            redirectUrlToAdd = result.data.redirectUrl ?? '';
-                        }
-                    } else if (result.type === 'failure' && result.data) {
-                        error = result.data.error ?? (lang === 'es' ? 'Error al enviar.' : 'Failed to send.');
-                        redirectUrlToAdd = result.data.redirectUrl ?? '';
-                    }
-                };
-            }}
-        >
-            <input type="hidden" name="redirectTo" value={redirectTo} />
+        <form on:submit|preventDefault={handleSubmit} class="space-y-5">
             <div class="space-y-2">
                     <label
                         class="text-xs font-medium uppercase tracking-wider text-muted-foreground ml-1"

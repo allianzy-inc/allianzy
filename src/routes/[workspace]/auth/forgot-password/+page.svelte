@@ -29,13 +29,10 @@
         try {
             const payload: { email: string; redirectTo?: string } = { email };
 
-            // Nota: redirectTo debe estar permitido en la configuración de Better Auth (allowed redirect URLs).
-            // Para evitar el error 403 "Invalid redirectURL" en entornos donde aún no está configurado,
-            // solo enviamos redirectTo si tienes una URL explícita y permitida.
+            // El enlace del correo lleva al servidor Neon; Neon redirige aquí con ?token=xxx para que el usuario pueda cambiar la contraseña.
+            // Si Neon devuelve 403 "Invalid redirectURL", añade esta URL en Neon Console → Auth → Configure domains / Allowed redirect URLs.
             if (browser) {
-                // Ajusta esta URL si en tu servidor de auth ya tienes configurado un redirect permitido.
-                // Por ejemplo, podrías usar tu dominio productivo:
-                // payload.redirectTo = 'https://tu-dominio.com/allianzy/auth/reset-password';
+                payload.redirectTo = `${window.location.origin}/${workspace}/auth/reset-password`;
             }
 
             const { error: resetError } = await authClient.requestPasswordReset(payload);

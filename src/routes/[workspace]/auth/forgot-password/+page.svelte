@@ -15,10 +15,11 @@
     let isSubmitting = false;
 
     $: lang = $currentLang;
+    // Neon valida contra el origen; enviar solo el origen evita 403. Al abrir el enlace del correo, el usuario llega a la raíz con ?token= y lo redirigimos a /auth/reset-password.
     $: redirectTo =
         browser ?
             (import.meta.env.VITE_PASSWORD_RESET_REDIRECT_URL?.trim() ||
-                `${window.location.origin}/${workspace}/auth/reset-password`)
+                window.location.origin)
         :   '';
 
     const NEON_AUTH_URL = import.meta.env.VITE_NEON_AUTH_URL?.replace(/\/$/, '') || '';
@@ -123,8 +124,8 @@
                     </p>
                     <p class="mt-2 text-xs text-muted-foreground">
                         {lang === 'es'
-                            ? 'Comprueba que esta URL esté en Neon Console → Auth → Domains (sin barra final).'
-                            : 'Ensure this URL is in Neon Console → Auth → Domains (no trailing slash).'}
+                            ? 'En Neon Console → Auth → Domains debe estar el origen (ej. https://www.allianzy.com) sin barra final.'
+                            : 'Neon Console → Auth → Domains must include the origin (e.g. https://www.allianzy.com) with no trailing slash.'}
                     </p>
                 {/if}
             </div>
